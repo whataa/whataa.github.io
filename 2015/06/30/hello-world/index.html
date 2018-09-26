@@ -89,7 +89,7 @@
 <meta property="og:url" content="http://yoursite.com/2015/06/30/hello-world/index.html">
 <meta property="og:site_name" content="林江的笔记">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-01-28T08:57:59.057Z">
+<meta property="og:updated_time" content="2018-09-26T03:23:54.457Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Hello Hexo">
 
@@ -257,6 +257,15 @@
           
 
           
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2015/06/30/hello-world/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/06/30/hello-world/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
 
           
 
@@ -341,6 +350,17 @@
 
 
           
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
 
         </div>
         
@@ -584,6 +604,13 @@
       }
 
       run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
       
     </script>
   
