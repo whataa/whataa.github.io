@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="开源项目," />
+  <meta name="keywords" content="Flutter,Widget," />
 
 
 
@@ -84,20 +84,20 @@
 
 
 
-<meta name="description" content="本篇接上一篇，以演示代码和效果呈现。">
-<meta name="keywords" content="开源项目">
+<meta name="description" content="InheritedWidget是学习flutter不得不掌握的一个特殊组件，具备向下传值和选择性reBuild子树节点的特性，许多SDK组件包括第三方库包都是基于其特性实现，本文结合官方文档发现并解决了一个使用InheritedWidget时容易被忽略的问题，并给出推荐方案。">
+<meta name="keywords" content="Flutter,Widget">
 <meta property="og:type" content="article">
-<meta property="og:title" content="一种巧妙的drawable.xml替代方案-效果篇">
-<meta property="og:url" content="http://yoursite.com/2018/09/08/一种巧妙的drawable.xml替代方案-效果篇/index.html">
+<meta property="og:title" content="使用InheritedWidget被忽略的要点">
+<meta property="og:url" content="http://yoursite.com/2019/02/25/flutter_inherited_note/index.html">
 <meta property="og:site_name" content="林江的笔记">
-<meta property="og:description" content="本篇接上一篇，以演示代码和效果呈现。">
+<meta property="og:description" content="InheritedWidget是学习flutter不得不掌握的一个特殊组件，具备向下传值和选择性reBuild子树节点的特性，许多SDK组件包括第三方库包都是基于其特性实现，本文结合官方文档发现并解决了一个使用InheritedWidget时容易被忽略的问题，并给出推荐方案。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB47eb0205a805ab3c719e4ec0eaf4b643?method=download&shareKey=f2797e4084769c4dd0fd558c1ac87378">
-<meta property="og:updated_time" content="2018-09-08T15:55:37.195Z">
+<meta property="og:image" content="https://note.youdao.com/yws/api/personal/file/WEB0c9cefa2cc7a5b1908c47cab494588a5?method=download&shareKey=3d07341e3daa253f8569b7fafd833f3e">
+<meta property="og:updated_time" content="2019-02-25T06:08:53.792Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="一种巧妙的drawable.xml替代方案-效果篇">
-<meta name="twitter:description" content="本篇接上一篇，以演示代码和效果呈现。">
-<meta name="twitter:image" content="https://note.youdao.com/yws/api/personal/file/WEB47eb0205a805ab3c719e4ec0eaf4b643?method=download&shareKey=f2797e4084769c4dd0fd558c1ac87378">
+<meta name="twitter:title" content="使用InheritedWidget被忽略的要点">
+<meta name="twitter:description" content="InheritedWidget是学习flutter不得不掌握的一个特殊组件，具备向下传值和选择性reBuild子树节点的特性，许多SDK组件包括第三方库包都是基于其特性实现，本文结合官方文档发现并解决了一个使用InheritedWidget时容易被忽略的问题，并给出推荐方案。">
+<meta name="twitter:image" content="https://note.youdao.com/yws/api/personal/file/WEB0c9cefa2cc7a5b1908c47cab494588a5?method=download&shareKey=3d07341e3daa253f8569b7fafd833f3e">
 
 
 
@@ -118,10 +118,10 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2018/09/08/一种巧妙的drawable.xml替代方案-效果篇/"/>
+  <link rel="canonical" href="http://yoursite.com/2019/02/25/flutter_inherited_note/"/>
 
 
-  <title> 一种巧妙的drawable.xml替代方案-效果篇 | 林江的笔记 </title>
+  <title> 使用InheritedWidget被忽略的要点 | 林江的笔记 </title>
 </head>
 
 <body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
@@ -243,7 +243,7 @@
             
             
               
-                一种巧妙的drawable.xml替代方案-效果篇
+                使用InheritedWidget被忽略的要点
               
             
           </h1>
@@ -255,8 +255,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2018-09-08T23:52:00+08:00" content="2018-09-08">
-              2018-09-08
+            <time itemprop="dateCreated" datetime="2019-02-25T10:00:00+08:00" content="2019-02-25">
+              2019-02-25
             </time>
           </span>
 
@@ -269,8 +269,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index">
-                    <span itemprop="name">Android</span>
+                  <a href="/categories/Flutter/" itemprop="url" rel="index">
+                    <span itemprop="name">Flutter</span>
                   </a>
                 </span>
 
@@ -285,8 +285,8 @@
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2018/09/08/一种巧妙的drawable.xml替代方案-效果篇/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/09/08/一种巧妙的drawable.xml替代方案-效果篇/" itemprop="commentsCount"></span>
+                <a href="/2019/02/25/flutter_inherited_note/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/02/25/flutter_inherited_note/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -296,7 +296,7 @@
 
           
           
-             <span id="/2018/09/08/一种巧妙的drawable.xml替代方案-效果篇/" class="leancloud_visitors" data-flag-title="一种巧妙的drawable.xml替代方案-效果篇">
+             <span id="/2019/02/25/flutter_inherited_note/" class="leancloud_visitors" data-flag-title="使用InheritedWidget被忽略的要点">
                &nbsp; | &nbsp;
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -319,40 +319,42 @@
       
 
       
-        <blockquote>
-<p>接上一原理篇：<a href="http://linjiang.tech/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88/" target="_blank" rel="noopener">一种巧妙的drawable.xml替代方案</a></p>
-</blockquote>
-<p>在上一篇文章中，我们详细了解到了一种利用DataBinding来替代drawable.xml的方案，但是并没有任何真正的演示代码和效果来呈现，本篇就是此目的。</p>
-<p>本文将以上一篇方案所对应的库<code>NoDrawable</code>来演示，具体的用法请点击链接 <a href="https://github.com/whataa/noDrawable" target="_blank" rel="noopener">https://github.com/whataa/noDrawable</a> 查看。以大部分App中都有的登录页为例，以下为设计图：</p>
-<p><img src="https://note.youdao.com/yws/api/personal/file/WEB47eb0205a805ab3c719e4ec0eaf4b643?method=download&amp;shareKey=f2797e4084769c4dd0fd558c1ac87378" alt="image"></p>
-<p>这是一张很常见（正常）的设计图，但是从实现角度来看，按照传统方式，我们至少得新建8个drawable.xml资源文件（没想到吧）：</p>
-<ol>
-<li>整体背景的渐变色；</li>
-<li>输入框的普通状态背景和选中状态背景；</li>
-<li>登录按钮的背景；</li>
-<li>“第三方登录”左右两边的“尾翼”资源，各一个（没办法，即使小，还是得做啊）；</li>
-<li>微信和QQ的按钮各一个（不同的按压效果）；</li>
-</ol>
-<p>可以看出来，仅一张设计图就新建了8个文件，那项目中的其它页面呢？即使按照规范将文件名起得整整齐齐的，保不齐下一次圆角大小变了、同样的圆角单背景色变了…枯燥无味吧。</p>
-<p>现在我们直接用<code>NoDrawable</code>来试试到底能不能达到一个drawable文件都不用创建的效果。</p>
+        <p>我们知道，flutter提供了一套功能粒度划分非常细的基本组件，并推荐利用组合的方式来构建布局，这确实很便捷、高效，但是也导致了Widget层次结构嵌套非常深，即使是一个很简单的页面。而不论什么页面，控件之间往往存在某些状态依赖关系，假使让一个结构形如“A-&gt;B-&gt;C-&gt;…-&gt;Z”中的A传递数据给Z，如果利用构造函数来一层层传递，效率可想而知。好在官方提供了 <code>InheritedWidget</code> 。</p>
+<p>InheritedWidget的好处不言而喻，从起官方文档的定义即可知：</p>
 <blockquote>
-<p>为节约篇幅，以下演示片段均展示与drawable相关的属性，其余省略</p>
+<p>Base class for widgets that efficiently propagate information down the tree.</p>
+<p>To obtain <strong>the nearest</strong> instance of a particular type of inherited widget from a build context, use BuildContext.inheritFromWidgetOfExactType.</p>
+<p>Inherited widgets, when referenced <strong>in this way</strong>, will cause the consumer to rebuild when the inherited widget itself changes state.</p>
 </blockquote>
-<h3 id="1-整体背景的渐变色"><a href="#1-整体背景的渐变色" class="headerlink" title="1. 整体背景的渐变色"></a>1. 整体背景的渐变色</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;android.support.constraint.ConstraintLayout </span><br><span class="line">    drawable_endColor=&quot;@&#123;0xff3e91ee&#125;&quot;</span><br><span class="line">    drawable_orientation=&quot;@&#123;@integer/orientation_bottom_top&#125;&quot;</span><br><span class="line">    drawable_startColor=&quot;@&#123;0xff02144e&#125;&quot;</span><br><span class="line">    ...</span><br><span class="line">    &gt;</span><br></pre></td></tr></table></figure>
-<h3 id="2-输入框状态"><a href="#2-输入框状态" class="headerlink" title="2. 输入框状态"></a>2. 输入框状态</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;EditText</span><br><span class="line">    drawable_focused_strokeColor=&quot;@&#123;@color/color_green&#125;&quot;</span><br><span class="line">    drawable_focused_strokeDash=&quot;@&#123;4&#125;&quot;</span><br><span class="line">    drawable_focused_strokeDashGap=&quot;@&#123;4&#125;&quot;</span><br><span class="line">    drawable_focused_strokeWidth=&quot;@&#123;2&#125;&quot;</span><br><span class="line">    drawable_focused_marginLeft=&quot;@&#123;-3&#125;&quot;</span><br><span class="line">    drawable_focused_marginTop=&quot;@&#123;-3&#125;&quot;</span><br><span class="line">    drawable_focused_marginRight=&quot;@&#123;-3&#125;&quot;</span><br><span class="line">    drawable_radius=&quot;@&#123;21&#125;&quot;</span><br><span class="line">    drawable_solidColor=&quot;@&#123;0x7fffffff&#125;&quot;</span><br><span class="line">    ...</span><br><span class="line">    /&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="3-登录按钮的背景"><a href="#3-登录按钮的背景" class="headerlink" title="3. 登录按钮的背景"></a>3. 登录按钮的背景</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;Button</span><br><span class="line">    drawable_radius=&quot;@&#123;21&#125;&quot;</span><br><span class="line">    drawable_solidColor=&quot;@&#123;0xff818385&#125;&quot;</span><br><span class="line">    drawable_enabled_radius=&quot;@&#123;21&#125;&quot;</span><br><span class="line">    drawable_enabled_solidColor=&quot;@&#123;0xff59c8d8&#125;&quot;</span><br><span class="line">    ...</span><br><span class="line">    /&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="4-“第三方登录”左右两边的“尾翼”"><a href="#4-“第三方登录”左右两边的“尾翼”" class="headerlink" title="4. “第三方登录”左右两边的“尾翼”"></a>4. “第三方登录”左右两边的“尾翼”</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;View</span><br><span class="line">    drawable_endColor=&quot;@&#123;0x00000000&#125;&quot;</span><br><span class="line">    drawable_orientation=&quot;@&#123;@integer/orientation_right_left&#125;&quot;</span><br><span class="line">    drawable_startColor=&quot;@&#123;0xffffffff&#125;&quot;</span><br><span class="line">    ...</span><br><span class="line">    /&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="5-微信按钮按压效果"><a href="#5-微信按钮按压效果" class="headerlink" title="5. 微信按钮按压效果"></a>5. 微信按钮按压效果</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;ImageView</span><br><span class="line">    drawable_pressed_shapeMode=&quot;@&#123;@integer/shapeMode_oval&#125;&quot;</span><br><span class="line">    drawable_pressed_solidColor=&quot;@&#123;0xff54B536&#125;&quot;</span><br><span class="line">    drawable_shapeMode=&quot;@&#123;1&#125;&quot;</span><br><span class="line">    drawable_solidColor=&quot;@&#123;0xffDCDFE8&#125;&quot;</span><br><span class="line">    ...</span><br><span class="line">    /&gt;</span><br></pre></td></tr></table></figure>
-<p>结合 <a href="https://github.com/whataa/noDrawable" target="_blank" rel="noopener">NoDrawable</a> 的属性文档，不知大家是否可以理解到位。根据上述代码片段，我们可以总结到该方案的两大特性：</p>
+<p>通过直译（加揣度），大意就是包含以下两个特性：</p>
 <ol>
-<li>高可读性</li>
+<li>InheritedWidget是一个可以在树中高效地向下传递数据的组件：我们可以在以 <code>InheritedWidget</code> 为节点的树下任一Widget中调用 <code>BuildContext.inheritFromWidgetOfExactType</code> 来获取离其最近的 <code>InheritedWidget</code> 实例。</li>
+<li>当以上面这种方式（调用<code>inheritFromWidgetOfExactType</code>方法时）被引用后，每当InheritedWidget自身的状态改变时，会导致 “consumer”（调用<code>inheritFromWidgetOfExactType</code>方法的这个Child） 重新 <code>build</code> 。</li>
 </ol>
-<p>直接在布局中的View标签声明drawable属性，对View最终效果一目了然；</p>
-<ol>
-<li>适配任意View</li>
-</ol>
-<p>像使用View自身的属性一样，作用于任何View；</p>
-<p>效果图就不贴了，和设计图一模一样。大家如果有具体需求，可直接到<code>NoDrawable</code>仓库地址查看，其demo包含本文完整的代码及效果预览，最后，感谢阅读。</p>
+<p>SDK提供的Theme就是基于该特性，实现了配置的传递和配置的动态改变。</p>
+<h3 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h3><p>目前网上也有很多使用教程，核心大致实现<a href="https://gist.github.com/whataa/f197d3136ac800ccbb254fa4974a732a" target="_blank" rel="noopener">inherited_widget_test.dart</a>，其结构图如下所示：</p>
+<html><br><p><br><img src="https://note.youdao.com/yws/api/personal/file/WEB0c9cefa2cc7a5b1908c47cab494588a5?method=download&shareKey=3d07341e3daa253f8569b7fafd833f3e" width="40%"><br></p><br></html>
+
+
+<p>我们先简单描述下代码逻辑：</p>
+<ul>
+<li><code>WidgetA</code> 调用了<code>inheritFromWidgetOfExactType</code>方法，获得了存放在 <code>MyInherited</code> 对象里的 <code>data</code> 数据并显示在 <code>WidgetA</code> 内容上，同时使得 <code>WidgetA</code> 和 <code>MyInherited</code> 产生关联；</li>
+<li>当点击 <code>FlatButton</code> 触发 <code>MyWidget</code> 状态更新时， <code>MyState</code> 的 <code>build</code> 方法回调，重新构建 <code>MyInherited</code> 对象传入新值，由于<code>data</code>发生变化， <code>MyInherited</code> 的方法 <code>updateShouldNotify</code> 中返回了true，最终使得与<code>MyInherited</code> 关联的 <code>WidgetA</code> 触发reBuild。</li>
+</ul>
+<p>当我们运行并点击<code>FlatButton</code>后，页面表现得确实如上述所示，<code>WidgetA</code>的内容由 <code>WidgetA data = 0</code> 变为了 <code>WidgetA data = 1</code>，似乎 <code>InheritedWidget</code> 正确的使用方式正是如此，但是log里输出的却是如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">I/flutter: onPressed</span><br><span class="line">I/flutter: MyWidget build</span><br><span class="line">I/flutter: MyInherited construct</span><br><span class="line">I/flutter: MyInherited updateShouldNotify result = true</span><br><span class="line">I/flutter: WidgetA build</span><br><span class="line">I/flutter: WidgetB build</span><br></pre></td></tr></table></figure>
+<p>可以看到，结合前面的代码逻辑分析，理论上只有 <code>WidgetA</code> 才会reBuild，而现在却产生了 <code>I/flutter: WidgetB build</code> 这条记录。这是为什么呢？</p>
+<h3 id="原因分析"><a href="#原因分析" class="headerlink" title="原因分析"></a>原因分析</h3><p>其实可以从前面提到的特性2找到答案。其中说到：<strong><em>InheriteWidget 状态发生变化时会rebuild相关的child。</em></strong> 我们知道，flutter中Widget被标识为了<code>@immutable</code>，即是不可变的，那么所谓的状态发生变化就意味着InheriteWidget重新构建，由于前面代码中在InheriteWidget构造时同时也构造的其child对象，因此当InheriteWidget重新构建时也会导致child跟着重新构建，这样也就失去了 “rebuild相关的child” 的意义，</p>
+<p><strong><em>也就是说，要想特性2生效，需要保证InheriteWidget节点下的树不会被重新构建。</em></strong> </p>
+<h3 id="推荐做法"><a href="#推荐做法" class="headerlink" title="推荐做法"></a>推荐做法</h3><h4 id="1-使用const-Widget"><a href="#1-使用const-Widget" class="headerlink" title="1. 使用const Widget"></a>1. 使用const Widget</h4><p>将<code>InheriteWidget</code> 的child转化为const，这样即使在重建 <code>InheriteWidget</code> 时，由于其child得到的是同一个对象，也就不会导致这个子树重建，选择性reBuild也就得到了保证。但是由于const特性，相关的参数也必须是常量，因此需要重写或修改的代码量相对较多，因此更推荐下面的做法。</p>
+<h4 id="2-上移Child对象到InheriteWidget的Parent-Widget"><a href="#2-上移Child对象到InheriteWidget的Parent-Widget" class="headerlink" title="2. 上移Child对象到InheriteWidget的Parent Widget"></a>2. 上移Child对象到InheriteWidget的Parent Widget</h4><p>我们可以参考Theme的实现方式，Theme是一个普通的Widget，其build方法如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">/// Theme.class</span><br><span class="line">@override</span><br><span class="line">Widget build(BuildContext context) &#123;</span><br><span class="line">    return _InheritedTheme(</span><br><span class="line">      theme: this,</span><br><span class="line">      child: IconTheme(</span><br><span class="line">        data: data.iconTheme,</span><br><span class="line">        child: child,</span><br><span class="line">      ),</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中，<code>_InheritedTheme</code> 就是InheritedWidget，其child参数所指向的child对象是在Theme的构造函数中传入：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">const Theme(&#123;</span><br><span class="line">    Key key,</span><br><span class="line">    @required this.data,</span><br><span class="line">    this.isMaterialAppTheme = false,</span><br><span class="line">    @required this.child,</span><br><span class="line">  &#125;)</span><br></pre></td></tr></table></figure></p>
+<p>这样就避免了当触发Theme的build方法进而导致<code>_InheritedTheme</code>重建时，child也被重新实例化的情况。</p>
+<p>对于StatefulWidget来说，InheritedWidget是在State对象的build方法中实例化的，setState触发的是State的build，而StatefulWidget本身是没有重新实例化的，也就保证了child没有被重新实例化。</p>
+<p>现在我们在保证层级结构不变的前提下，重新对上述式例进行优化，修改后的代码位于<a href="https://gist.github.com/whataa/bef37322816ba8e91b8368a1f716b3ca" target="_blank" rel="noopener">inherited_widget_test_2.dart</a>，其中 <code>WidgetA和WidgetB</code> 对象已经提前于InheritedWidget在 <code>MyWidget</code> 构建期间实例化，当<code>MyWidget</code>执行 <code>build</code> 方法时触发InheritedWidget构建时再作为参数传入。这样只要 <code>MyWidget</code> 不重新构建，child也就不会构建，每次触发 <code>MyWidget</code> 的 <code>State</code> 变化时，只有InheritedWidget才会重新构建。</p>
+<p>当我们再次点击FlatButton时，日志将如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">I/flutter: onPressed</span><br><span class="line">I/flutter: MyWidget build</span><br><span class="line">I/flutter: MyInherited construct</span><br><span class="line">I/flutter: MyInherited updateShouldNotify result = true</span><br><span class="line">I/flutter: WidgetA build</span><br></pre></td></tr></table></figure></p>
+<h3 id="结束"><a href="#结束" class="headerlink" title="结束"></a>结束</h3><p>InheritedWidget 是学习flutter不得不掌握的一个特殊组件，具备向下传值和选择性reBuild子树节点的特性，许多SDK组件包括第三方库包都是基于其特性实现，本文结合官方文档发现并解决了一个使用InheritedWidget时容易被忽略的问题，并给出推荐方案。</p>
+<p>感谢阅读。</p>
 
       
     </div>
@@ -375,7 +377,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/开源项目/" rel="tag">#开源项目</a>
+            <a href="/tags/Flutter/" rel="tag">#Flutter</a>
+          
+            <a href="/tags/Widget/" rel="tag">#Widget</a>
           
         </div>
       
@@ -384,17 +388,13 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/09/08/一种巧妙的drawable.xml替代方案/" rel="next" title="一种巧妙的drawable.xml替代方案">
-                <i class="fa fa-chevron-left"></i> 一种巧妙的drawable.xml替代方案
+              <a href="/2018/09/08/一种巧妙的drawable.xml替代方案-效果篇/" rel="next" title="一种巧妙的drawable.xml替代方案-效果篇">
+                <i class="fa fa-chevron-left"></i> 一种巧妙的drawable.xml替代方案-效果篇
               </a>
             
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/02/25/flutter_inherited_note/" rel="prev" title="使用InheritedWidget被忽略的要点">
-                使用InheritedWidget被忽略的要点 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -535,7 +535,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-整体背景的渐变色"><span class="nav-number">1.</span> <span class="nav-text">1. 整体背景的渐变色</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-输入框状态"><span class="nav-number">2.</span> <span class="nav-text">2. 输入框状态</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-登录按钮的背景"><span class="nav-number">3.</span> <span class="nav-text">3. 登录按钮的背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-“第三方登录”左右两边的“尾翼”"><span class="nav-number">4.</span> <span class="nav-text">4. “第三方登录”左右两边的“尾翼”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-微信按钮按压效果"><span class="nav-number">5.</span> <span class="nav-text">5. 微信按钮按压效果</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#案例"><span class="nav-number">1.</span> <span class="nav-text">案例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#原因分析"><span class="nav-number">2.</span> <span class="nav-text">原因分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#推荐做法"><span class="nav-number">3.</span> <span class="nav-text">推荐做法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-使用const-Widget"><span class="nav-number">3.1.</span> <span class="nav-text">1. 使用const Widget</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-上移Child对象到InheriteWidget的Parent-Widget"><span class="nav-number">3.2.</span> <span class="nav-text">2. 上移Child对象到InheriteWidget的Parent Widget</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结束"><span class="nav-number">4.</span> <span class="nav-text">结束</span></a></li></ol></div>
             
           </div>
         </section>
@@ -659,9 +659,9 @@
 
     <script type="text/javascript">
       var disqus_shortname = 'http-linjiang-tech';
-      var disqus_identifier = '2018/09/08/一种巧妙的drawable.xml替代方案-效果篇/';
-      var disqus_title = "一种巧妙的drawable.xml替代方案-效果篇";
-      var disqus_url = 'http://yoursite.com/2018/09/08/一种巧妙的drawable.xml替代方案-效果篇/';
+      var disqus_identifier = '2019/02/25/flutter_inherited_note/';
+      var disqus_title = "使用InheritedWidget被忽略的要点";
+      var disqus_url = 'http://yoursite.com/2019/02/25/flutter_inherited_note/';
 
       function run_disqus_script(disqus_script){
         var dsq = document.createElement('script');
