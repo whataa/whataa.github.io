@@ -1,0 +1,932 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Dart,Flutter," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="Dart语言博众家之长，本篇以Java语言角度记录一些学习Dart的笔记，期望包含其中的主要差异和特性。">
+<meta name="keywords" content="Dart,Flutter">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Dart的学习笔记（持续更新）">
+<meta property="og:url" content="http://yoursite.com/2019/03/21/dart/index.html">
+<meta property="og:site_name" content="林江的笔记">
+<meta property="og:description" content="Dart语言博众家之长，本篇以Java语言角度记录一些学习Dart的笔记，期望包含其中的主要差异和特性。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-03-21T06:55:29.731Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Dart的学习笔记（持续更新）">
+<meta name="twitter:description" content="Dart语言博众家之长，本篇以Java语言角度记录一些学习Dart的笔记，期望包含其中的主要差异和特性。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"hide"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/03/21/dart/"/>
+
+
+  <title> Dart的学习笔记（持续更新） | 林江的笔记 </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">林江的笔记</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Dart的学习笔记（持续更新）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2019-03-21T10:00:00+08:00" content="2019-03-21">
+              2019-03-21
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Dart/" itemprop="url" rel="index">
+                    <span itemprop="name">Dart</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2019/03/21/dart/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/03/21/dart/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2019/03/21/dart/" class="leancloud_visitors" data-flag-title="Dart的学习笔记（持续更新）">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在Dart中一切都是对象，一个.dart文件可以声明任何对象，包括类、函数、变量；</p>
+<h2 id="var"><a href="#var" class="headerlink" title="var"></a>var</h2><p>除了局部变量建议用var之外，其余地方建议用具体类型声明；</p>
+<h2 id="const"><a href="#const" class="headerlink" title="const"></a>const</h2><p>const 修饰一个编译时常量。  </p>
+<ul>
+<li>当修饰构造函数时，则该类的所有fields必须是final修饰；</li>
+<li>当const修饰的是类的field，则必须同时修饰static；</li>
+<li>被final或者const修饰的变量，变量类型可以省略；</li>
+</ul>
+<h2 id="final"><a href="#final" class="headerlink" title="final"></a>final</h2><p>类的fields被final修饰，可以不初始化（只是会警告），但是若要初始化，则必须通过构造函数来初始化，不能通过其它函数初始化。</p>
+<ul>
+<li>声明对象时可以省略对象类型；</li>
+</ul>
+<h2 id="covariant"><a href="#covariant" class="headerlink" title="covariant"></a><a href="https://www.dartlang.org/guides/language/sound-dart#use-sound-parameter-types-when-overriding-methods" target="_blank" rel="noopener">covariant</a></h2><p>因为Dart是类型安全的，所以Override方法时，方法的参数类型不能“收缩(tight)”。但是某些时候需要这种情况时，可以用该关键字注解用来抑制「静态检测错误」（即使知道是无效的），以 <strong>通过编译</strong>。但是运行时仍会执行无效参数检查。</p>
+<h1 id="Class"><a href="#Class" class="headerlink" title="Class"></a>Class</h1><h2 id="dart文件"><a href="#dart文件" class="headerlink" title="dart文件"></a>dart文件</h2><ul>
+<li>主方法是 <code>main()</code>, 如果需要接收输入的参数则定义为 <code>main(List&lt;String&gt; args)</code> ；</li>
+<li>可以定义任何代码，包括多个类、变量、函数等，无需限定在 <code>class</code> 内部；</li>
+<li><p>没有 <code>public、protected、private</code> 关键字，默认所有的定义都是「public」的，如果需要转化为「private」，直接在对应的命名前增加下划线 <code>_</code>；</p>
+</li>
+<li><p><code>abstract</code> 定义抽象类，使用 <code>extends</code> 则表示继承；</p>
+</li>
+<li><p>没有 <code>interface</code> 关键字，默认所以的 <code>class</code> 都是隐式的接口。使用 <code>implements</code> 实现接口:</p>
+<ul>
+<li>若在同一个文件，则必须实现接口定义的所有变量和函数；</li>
+<li>若不在同一个文件，则只需实现「public」类型的变量和函数；</li>
+</ul>
+</li>
+</ul>
+<h2 id="构造函数"><a href="#构造函数" class="headerlink" title="构造函数"></a>构造函数</h2><ul>
+<li><p>提供两种定义方式：</p>
+<ol>
+<li><p>与类名 <code>(ClassName)</code> 相同，可以理解为 <code>NoNamed constructors</code>；</p>
+<blockquote>
+<p>有且只能存在一个</p>
+</blockquote>
+</li>
+<li><p>以<code>ClassName.identifier</code>的形式，称作 <code>Named constructors</code>；</p>
+<blockquote>
+<p>可用以提供更具场景化的构造名称，和Java的利用静态方法构造对象的方案类似，因此这种构造方式也就无法被子类继承;</p>
+</blockquote>
+</li>
+</ol>
+</li>
+<li><p>在没有显式提供任何构造函数时，默认包含一个 <strong>无参无名</strong> 构造函数；不管是哪种方式，一旦显式定义了，默认的无参构造函数就被取代；</p>
+</li>
+<li><p>可以没有方法体；</p>
+</li>
+</ul>
+<ul>
+<li><p>构造函数参数区后可继续接 <code>:</code> + 表达式，称为初始化表达式<code>Initializer expressions</code> ：</p>
+<ol>
+<li>调用父类构造函数，例如：<code>Point.circle(int x) : super.any(x);</code></li>
+<li>实例化成员变量，例如：<code>Point(int y) : x = 1 + y;</code></li>
+<li>开发阶段的断言，例如：<code>Point(int y) : assert(y &gt; 0);</code></li>
+<li><p>重定向到其它构造函数，例如：<code>Point.circle(int x) : this(x);</code></p>
+<blockquote>
+<p>重定向无法和上述前三种共用、没有body、不能快速参数指定</p>
+<p>1, 2, 3可以组合，但是1必须位于整个表达式的最后。</p>
+</blockquote>
+</li>
+</ol>
+</li>
+<li><p><code>factory</code> 关键字定义一个工厂函数（是构造函数，相当于从语言层支持了工厂方法），例如抽象类不能被实例化，可以利用该方式返回子类对象；</p>
+</li>
+<li><p>如果类实例化的对象不可变（不可修改该对象、且不可修改该对象的变量），可以通过在构造函数前面声明 <code>const</code>、对所有变量声明 <code>final</code> 来将对象转化为编译时常量。</p>
+<p>该形式的构造函数有以下特性：</p>
+<ol>
+<li>没有有body；</li>
+<li>由于所有的变量必须final，对于私有变量，可以通过 初始化表达式 来实例化；</li>
+<li>初始化表达式 涉及的只能是常量；</li>
+<li>任何地方通过该构造函数实例化的 <strong><em>constant对象</em></strong> (例如<code>const Point(1)</code>这种)，如果参数完全一致，那么这些对象是同一个对象；</li>
+</ol>
+</li>
+</ul>
+<h3 id="1-参数"><a href="#1-参数" class="headerlink" title="1. 参数"></a>1. 参数</h3><ul>
+<li><p>可直接在参数区使用 <code>this.</code>+ 实例变量名 快速为实例变量赋值，例如：</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Bicycle(this.cadence, this.speed, this.gear);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>命名可选参数：将构造函数的部分参数包裹在 <code>{}</code> 中，同时可以为可选参数提供默认值，若参数是一个对象，则默认值需要声明为 <code>const</code> 以表示是一个编译时常量；</p>
+</li>
+<li><p>位置可选参数：将构造函数的部分参数包裹在 <code>[]</code> 中，传入的参数位置和函数声明的参数位置一一对应。</p>
+</li>
+</ul>
+<h3 id="2-继承"><a href="#2-继承" class="headerlink" title="2. 继承"></a>2. 继承</h3><ul>
+<li>子类的构造函数必须调用父类的构造函数，默认隐式调用父类的无参无名构造函数（注意：<code>Named constructors</code> 的无参构造函数不算）；若父类没有，则需要通过 <code>: super</code> 的形式手动调用，例如：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Point.circle(int x) : super(x);</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h2><ul>
+<li>定义对象时可以使用 <code>var</code> 关键字，同时也支持 <code>final</code>（如果该对象不会发生变化）；</li>
+<li>实例化对象时可以省略 <code>new</code> 关键字；</li>
+</ul>
+<h2 id="变量"><a href="#变量" class="headerlink" title="变量"></a>变量</h2><ul>
+<li><p>由于完全面向对象，所以任何类型的变量默认值都为null，即使是num；</p>
+</li>
+<li><p>默认情况每个「public」实例变量都隐式地实现了 <code>getter/setter</code> （无需也禁止再手动实现），如果该实例变量被声明为了「private」，则可以使用关键字 <code>get</code> 定义方法以提供对外(内)访问，<code>set</code> 定义方法提供对外(内)修改；</p>
+</li>
+</ul>
+<h2 id="泛型"><a href="#泛型" class="headerlink" title="泛型"></a>泛型</h2><ul>
+<li>与Java的泛型在运行时被擦除不一样的是，Dart的泛型指定后在运行时始终存在：  <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var names = List&lt;String&gt;();</span><br><span class="line">names.addAll([&apos;Seth&apos;, &apos;Kathy&apos;, &apos;Lars&apos;]);</span><br><span class="line">print(names is List&lt;String&gt;); // true</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="Mixin"><a href="#Mixin" class="headerlink" title="Mixin"></a><a href="https://my.oschina.net/zzxzzg/blog/2962518" target="_blank" rel="noopener">Mixin</a></h2><ul>
+<li>可以理解为「组合」，形如Java接口但更强大；</li>
+<li>使用方式是通过 <code>class A with B, C, ...</code>，使A得到B、C的方法、字段；</li>
+<li><p>除了普通类，可使用关键字 <code>mixin</code> 定义一种特殊的类，专门表示用来mixin(<code>with</code>)的；  </p>
+<ol>
+<li>mixin类不能继承或被继承，但是可以（或被）<code>implements</code>；</li>
+<li>mixin类可以后接 <code>on</code>，例如 <code>mixin A on B</code> ，用以限定 A 只能被 B 及其子类所<code>with</code>；</li>
+<li>mixin on 所指定的限定类必须包含一个无参无名构造函数；</li>
+</ol>
+</li>
+</ul>
+<h2 id="异常"><a href="#异常" class="headerlink" title="异常"></a>异常</h2><ul>
+<li><code>try-catch-finally</code> 捕获异常；</li>
+<li><p>可以在try模块后接 <code>on + Ex</code> 模块来捕获具体类型的异常，区别于 <code>catch</code> 捕获的是具体异常对象； </p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">try &#123;</span><br><span class="line">  breedMoreLlamas();</span><br><span class="line">&#125; on OutOfLlamasException &#123;</span><br><span class="line">  // A specific exception</span><br><span class="line">  buyMoreLlamas();</span><br><span class="line">&#125; on Exception catch (e) &#123;</span><br><span class="line">  // Anything else that is an exception</span><br><span class="line">  print(&apos;Unknown exception: $e&apos;);</span><br><span class="line">&#125; catch (e) &#123;</span><br><span class="line">  // No specified type, handles all</span><br><span class="line">  print(&apos;Something really unknown: $e&apos;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用 <code>throw</code> + 字符串 快速抛出异常，也可以继承 <code>Exception</code> 类实现自定义的异常； </p>
+</li>
+<li>使用 <code>reThrow</code> 快速在catch块中再次抛出；</li>
+</ul>
+<h2 id="函数式编程"><a href="#函数式编程" class="headerlink" title="函数式编程"></a>函数式编程</h2><ul>
+<li>支持函数作为参数；</li>
+<li>支持将函数赋值给变量；</li>
+<li><p>由于函数也是对象，所以关键字 <code>Function</code> 如同 <code>num、bool</code> 一样，代表函数的类型，因此，对象可声明的地方，函数也如此，例如：</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">void main() &#123;</span><br><span class="line">    Function test() &#123;</span><br><span class="line">        return int abc() =&gt; 0;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>所有的函数都有返回值，如果没有显式指定return，默认返回null；</p>
+</li>
+<li>函数可以省略声明返回类型，这样就是默认的dynamic类型；</li>
+<li><code>=&gt; expr</code> 是对 <code>{ return expr; }</code> 的一种简写手法，注意：expr指<strong>表达式</strong>；</li>
+</ul>
+<h3 id="typedef"><a href="#typedef" class="headerlink" title="typedef"></a>typedef</h3><ul>
+<li>也是一种类型；</li>
+</ul>
+<p>typedef 用于定义Function类型，具体指参数类型、个数、返回值，而Function的名字只是一个别名，包括以下两种定定义方式：</p>
+<ol>
+<li><code>typedef XXX = void Function(int/String/... x);</code></li>
+<li><code>typedef void XXX(int/String/... x);</code></li>
+</ol>
+<blockquote>
+<p>注意：若省略参数名，则参数类型失效，变为了dynamic</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">typedef int Test(Object a, Object);</span><br><span class="line">typedef int ABC(Object a, Object b);</span><br><span class="line">typedef ABC2 = int Function(Object a, Object b);</span><br><span class="line">int sort(Object a, Object b) =&gt; 0;</span><br><span class="line">main() &#123;</span><br><span class="line">  print(Test); // (Object, dynamic) =&gt; int</span><br><span class="line">  print(ABC);  // (Object, Object) =&gt; int</span><br><span class="line">  </span><br><span class="line">  print(&quot;sort is ABC: $&#123;sort is ABC&#125;&quot;); // true</span><br><span class="line">  print(&quot;sort is ABC2: $&#123;sort is ABC2&#125;&quot;); // true</span><br><span class="line">  </span><br><span class="line">  print(&quot;ABC is ABC2: $&#123;ABC is ABC2&#125;&quot;); // false</span><br><span class="line">  print(&quot;ABC == ABC2: $&#123;ABC == ABC2&#125;&quot;); // true</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="条件"><a href="#条件" class="headerlink" title="条件"></a>条件</h2><ul>
+<li><p><code>switch case</code> 支持省略 <code>break</code> 以继续下一个 <code>case</code> ，但是前提是这个 <code>case</code> 不包含代码，否则异常；如果确要如此，可以使用 <code>continue + label:</code> 的形式：</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">switch (command) &#123;</span><br><span class="line">  case &apos;CLOSED&apos;:</span><br><span class="line">    executeClosed();</span><br><span class="line">    continue nowClosed;</span><br><span class="line">  // Continues executing at the nowClosed label.</span><br><span class="line"></span><br><span class="line">  nowClosed:</span><br><span class="line">  case &apos;NOW_CLOSED&apos;:</span><br><span class="line">    // Runs for both CLOSED and NOW_CLOSED.</span><br><span class="line">    executeNowClosed();</span><br><span class="line">    break;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="external"><a href="#external" class="headerlink" title="external"></a><a href="https://stackoverflow.com/a/24929907" target="_blank" rel="noopener">external</a></h2><p>大意是用于修饰函数，表示该函数的具体实现和它定义的地方是分开的。据目前所知，这种形式常用来针对不同平台作不同的具体实现，例如浏览器端和服务端VM的差异实现。</p>
+<h2 id="async-await"><a href="#async-await" class="headerlink" title="async / await"></a>async / await</h2><p><a href="https://segmentfault.com/a/1190000007535316" target="_blank" rel="noopener">https://segmentfault.com/a/1190000007535316</a></p>
+<h2 id="sync-async-yield-yield"><a href="#sync-async-yield-yield" class="headerlink" title="sync/async/yield/yield*"></a>sync<em>/async</em>/yield/yield*</h2><p>一种（序列）生成器的概念。<a href="https://www.dartlang.org/articles/language/beyond-async" target="_blank" rel="noopener">https://www.dartlang.org/articles/language/beyond-async</a></p>
+<ul>
+<li><p>类似Async-await概念。用Sync<em>/Async</em>修饰函数，函数被调用时，不同于前者立即返回Future，后者是返回Iterable（同步）/Stream（异步）。</p>
+</li>
+<li><p>函数内通过yield发射值到迭代器/流，同步的情况是需要外部pull（惰性）；异步的情况是stream被订阅后主动push；</p>
+</li>
+<li>Sync、ASync是同步和异步的区别，同步情况下，每次yield后会“暂停”，直到下次被pull；异步情况则不会。</li>
+<li>yield后接一个表达式，yield* 则是后接一个子序列（符合同步异步情况的前提下），并将这个子序列转入当前函数的序列中。</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Dart/" rel="tag">#Dart</a>
+          
+            <a href="/tags/Flutter/" rel="tag">#Flutter</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/02/25/flutter_inherited_note/" rel="next" title="使用InheritedWidget被忽略的要点">
+                <i class="fa fa-chevron-left"></i> 使用InheritedWidget被忽略的要点
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/my_avatar.jpg"
+               alt="林江" />
+          <p class="site-author-name" itemprop="name">林江</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">15</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/whataa" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://sighttp.qq.com/msgrd?v=3&uin=837979117&site=&menu=yes" target="_blank" title="QQ">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  QQ
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#var"><span class="nav-number">1.</span> <span class="nav-text">var</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#const"><span class="nav-number">2.</span> <span class="nav-text">const</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#final"><span class="nav-number">3.</span> <span class="nav-text">final</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#covariant"><span class="nav-number">4.</span> <span class="nav-text">covariant</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Class"><span class="nav-number"></span> <span class="nav-text">Class</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#dart文件"><span class="nav-number">1.</span> <span class="nav-text">dart文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#构造函数"><span class="nav-number">2.</span> <span class="nav-text">构造函数</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-参数"><span class="nav-number">2.1.</span> <span class="nav-text">1. 参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-继承"><span class="nav-number">2.2.</span> <span class="nav-text">2. 继承</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实例"><span class="nav-number">3.</span> <span class="nav-text">实例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#变量"><span class="nav-number">4.</span> <span class="nav-text">变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#泛型"><span class="nav-number">5.</span> <span class="nav-text">泛型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Mixin"><span class="nav-number">6.</span> <span class="nav-text">Mixin</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#异常"><span class="nav-number">7.</span> <span class="nav-text">异常</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#函数式编程"><span class="nav-number">8.</span> <span class="nav-text">函数式编程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#typedef"><span class="nav-number">8.1.</span> <span class="nav-text">typedef</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#条件"><span class="nav-number">9.</span> <span class="nav-text">条件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#external"><span class="nav-number">10.</span> <span class="nav-text">external</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#async-await"><span class="nav-number">11.</span> <span class="nav-text">async / await</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sync-async-yield-yield"><span class="nav-number">12.</span> <span class="nav-text">sync/async/yield/yield*</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">林江</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<span id="busuanzi_container_site_pv">
+    &nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;总访问: <span id="busuanzi_value_site_pv"></span>次
+</span>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'http-linjiang-tech';
+      var disqus_identifier = '2019/03/21/dart/';
+      var disqus_title = "Dart的学习笔记（持续更新）";
+      var disqus_url = 'http://yoursite.com/2019/03/21/dart/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("lTrcHfqk0M08SqMAmNgd7tOc-gzGzoHsz", "yazrWiRSI4OOHXlGROJalqBk");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+          for(var i = 0; i < entries.length; i++) {
+            var url = entries[i];
+            var element = document.getElementById(url);
+            var countSpan = $(element).find(COUNT_CONTAINER_REF);
+            if( countSpan.text() == '') {
+              countSpan.text(0);
+            }
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+
+  
+
+
+</body>
+</html>
