@@ -92,7 +92,7 @@
 <meta property="og:site_name" content="林江的笔记">
 <meta property="og:description" content="本文是一篇纯技巧型的文章，非常方便没有VPN / 公司采用沙盒机制无法连接网络等场景下的使用。Patch的方式使得我们不用面对在每次IDE更新后就重新下载动辄上G的全量安装文件、或者由于配置的麻烦不想去更新而无法体验到最新的特性这些问题。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-01-28T08:57:59.055Z">
+<meta property="og:updated_time" content="2019-09-19T07:25:08.124Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="以Patch的形式更新Android Studio">
 <meta name="twitter:description" content="本文是一篇纯技巧型的文章，非常方便没有VPN / 公司采用沙盒机制无法连接网络等场景下的使用。Patch的方式使得我们不用面对在每次IDE更新后就重新下载动辄上G的全量安装文件、或者由于配置的麻烦不想去更新而无法体验到最新的特性这些问题。">
@@ -317,28 +317,35 @@
       
 
       
-        <ul>
+        <p>2019/09/19 更新：兼容最新的方式，添加Mac平台相关描述</p>
+<h3 id="Steps"><a href="#Steps" class="headerlink" title="Steps"></a>Steps</h3><ol>
 <li><p>通过如下方式得到最新渠道(<code>Canary, Dev, Beta, Stable</code>)版本号；</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">1. https://dl.google.com/android/studio/patches/updates.xml</span><br><span class="line">or</span><br><span class="line">2. http://tools.android.com/download/studio</span><br></pre></td></tr></table></figure>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">1. https://dl.google.com/android/studio/patches/updates.xml</span><br><span class="line">or</span><br><span class="line">2. http://tools.android.com/download/studio</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>查看本地Studio的版本号，位于<code>\Android Studio\build.txt</code>；</p>
+<li><p>查看本地Studio的版本号，</p>
+<p> 例如：Build #AI-191.8026.42.35.5791312, built on August 9, 2019</p>
 </li>
-<li><p>拼接Studio Patch的地址并下载，从当前版本<code>${from-version}</code>到最新版本<code>${to-version}</code> ：</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 无需代理</span><br><span class="line">https://dl.google.com/android/studio/patches/AI-$&#123;from-version&#125;-$&#123;to-version&#125;-patch-win.jar</span><br></pre></td></tr></table></figure>
+<li><p>拼接Studio Patch的地址并下载</p>
+<ul>
+<li><code>${platform}</code> ：windows平台为win，Mac平台为mac</li>
+<li><code>${from-version}</code>：当前版本</li>
+<li><p><code>${to-version}</code> ：最新版本</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 无需代理</span><br><span class="line">https://dl.google.com/android/studio/patches/AI-$&#123;from-version&#125;-$&#123;to-version&#125;-patch-$&#123;platform&#125;.jar</span><br></pre></td></tr></table></figure>
 </li>
 </ul>
-<ul>
+</li>
 <li><p>得到Patch文件后，粘贴至Android Studio根目录下的上层文件夹（建议）。</p>
 <blockquote>
-<p>若直接存放在根目录下，执行命令时会出现冲突。</p>
+<p>Windows：若直接存放在根目录下，执行命令时会出现冲突。<br>Mac：粘贴至 /Applications/Android\ Studio.app/ ，即于Contents目录同级。</p>
 </blockquote>
 </li>
-<li><p>打开cmd转到Android Studio的根目录下，执行如下命令：</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">0. 注意如果目录是在系统盘(C:)，一定要使用带 管理员权限 的命令提示符；</span><br><span class="line">1. 注意$&#123;PATCH-PATH&#125;为可执行的Patch的路径及文件全名（可使用相对路径）；</span><br><span class="line">2. 注意命令最后有一个“.”</span><br><span class="line">Java -classpath $&#123;PATCH-PATH&#125; com.intellij.updater.Runner install .</span><br></pre></td></tr></table></figure>
+<li><p>打开终端cd到上述对应路径，执行如下命令：</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">0. 注意如果目录是在系统盘(C:)，一定要使用带 管理员权限 的命令提示符；</span><br><span class="line">1. 注意$&#123;PATCH-PATH&#125;为可执行的Patch的路径及文件全名（可使用相对路径）；</span><br><span class="line">2. 注意命令最后有一个“.”</span><br><span class="line">Java -classpath $&#123;PATCH-PATH&#125; com.intellij.updater.Runner install .</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>最新方式中将最后的 <code>.</code> 替换为 <code>Contents</code> </p>
+</blockquote>
 </li>
-<li><p>查看<code>build.txt</code>中版本号是否改变确保成功。</p>
-</li>
-</ul>
+</ol>
 <h3 id="Demo"><a href="#Demo" class="headerlink" title="Demo"></a>Demo</h3><ol>
 <li><p>本地version为：<code>145.3360264</code><br>最新version为：<code>145.3537739</code></p>
 </li>
@@ -346,10 +353,10 @@
 </li>
 <li><p>粘贴至<code>E:\Android Studio Wrapper\AI-145.3360264-145.3537739-patch-win.jar</code></p>
 </li>
-<li><p>cmd cd 至 <code>E:\Android Studio Wrapper\Android Studio&gt;:</code>   </p>
+<li><p>终端 cd 至 <code>E:\Android Studio Wrapper\Android Studio&gt;:</code>   </p>
 </li>
-<li><p>执行命令：<br><code>Java -classpath ..\AI-145.3360264-145.3
-537739-patch-win.jar com.intellij.updater.Runner install .</code></p>
+<li><p>执行命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// window</span><br><span class="line">Java -classpath ..\AI-145.3360264-145.3537739-patch-win.jar com.intellij.updater.Runner install .</span><br><span class="line">// mac</span><br><span class="line">java -classpath ./AI-145.3360264-145.3537739-patch--mac.jar com.intellij.updater.Runner install Contents</span><br></pre></td></tr></table></figure>
 </li>
 </ol>
 <h3 id="Notice"><a href="#Notice" class="headerlink" title="Notice"></a>Notice</h3><ul>
@@ -542,7 +549,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Demo"><span class="nav-number">1.</span> <span class="nav-text">Demo</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Notice"><span class="nav-number">2.</span> <span class="nav-text">Notice</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Steps"><span class="nav-number">1.</span> <span class="nav-text">Steps</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Demo"><span class="nav-number">2.</span> <span class="nav-text">Demo</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Notice"><span class="nav-number">3.</span> <span class="nav-text">Notice</span></a></li></ol></div>
             
           </div>
         </section>
