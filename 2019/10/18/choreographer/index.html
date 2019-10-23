@@ -84,18 +84,18 @@
 
 
 
-<meta name="description" content="Choreographer是用于协调动画、输入以及绘制三种事件的触发时间，属于Android渲染机制的一部分。本文主要概述Choreographer的实现以及如何衔接系统和应用的关系，并额外介绍了一种统计帧绘制的事件的方案。">
+<meta name="description" content="Choreographer是用于协调动画、输入以及绘制三种事件的触发时间，属于Android渲染机制的一部分。本文主要概述Choreographer的实现以及如何衔接系统和应用的关系，并探讨了一种统计帧绘制的事件的方案。">
 <meta name="keywords" content="View">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Choreographer机制概述">
 <meta property="og:url" content="http://yoursite.com/2019/10/18/choreographer/index.html">
 <meta property="og:site_name" content="林江的笔记">
-<meta property="og:description" content="Choreographer是用于协调动画、输入以及绘制三种事件的触发时间，属于Android渲染机制的一部分。本文主要概述Choreographer的实现以及如何衔接系统和应用的关系，并额外介绍了一种统计帧绘制的事件的方案。">
+<meta property="og:description" content="Choreographer是用于协调动画、输入以及绘制三种事件的触发时间，属于Android渲染机制的一部分。本文主要概述Choreographer的实现以及如何衔接系统和应用的关系，并探讨了一种统计帧绘制的事件的方案。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-10-18T10:23:30.384Z">
+<meta property="og:updated_time" content="2019-10-23T07:49:02.408Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Choreographer机制概述">
-<meta name="twitter:description" content="Choreographer是用于协调动画、输入以及绘制三种事件的触发时间，属于Android渲染机制的一部分。本文主要概述Choreographer的实现以及如何衔接系统和应用的关系，并额外介绍了一种统计帧绘制的事件的方案。">
+<meta name="twitter:description" content="Choreographer是用于协调动画、输入以及绘制三种事件的触发时间，属于Android渲染机制的一部分。本文主要概述Choreographer的实现以及如何衔接系统和应用的关系，并探讨了一种统计帧绘制的事件的方案。">
 
 
 
@@ -319,9 +319,9 @@
       
         <p>Choreographer是用于协调动画(animation)、输入(input)以及绘制(drawing)三种事件的触发时间。<br>具体来说就是作为系统”垂直同步脉冲“VSYNC和应用端的协调者，通过稳定的周期性回调来统一上述与UI相关的事件的执行，以期达到稳定流畅的显示效果。</p>
 <p>Choreographer在内部为这些事件各自维护了一个按发生时间从近及远的队列，用于存储向其请求执行的任务，每当同步信号到来时，就从相应的队列中取出符合的任务并按照INPUT、ANIMATION、TRAVERSAL的顺序回调，最终触发触摸事件分发、动画执行和绘制流程相关逻辑的执行。</p>
-<p>所谓VSYNC，是Android4.1开始引入的一种提升页面流畅性的新机制，不详述。需要注意的是，系统在运行期间以60帧的帧率即16.67ms的间隔持续发出脉冲信号，但并不意味着应用内部不论何种情况都会不断地收到该信号，仅当应用主动向系统请求时，最近的VSYNC才会传递给Choreographer并安排相应的任务；其中”应用主动请求“包括input事件的唤起、动画的执行以及视图层级的刷新。</p>
+<p>所谓VSYNC，是Android4.1开始引入的一种提升页面流畅性的新机制，以固定周期集中处理UI绘制相关操作以提供更稳定的FPS；在此之前每一帧的UI绘制相关操作都是无间隔地以message形式抛给Handler处理的，那么FPS直接取决于message的执行时间，导致忽高忽低。需要注意的是，系统在运行期间以60帧的帧率即16.67ms的间隔（对于最近火热的90帧的手机，其系统的VSYNC则是90帧即11.1ms的间隔）持续发出脉冲信号，但并不意味着应用内部不论何种情况都会不断地收到该信号，仅当应用主动向系统请求时，最近的VSYNC才会传递给Choreographer并安排相应的任务；其中”应用主动请求“包括input事件的唤起、动画的执行以及视图层级的刷新。</p>
 <p><a name="O91kg"></a></p>
-<h2 id="TRAVERSAL流程"><a href="#TRAVERSAL流程" class="headerlink" title="TRAVERSAL流程"></a>TRAVERSAL流程</h2><p>这里我们以View的绘制执行为例来梳理应用与Choreographer之间的关系。<br>当视图需要重绘时，我们会调用invalidate或requestLayout方法，该方法将事件通过视图层级层层向上传递到了ViewRootImpl的requestLayout方法中，并最终调用scheduleTraversals方法：</p>
+<h2 id="TRAVERSAL流程"><a href="#TRAVERSAL流程" class="headerlink" title="TRAVERSAL流程"></a>TRAVERSAL流程</h2><p>这里我们以View的绘制执行为例来梳理应用与Choreographer之间的关系。<br>当视图需要重绘时，我们会调用requestLayout方法，该方法将事件通过视图层级层层向上传递到了ViewRootImpl的requestLayout方法中，并最终调用scheduleTraversals方法：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">scheduleTraversals</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!mTraversalScheduled) &#123;</span><br><span class="line">        ...</span><br><span class="line">        mChoreographer.postCallback(</span><br><span class="line">                Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, <span class="keyword">null</span>);</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>显而易见，该方法直接向Choreographer通过postCallback插入了一个TRAVERSAL事件，我们前面说到，当同步信号到来时就会取出Choreographer里面的队列事件并执行，这里的事件指的其实就是 mTraversalRunnable ，其内部调用正是Android绘制的真正执行方法：doTraversal()，整个流程也就不言而喻了。<br>postCallback内部并不复杂，主要做了以下两件事：</p>
 <ol>
@@ -339,9 +339,15 @@
 <blockquote>
 <p>Skipped xx frames!  The application may be doing too much work on its main thread.</p>
 </blockquote>
-<p>就是在该方法中输出的，刚刚我们说到onVsync方法会把通知事件抛给Handler，如果在此期间存在非常耗时的message，那么等到doFrame这个消息执行时可能已经过了好几个VSYNC周期即掉帧了，在doFrame中就是通过对比 当前时间 和触发该message的 onVsync的发生时间 来判断出大致掉了多少帧，所以在主线程中不管是input、animation以及UI绘制三者自身耗时还是其它message的执行耗时，都会导致掉帧。</p>
+<p>就是在该方法中输出的，刚刚我们说到onVsync方法会把通知事件抛给Handler，如果在此期间存在非常耗时的message，那么等到doFrame这个消息执行时可能已经过了好几个VSYNC周期，在doFrame中就是通过对比 当前时间 和触发该message的 onVsync的发生时间 来判断出大致掉了多少帧，所以在主线程中不管是input、animation以及UI绘制三者自身耗时还是其它message的执行耗时，都会导致掉帧。</p>
+<blockquote>
+<p>注：onVsync的发生时间并非指onVsync开始执行时的时间，而是传给onVsync的参数时间，这个时间是VSYNC信号到来的时间。</p>
+</blockquote>
 <p><a name="g1k0I"></a></p>
-<h2 id="题外话：流畅度"><a href="#题外话：流畅度" class="headerlink" title="题外话：流畅度"></a>题外话：流畅度</h2><p>既然已经大致了解了Android的UI绘制与Choreographer的关系，那么可以以什么方式或从什么地方来检测每一帧的耗时情况呢？<br>由前面的分析可知，所谓每一帧其实指的就是input、animation、traversal三种事件对应的三个doCallback方法的执行结果，那么帧耗时就可以用这三个方法的执行总时间来表示。<br>统计一个方法的耗时最直接的方案就是向方法内部第一行和最后一行插桩得到执行时间差，此处依然行之有效，当然并不是编译期插入，毕竟是系统方法，而是向input、animation、traversal三个事件队列的头部插入一个我们自己包装的事件，从input队列第一个事件开始执行到animation队列的第一个事件开始执行刚好就是此次所有input事件的执行时间，以此类推即可计算出三种事件的耗时，由此可见，根据该方案我们不仅可以得到每一帧的耗时，还能更进一步得到每一帧内input、animation、traversal三种事件的耗时情况。<br>至于为什么只插入到队列头部，是进入doCallback的事件是从相应队列中取出的符合执行时间的集合，这里的问题就是符合时间的事件是取决于doFrame开始执行的时间戳，没法提前知道，即无法成对地向队列尾部插入事件。<br>另外还有一个小细节，traversal的doCallback之后就结束了，一帧的耗时统计没法闭合，所以我们可以增加一个标识符，在下一个message事件开始时根据标识符来结束对TRAVERSAL的耗时统计。</p>
+<h2 id="题外话：流畅度"><a href="#题外话：流畅度" class="headerlink" title="题外话：流畅度"></a>题外话：流畅度</h2><p>既然已经大致了解了Android的UI绘制与Choreographer的关系，那么可以以什么方式或从什么地方来检测每一帧的耗时情况呢？</p>
+<p>由前面的分析可知，所谓每一帧其实指的就是input、animation、traversal三种事件对应的三个doCallback方法的执行结果，那么帧耗时就可以用这三个方法的执行总时间来表示。</p>
+<p>统计一个方法的耗时最直接的方案就是向方法内部第一行和最后一行插桩得到执行时间差，此处依然行之有效，当然并不是编译期插入，毕竟是系统方法，而是向input、animation、traversal三个事件队列的头部插入一个我们自己包装的事件，从input队列第一个事件开始执行到animation队列的第一个事件开始执行刚好就是此次所有input事件的执行时间，以此类推即可计算出三种事件的耗时，由此可见，根据该方案我们不仅可以得到每一帧的耗时，还能更进一步得到每一帧内input、animation、traversal三种事件的耗时情况。</p>
+<p>至于为什么只插入到队列头部，是进入doCallback的事件是从相应队列中取出的符合执行时间的集合，这里的问题就是符合时间的事件是取决于doFrame开始执行的时间戳，没法提前知道，即无法成对地向队列尾部插入事件。<br>另外还有一个小细节，traversal的doCallback之后就结束了，一帧的耗时统计没法闭合，所以我们可以增加一个标识符，在下一个message事件开始时根据标识符来结束对TRAVERSAL的耗时统计。</p>
 <p>其实该方案正是取自微信开源的Matrix项目，具体代码逻辑位于 UIThreadMonitor 类，关于在什么时机并如何向Choreographer内部的队列插入自定义事件可自行参考。</p>
 <p><a name="rsOQV"></a></p>
 <h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
