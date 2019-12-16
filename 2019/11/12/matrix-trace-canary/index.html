@@ -92,7 +92,7 @@
 <meta property="og:site_name" content="linjiang&#39;s blog">
 <meta property="og:description" content="matrix是微信开源的APM方案，其中TraceCannery是一套用于监控应用卡顿和帧率并提供精确化的日志捕捉和分析能力的模块。本文以手册形式对其设计方案的选择和功能背后的原理进行分析说明，以期对Android端性能检测和优化有更加透彻的理解。">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-11-12T10:11:14.985Z">
+<meta property="og:updated_time" content="2019-12-16T08:36:37.835Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Matrix-TraceCanary的设计和原理分析手册">
 <meta name="twitter:description" content="matrix是微信开源的APM方案，其中TraceCannery是一套用于监控应用卡顿和帧率并提供精确化的日志捕捉和分析能力的模块。本文以手册形式对其设计方案的选择和功能背后的原理进行分析说明，以期对Android端性能检测和优化有更加透彻的理解。">
@@ -316,9 +316,11 @@
 <p><a name="klufX"></a></p>
 <h3 id="UIThreadMonitor"><a href="#UIThreadMonitor" class="headerlink" title="UIThreadMonitor"></a>UIThreadMonitor</h3><p>TracePlugin模块的核心实现。通过LooperMonitor和Choreographer实现对线程所有UI操作的监控，为具体Tracer提供相应事件的回调和统计。</p>
 <ol>
-<li><p>如何实现对UI操作 <strong>帧级别</strong> 的耗时统计？<br>通过LooperMonitor观察主线程Handler的每条message的回调事件，并在每次事件结束时向 <code>Choreographer</code> 分别插入INPUT、ANIMATION、TRAVERSAL三个事件到对应的队列头部（实际是先插入INPUT，当INPUT执行时再插入ANIMATION和TRAVERSAL），当下次VSYNC到来时触发执行相应回调，以达到对该三个事件执行时间的精确统计。<br>注意：这里的帧定义为系统处理输入、动画以及绘制的总操作，注意和Handler其余message的区别。由于每一帧执行也是通过Handler触发，所以不管是帧的执行还是其余message，只要出现了耗时，都会导致帧未及时执行或执行过长从而引起卡顿。</p>
+<li><p>如何实现对UI操作 <strong>帧级别</strong> 的耗时统计？</p>
+<p> 通过LooperMonitor观察主线程Handler的每条message的回调事件，并在每次事件结束时向 <code>Choreographer</code> 分别插入INPUT、ANIMATION、TRAVERSAL三个事件到对应的队列头部（实际是先插入INPUT，当INPUT执行时再插入ANIMATION和TRAVERSAL），当下次VSYNC到来时触发执行相应回调，以达到对该三个事件执行时间的精确统计。<br>注意：这里的帧定义为系统处理输入、动画以及绘制的总操作，注意和Handler其余message的区别。由于每一帧执行也是通过Handler触发，所以不管是帧的执行还是其余message，只要出现了耗时，都会导致帧未及时执行或执行过长从而引起卡顿。</p>
 </li>
-<li><p>为什么插入到队列头部？<br>VSYNC事件触发UI相关的操作实际也是通过主线程Handler来完成的，最终执行点是doFrame方法，该方法里是按照INPUT、ANIMATION、TRAVERSAL三种事件依次回调的，从每个事件的队列中取出符合执行时间的集合并执行；这里的问题就是符合时间的事件是取决于doFrame开始执行的时间戳，没法提前知道，即无法成对地向队列尾部插入事件。<br>因此考虑另一种方案：从INPUT队列第一个事件开始执行到ANIMATION队列的第一个事件开始执行刚好就是此次所有INPUT事件的执行时间，以此类推即可计算出三种事件的耗时；但是TRAVERSAL之后就结束了，TRAVERSAL的耗时没法在此次doFrame事件的回调中完成统计，所以我们增加一个标识符，在下一个message事件开始时根据标识符来结束对TRAVERSAL的耗时统计。</p>
+<li><p>为什么插入到队列头部？</p>
+<p> VSYNC事件触发UI相关的操作实际也是通过主线程Handler来完成的，最终执行点是doFrame方法，该方法里是按照INPUT、ANIMATION、TRAVERSAL三种事件依次回调的，从每个事件的队列中取出符合执行时间的集合并执行；这里的问题就是符合时间的事件是取决于doFrame开始执行的时间戳，没法提前知道，即无法成对地向队列尾部插入事件。<br>因此考虑另一种方案：从INPUT队列第一个事件开始执行到ANIMATION队列的第一个事件开始执行刚好就是此次所有INPUT事件的执行时间，以此类推即可计算出三种事件的耗时；但是TRAVERSAL之后就结束了，TRAVERSAL的耗时没法在此次doFrame事件的回调中完成统计，所以我们增加一个标识符，在下一个message事件开始时根据标识符来结束对TRAVERSAL的耗时统计。</p>
 </li>
 </ol>
 <p>关于Choreographer的运行机制参考：<a href="http://linjiang.tech/2019/10/18/choreographer/" target="_blank" rel="noopener">http://linjiang.tech/2019/10/18/choreographer/</a></p>
@@ -403,7 +405,7 @@
 <p>ANR监控是针对“帧”而言，这里的帧在老版本使用Choreographer分发每帧的回调，而新版本使用主线程的Handler-dispatchMessage机制，其中一个主要原因是因为Choreographer的doFrame也是以Message形式抛给Looper处理的，而主线程除了doFrame，本身就可能还存在其它Message需要处理，在两个脉冲之间如果存在耗时message就会导致doFrame不能及时处理，这里就引出了两个问题，一是我们的ANR监控可能误报，因为老方案检测的是两个doFrame之间的总时间超过阈值，但这之间可能是多个message，平摊下来的耗时可能并不会触发真正的ANR；二是监控到ANR时取得的函数栈执行耗时切片相对过大，不太便于分析，总而言之就是无法更精确的统计帧率和卡顿，而新机制可以将上述监控精准到message级别，优势不言而喻。<br>而利用Handler机制的缺点就是方案所依赖的的回调是判断Looper中组装的log字符串，由于回调很频繁因此系统产生大量的字符串严重时会使得内存紧张触发频繁的GC从而导致app性能下降；</p>
 <p><a name="2wPRD"></a></p>
 <h3 id="StartupTracer"><a href="#StartupTracer" class="headerlink" title="StartupTracer"></a>StartupTracer</h3><p>用于监控冷/热启动场景下的性能问题，提供的分析快照包含冷热启动的总耗时、application耗时、启动页耗时、以及相应期间的函数调用栈及其耗时。</p>
-<p>其中函数调用栈的快照来自前述的AppMethodBeat的切片，其它相关的耗时统计则依赖对ActivityThread的hook，切入的时机并未要求手动在application中实现，而是选自函数插桩后的运行时的第一次调用，由于默认是全局插桩，那么不管application实现的onCreate方法还是attchBaseContext，只要被调用就会触发hook。Hook其实只做了一件事：就是替换掌管分发应用内四大组件生命周期消息的Handler对象 <code>mH</code> ，这样便可获取到启动页的launch时机，从而间接计算出application的总耗时（启动页启动时的时间点 - hook切入时的时间点）和启动页的启动耗时（Activity#onWindowFocusChanged - 启动页启动时的时间点）。</p>
+<p>其中函数调用栈的快照来自前述的AppMethodBeat的切片，其它相关的耗时统计则依赖对ActivityThread的hook，切入的时机并未要求手动在application中实现，而是选自函数插桩后的运行时的第一次调用，由于默认是全局插桩，那么不管application实现的onCreate方法还是attchBaseContext，只要被调用就会触发hook。Hook其实只做了一件事：就是反射替换掌管分发应用内四大组件生命周期消息的Handler对象 <code>mH</code> 的 <code>mCallback</code> ，这样便可获取到启动页的launch时机，从而间接计算出application的总耗时（启动页启动时的时间点 - hook切入时的时间点）和启动页的启动耗时（Activity#onWindowFocusChanged - 启动页启动时的时间点）。</p>
 <p>onWindowFocusChanged和onResume一个很重要的区别就是onResume回调时只是表示进入了可见状态，Activity的layout仍未绘制，理论上Activity的启动统计除了位于生命周期回调函数中的逻辑耗时，还应包括布局的onMeasure、onLayout、onDraw流程的时间，而onWindowFocusChanged的首次回调表示Activity真正可见，是一个<strong>相对更完美</strong>的统计截止点；之所以不是最完美是因为onDraw是在onWindowFocusChanged之后回调的，即 <code>onResume -&gt; onMeasure -&gt; onLayout -&gt; onWindowFocusChanged -&gt; onDraw</code> ，因此上面的“真正可见”的时机实际上还是一团黑/白，没有任何内容。</p>
 <p>补充说明：</p>
 <ul>
