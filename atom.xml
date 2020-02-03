@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>linjiang&#39;s blog</title>
+  
+  
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="http://yoursite.com/"/>
+  <updated>2020-01-20T06:24:29.370Z</updated>
+  <id>http://yoursite.com/</id>
+  
+  <author>
+    <name>linjiang</name>
+    
+  </author>
+  
+  <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>从R文件索引看资源优化</title>
+    <link href="http://yoursite.com/2020/01/20/r-resources-arsc/"/>
+    <id>http://yoursite.com/2020/01/20/r-resources-arsc/</id>
+    <published>2020-01-20T02:00:00.000Z</published>
+    <updated>2020-01-20T06:24:29.370Z</updated>
+    
+    <summary type="html">
+    
+      包体积的优化是一个老生常谈的话题，除了官方文档的最佳实践，社区也探索出了一系列优化方案，例如效果显著的微信AndResGuard，对资源索引表和资源路径进行了缩减，可让原本已经优化过的apk再立减好几M；又例如针对特定场景优化的booster，其中对R文件的处理可以进一步减少class文件冗余。不管哪种，都建立在R字段对资源的索引基础之上，本文就来简单阐述其具体过程和优化方案。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="资源优化" scheme="http://yoursite.com/tags/%E8%B5%84%E6%BA%90%E4%BC%98%E5%8C%96/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>LeakCanary2.0解析</title>
+    <link href="http://yoursite.com/2019/12/25/leakcanary/"/>
+    <id>http://yoursite.com/2019/12/25/leakcanary/</id>
+    <published>2019-12-25T02:00:00.000Z</published>
+    <updated>2019-12-25T00:59:19.690Z</updated>
+    
+    <summary type="html">
+    
+      LeakCanary是square公司开源的内存泄漏检测工具，近期发布了2.0正式版，并带来了全新的内存分析工具shark，本文旨在梳理其整个工作流程。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="performance" scheme="http://yoursite.com/tags/performance/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Matrix-TraceCanary的设计和原理分析手册</title>
+    <link href="http://yoursite.com/2019/11/12/matrix-trace-canary/"/>
+    <id>http://yoursite.com/2019/11/12/matrix-trace-canary/</id>
+    <published>2019-11-12T02:00:00.000Z</published>
+    <updated>2019-12-16T08:36:37.835Z</updated>
+    
+    <summary type="html">
+    
+      matrix是微信开源的APM方案，其中TraceCannery是一套用于监控应用卡顿和帧率并提供精确化的日志捕捉和分析能力的模块。本文以手册形式对其设计方案的选择和功能背后的原理进行分析说明，以期对Android端性能检测和优化有更加透彻的理解。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="matrix" scheme="http://yoursite.com/tags/matrix/"/>
+    
+      <category term="performance" scheme="http://yoursite.com/tags/performance/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Choreographer机制概述</title>
+    <link href="http://yoursite.com/2019/10/18/choreographer/"/>
+    <id>http://yoursite.com/2019/10/18/choreographer/</id>
+    <published>2019-10-18T02:00:00.000Z</published>
+    <updated>2019-10-23T07:49:02.408Z</updated>
+    
+    <summary type="html">
+    
+      Choreographer是用于协调动画、输入以及绘制三种事件的触发时间，属于Android渲染机制的一部分。本文主要概述Choreographer的实现以及如何衔接系统和应用的关系，并探讨了一种统计帧绘制的事件的方案。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="View" scheme="http://yoursite.com/tags/View/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Dart的学习笔记</title>
+    <link href="http://yoursite.com/2019/03/21/dart/"/>
+    <id>http://yoursite.com/2019/03/21/dart/</id>
+    <published>2019-03-21T02:00:00.000Z</published>
+    <updated>2019-09-19T07:26:01.297Z</updated>
+    
+    <summary type="html">
+    
+      Dart语言博众家之长，本篇以Java语言角度记录一些学习Dart的笔记，期望包含其中的主要差异和特性。
+    
+    </summary>
+    
+    
+      <category term="Dart" scheme="http://yoursite.com/categories/Dart/"/>
+    
+    
+      <category term="Flutter" scheme="http://yoursite.com/tags/Flutter/"/>
+    
+      <category term="Dart" scheme="http://yoursite.com/tags/Dart/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>使用InheritedWidget被忽略的要点</title>
+    <link href="http://yoursite.com/2019/02/25/flutter_inherited_note/"/>
+    <id>http://yoursite.com/2019/02/25/flutter_inherited_note/</id>
+    <published>2019-02-25T02:00:00.000Z</published>
+    <updated>2019-02-25T06:08:53.792Z</updated>
+    
+    <summary type="html">
+    
+      InheritedWidget是学习flutter不得不掌握的一个特殊组件，具备向下传值和选择性reBuild子树节点的特性，许多SDK组件包括第三方库包都是基于其特性实现，本文结合官方文档发现并解决了一个使用InheritedWidget时容易被忽略的问题，并给出推荐方案。
+    
+    </summary>
+    
+    
+      <category term="Flutter" scheme="http://yoursite.com/categories/Flutter/"/>
+    
+    
+      <category term="Flutter" scheme="http://yoursite.com/tags/Flutter/"/>
+    
+      <category term="Widget" scheme="http://yoursite.com/tags/Widget/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>一种巧妙的drawable.xml替代方案-效果篇</title>
+    <link href="http://yoursite.com/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88-%E6%95%88%E6%9E%9C%E7%AF%87/"/>
+    <id>http://yoursite.com/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88-%E6%95%88%E6%9E%9C%E7%AF%87/</id>
+    <published>2018-09-08T15:52:00.000Z</published>
+    <updated>2018-09-08T15:55:37.195Z</updated>
+    
+    <summary type="html">
+    
+      本篇接上一篇，以演示代码和效果呈现。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="开源项目" scheme="http://yoursite.com/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>一种巧妙的drawable.xml替代方案</title>
+    <link href="http://yoursite.com/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88/"/>
+    <id>http://yoursite.com/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88/</id>
+    <published>2018-09-08T15:40:00.000Z</published>
+    <updated>2018-09-08T15:42:32.630Z</updated>
+    
+    <summary type="html">
+    
+      如何维护（替换）drawable xml是android开发中一个老生常谈的话题。按照标准的Android布局开发模式，我们不得不为各种UI效果新建不同的xml文件进行描述，哪怕是简单的一个圆角。随着项目迭代，成百上千的xml连同那模棱两可的文件名，不仅让开发者复用或清理的成本难以估计，还使得项目体积急剧增大。因此，下面我们探索一种原理巧妙、适配全面的drawable替代方案。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="开源项目" scheme="http://yoursite.com/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Large Database Queries on Android[译]</title>
+    <link href="http://yoursite.com/2018/03/10/[%E8%AF%91]Large%20Database%20Queries%20on%20Android/"/>
+    <id>http://yoursite.com/2018/03/10/[%E8%AF%91]Large%20Database%20Queries%20on%20Android/</id>
+    <published>2018-03-10T02:00:00.000Z</published>
+    <updated>2018-03-10T03:34:20.930Z</updated>
+    
+    <summary type="html">
+    
+      Paging Library的背景知识：Android中的分页加载SQLiteCursor存在的问题和限制。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/tags/Android/"/>
+    
+      <category term="译文" scheme="http://yoursite.com/tags/%E8%AF%91%E6%96%87/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>使用sublime提升mars-xlog日志文件分析效率</title>
+    <link href="http://yoursite.com/2017/08/06/Use%20sublime%20to%20enhance%20the%20efficiency%20of%20analyzing%20mars-xlog%20log%20files/"/>
+    <id>http://yoursite.com/2017/08/06/Use%20sublime%20to%20enhance%20the%20efficiency%20of%20analyzing%20mars-xlog%20log%20files/</id>
+    <published>2017-08-06T15:50:00.000Z</published>
+    <updated>2018-01-28T08:57:59.058Z</updated>
+    
+    <summary type="html">
+    
+      最近由于个人所负责的模块的不确定性，需要预埋大量的日志以便更精准地分析和定位问题、同时升级项目中原有的日志系统的需求又刚好提上了日程，于是通过和同事的几天调研，最终将公司App的日志系统替换为了微信开源的Mars-xlog组件，关于xlog的优势和使用方式可直接参见其[官方Github](https://github.com/Tencent/mars/tree/master/mars/log)，这里仅记录拿到收集的日志文件后，如何提升对日志的分析的效率的小技巧。
+    
+    </summary>
+    
+    
+      <category term="工具插件" scheme="http://yoursite.com/categories/%E5%B7%A5%E5%85%B7%E6%8F%92%E4%BB%B6/"/>
+    
+    
+      <category term="log" scheme="http://yoursite.com/tags/log/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Touch事件概述及自定义事件处理的被忽视的重要细节</title>
+    <link href="http://yoursite.com/2017/03/27/Touch%20summary%20and%20critical%20details%20of%20custom-event/"/>
+    <id>http://yoursite.com/2017/03/27/Touch%20summary%20and%20critical%20details%20of%20custom-event/</id>
+    <published>2017-03-27T02:00:00.000Z</published>
+    <updated>2018-01-28T08:57:59.057Z</updated>
+    
+    <summary type="html">
+    
+      文章如同标题所述主要分为两部分，前半部分主要是一个流程和Touch相关知识点的概述，期间罗列了一些常见例子帮助分析，差不多都是点到为止，后半部分则是在实际开发中，对手势处理的一些很容易被忽视的细节点，当然并不是说不了解这些细节点就无法进行自定义处理逻辑，但是掌握有助于理清处理手势的一些步骤，因此从整体而言，本篇也算是一篇不错的初学者入门篇。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="View" scheme="http://yoursite.com/tags/View/"/>
+    
+      <category term="手势事件" scheme="http://yoursite.com/tags/%E6%89%8B%E5%8A%BF%E4%BA%8B%E4%BB%B6/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>【Fragment】对Fragment、FragmentManager和BackStackRecord的字段全解析</title>
+    <link href="http://yoursite.com/2017/02/18/Fragment-Study%20and%20Analysis%20of%20Fragment%20fields/"/>
+    <id>http://yoursite.com/2017/02/18/Fragment-Study%20and%20Analysis%20of%20Fragment%20fields/</id>
+    <published>2017-02-18T02:00:00.000Z</published>
+    <updated>2018-01-28T08:57:59.057Z</updated>
+    
+    <summary type="html">
+    
+      Fragment、FragmentManager以及BackStackRecord是Fragment组件包中最主要的三个类，几乎包含了Fragment体系中所有的功能和知识点。从主流使用流程出发的源码分析对解决问题快速有效，但是一段时间后其中细节点可能就会慢慢的遗忘，只剩下一个感性的认知。本篇从字段入手，对这三个类的所有字段从含义、作用、使用方式以及所涉及的额外知识点几个方面的进行了详细的分析记录，有利于对源码分析和回顾，甚至完全可以当作一本字段参考字典。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="Fragment" scheme="http://yoursite.com/tags/Fragment/"/>
+    
+      <category term="字段解析" scheme="http://yoursite.com/tags/%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>【Fragment】对Fragment的BackStackRecord事务的分析</title>
+    <link href="http://yoursite.com/2017/01/21/Fragment-BackStackRecord/"/>
+    <id>http://yoursite.com/2017/01/21/Fragment-BackStackRecord/</id>
+    <published>2017-01-21T02:00:00.000Z</published>
+    <updated>2018-01-28T08:57:59.056Z</updated>
+    
+    <summary type="html">
+    
+      使用Fragment最重要的技能之一就是事务。本文拟解决以下常见问题：为什么要有事务，事务包含的所有特性，事务的具体执行过程以及使用事务的注意事项等。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="Fragment" scheme="http://yoursite.com/tags/Fragment/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>【Fragment】对Fragment的状态保存恢复机制原理的分析</title>
+    <link href="http://yoursite.com/2017/01/04/Fragment-Save%20and%20Restroe%20State/"/>
+    <id>http://yoursite.com/2017/01/04/Fragment-Save%20and%20Restroe%20State/</id>
+    <published>2017-01-04T02:00:00.000Z</published>
+    <updated>2018-01-28T08:57:59.056Z</updated>
+    
+    <summary type="html">
+    
+      如同Activity、View等，状态的保存与恢复的重要性不言而喻，对于Fragment，在哪setRetainInstance，在什么时机save/restore State我们也早已熟练于心，但是为什么要这样、或者还有没有更多的skill却是稍显不足，也许探究一下整个机制的过程说不定就会恍然大悟。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="Fragment" scheme="http://yoursite.com/tags/Fragment/"/>
+    
+      <category term="状态保存" scheme="http://yoursite.com/tags/%E7%8A%B6%E6%80%81%E4%BF%9D%E5%AD%98/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>以Patch的形式更新Android Studio</title>
+    <link href="http://yoursite.com/2016/12/30/Android%20Studio%20Patches%20Update/"/>
+    <id>http://yoursite.com/2016/12/30/Android%20Studio%20Patches%20Update/</id>
+    <published>2016-12-30T02:00:00.000Z</published>
+    <updated>2019-09-19T07:25:08.124Z</updated>
+    
+    <summary type="html">
+    
+      本文是一篇纯技巧型的文章，非常方便没有VPN / 公司采用沙盒机制无法连接网络等场景下的使用。Patch的方式使得我们不用面对在每次IDE更新后就重新下载动辄上G的全量安装文件、或者由于配置的麻烦不想去更新而无法体验到最新的特性这些问题。
+    
+    </summary>
+    
+    
+      <category term="工具插件" scheme="http://yoursite.com/categories/%E5%B7%A5%E5%85%B7%E6%8F%92%E4%BB%B6/"/>
+    
+    
+      <category term="Android-Studio" scheme="http://yoursite.com/tags/Android-Studio/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>App&#39;s ClassLoader的来源</title>
+    <link href="http://yoursite.com/2016/10/31/App&#39;s%20ClassLoader%E7%9A%84%E6%9D%A5%E6%BA%90/"/>
+    <id>http://yoursite.com/2016/10/31/App&#39;s%20ClassLoader%E7%9A%84%E6%9D%A5%E6%BA%90/</id>
+    <published>2016-10-31T02:00:00.000Z</published>
+    <updated>2018-01-28T08:57:59.055Z</updated>
+    
+    <summary type="html">
+    
+      Java中每一个类都是通过ClassLoader来加载的。对于基于Java的Android应用，这些ClassLoader是从哪来的呢。研究过Android插件化机制的都知道Android中有PathClassLoader和DexClassLoader这两个类，它们的概念和区别也许我们已经很熟悉了，但是对为什么应用的类加载器是PathClassLoader，它是如何产生的这些问题却是不甚了解。本文就从应用的启动流程出发，来揭开ClassLoader的秘密。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="ClassLoader" scheme="http://yoursite.com/tags/ClassLoader/"/>
+    
+      <category term="Hotfix&amp;Plugin" scheme="http://yoursite.com/tags/Hotfix-Plugin/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>多手指Touch变化处理原则基础</title>
+    <link href="http://yoursite.com/2016/09/26/%E5%A4%9A%E6%89%8B%E6%8C%87Touch%E5%8F%98%E5%8C%96%E5%A4%84%E7%90%86%E5%8E%9F%E5%88%99%E5%9F%BA%E7%A1%80/"/>
+    <id>http://yoursite.com/2016/09/26/%E5%A4%9A%E6%89%8B%E6%8C%87Touch%E5%8F%98%E5%8C%96%E5%A4%84%E7%90%86%E5%8E%9F%E5%88%99%E5%9F%BA%E7%A1%80/</id>
+    <published>2016-09-26T02:00:00.000Z</published>
+    <updated>2018-01-28T08:57:59.058Z</updated>
+    
+    <summary type="html">
+    
+      手势事件的产生、传递及处理也许我们并不陌生，特别是在自定义一些可交互性的`View`时，处理手势是不可避免的。而日常中我们接触得最多的是单指产生的手势事件，在多手指的情况下，是否存在一些我们常常忽略的问题？
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="View" scheme="http://yoursite.com/tags/View/"/>
+    
+      <category term="手势事件" scheme="http://yoursite.com/tags/%E6%89%8B%E5%8A%BF%E4%BA%8B%E4%BB%B6/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Coloring Buttons with ThemeOverlays and Background Tints[译]</title>
+    <link href="http://yoursite.com/2016/08/13/[%E8%AF%91]Coloring%20Buttons%20with%20ThemeOverlays%20&amp;%20Background%20Tints/"/>
+    <id>http://yoursite.com/2016/08/13/[%E8%AF%91]Coloring%20Buttons%20with%20ThemeOverlays%20&amp;%20Background%20Tints/</id>
+    <published>2016-08-13T02:00:00.000Z</published>
+    <updated>2018-01-28T08:57:59.058Z</updated>
+    
+    <summary type="html">
+    
+      如果我们想改变Button的背景色，一般如何实现？本文将介绍两种实现方式。第一种是使用AppCompat的Widget.AppCompat.Button.Colored样式并自定义ThemeOverlay来直接修改Button的背景色，而第二种方式则是使用AppCompat的built-in background tinting support来实现同样的效果。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+    
+    
+      <category term="Android" scheme="http://yoursite.com/tags/Android/"/>
+    
+      <category term="译文" scheme="http://yoursite.com/tags/%E8%AF%91%E6%96%87/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Hello Hexo</title>
+    <link href="http://yoursite.com/2015/06/30/hello-world/"/>
+    <id>http://yoursite.com/2015/06/30/hello-world/</id>
+    <published>2015-06-30T11:07:43.000Z</published>
+    <updated>2018-09-26T03:23:54.457Z</updated>
+    
+    <summary type="html">
+    
+      &lt;!----&gt;
+    
+    </summary>
+    
+    
+    
+  </entry>
+  
+</feed>
