@@ -90,7 +90,7 @@
 <meta name="keywords" content="View,手势事件">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Touch事件概述及自定义事件处理的被忽视的重要细节">
-<meta property="og:url" content="http://yoursite.com/2017/03/27/Touch summary and critical details of custom-event/index.html">
+<meta property="og:url" content="https://linjiang.tech/2017/03/27/Touch summary and critical details of custom-event/index.html">
 <meta property="og:site_name" content="linjiang&#39;s blog">
 <meta property="og:description" content="文章如同标题所述主要分为两部分，前半部分主要是一个流程和Touch相关知识点的概述，期间罗列了一些常见例子帮助分析，差不多都是点到为止，后半部分则是在实际开发中，对手势处理的一些很容易被忽视的细节点，当然并不是说不了解这些细节点就无法进行自定义处理逻辑，但是掌握有助于理清处理手势的一些步骤，因此从整体而言，本篇也算是一篇不错的初学者入门篇。">
 <meta property="og:locale" content="zh-Hans">
@@ -118,7 +118,7 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/03/27/Touch summary and critical details of custom-event/"/>
+  <link rel="canonical" href="https://linjiang.tech/2017/03/27/Touch summary and critical details of custom-event/"/>
 
 
   <title> Touch事件概述及自定义事件处理的被忽视的重要细节 | linjiang's blog </title>
@@ -329,7 +329,7 @@
 <h3 id="touchSlop"><a href="#touchSlop" class="headerlink" title="touchSlop"></a>touchSlop</h3><p>首先是touchSlop，通过<code>getScaledTouchSlop()</code>可以得到，它是一个决定触摸事件是否能从轻触转换为拖拽的阈值。通常，当我们的手指停留在屏幕上时，即使尽可能的让手指不乱动， 我们也会发现，不管手指有多么的静止， 还是会看到有相当多的<code>ACTION_MOVE</code>传递到View中，因为我们的手指其实是个很容易颤动的东西，在将其转换为在屏幕上表示位置的一个像素点时，即使仅仅一点点的振动，系统为了探知手指的位置，也会产生大量的<code>ACTION_MOVE</code>事件。系统很多视图例如ScrollView都使用了touchSlop来与手指移动的距离相比来决定什么时候应该开始滚动或者类似的事情。 </p>
 <h3 id="Fling"><a href="#Fling" class="headerlink" title="Fling"></a>Fling</h3><p>系统还给我们提供了用于检查Fling的常量——最小Fling速度常量和最大Fling速度常量。Fling具体是指当手指在屏幕上飞快的一划，手指离开屏幕时，屏幕的滚动还没有停止，即一种自动化的滚动。例如我们”Fling”了一个可滚动的列表时，由于我们在手指离开屏幕之前并没有让其停下，框架就会把此手势认为是Fling，因此我们需要根据手势达到的速度来让滚动滚得自然一些。</p>
 <h3 id="scaledPagingTouchSlop"><a href="#scaledPagingTouchSlop" class="headerlink" title="scaledPagingTouchSlop"></a>scaledPagingTouchSlop</h3><p>scaledPagingTouchSlop在ViewPager中有被用到，该常量跟前面讲到的touchSlop是有区别的，当前这个touchSlop指的是横向滑动翻页的touchSlop，而不是我们常见的用于滚动的touchSlop，但也不是所有横向的slop都用这个常量，例如横向的ScrollView用的还是第一种slop来做检查，因此此处的slop仅仅用于ViewPager之类的视图中，起初设计这两个不同的常量的主要原因是，当把ScrollView放到ViewPager中时，怎样才能使两者都工作的好， 两种不同的slop检查就很容易判断出到底哪个视图的手势需求优先。</p>
-<h2 id="多点触摸事件"><a href="#多点触摸事件" class="headerlink" title="多点触摸事件"></a>多点触摸事件</h2><p>index跟id的不同之处在于，触摸点的id是固定的,但是其索引就不是的， 举个例子，例如当前有3个手指放在了屏幕上，那么这3个触摸点的id依次是0,1,2， 同样其index也是0,1,2， 但是一旦我们松开第二根放下的手指， 那么屏幕上剩下的触摸点的id还是0跟2， 但是其相对应的index就会变成0跟1。index更多的是在指这儿还有多少POINTER，而id就是个稳定的值，用于对按下的触摸点进行跟踪记录，具体可以参见前面一篇关于多手指处理的笔记：<a href="http://linjiang.tech/2016/09/26/%E5%A4%9A%E6%89%8B%E6%8C%87Touch%E5%8F%98%E5%8C%96%E5%A4%84%E7%90%86%E5%8E%9F%E5%88%99%E5%9F%BA%E7%A1%80/" target="_blank" rel="noopener">多手指Touch变化处理原则基础</a>。</p>
+<h2 id="多点触摸事件"><a href="#多点触摸事件" class="headerlink" title="多点触摸事件"></a>多点触摸事件</h2><p>index跟id的不同之处在于，触摸点的id是固定的,但是其索引就不是的， 举个例子，例如当前有3个手指放在了屏幕上，那么这3个触摸点的id依次是0,1,2， 同样其index也是0,1,2， 但是一旦我们松开第二根放下的手指， 那么屏幕上剩下的触摸点的id还是0跟2， 但是其相对应的index就会变成0跟1。index更多的是在指这儿还有多少POINTER，而id就是个稳定的值，用于对按下的触摸点进行跟踪记录，具体可以参见前面一篇关于多手指处理的笔记：<a href="http://linjiang.tech/2016/09/26/%E5%A4%9A%E6%89%8B%E6%8C%87Touch%E5%8F%98%E5%8C%96%E5%A4%84%E7%90%86%E5%8E%9F%E5%88%99%E5%9F%BA%E7%A1%80/">多手指Touch变化处理原则基础</a>。</p>
 <h2 id="事件的混合"><a href="#事件的混合" class="headerlink" title="事件的混合"></a>事件的混合</h2><p>默认情况下，当我们从View中获取并处理触摸事件时，实际上并没有监测到每一个单独的事件，当我们的手指在屏幕上划来划去时，虽然移动事件的确分发给了视图，但是这些事件是成批处理过之后的事件，并不是说这些触摸点信息就丢失了，这点在应用中体现在每次有事件到来时，在事件回调方法中得到的事件是关于事件成批处理中的最近发生的事件，当我们请求获取此次触摸事件中X,Y的位置或者其他请求时， 最终得到的结果都是从成批事件处理后的最近发生的事件。</p>
 <p>但是如果某些时候我们需要监测系统生成的每一个事件，例如可能我们要用这些来构建一个路径或者些其他，反正就是想要得到每一个单独的事件，通过MotionEvent对象可以得到我们想要的一切， 该对象的方法除了有返回x,y、发生时间、每一个单独事件的所有元数据以外，还可以得到此次成批处理中一共有多少事件， 这样我们就可以知道所有需要的事件了。</p>
 <h2 id="触摸代理"><a href="#触摸代理" class="headerlink" title="触摸代理"></a>触摸代理</h2><p>我们以一个例子切入：有一个ListView，由于设计需求导致其item中有一个图标太小以至于很难触摸的到，但是我们又希望用户可以点击到这个图标，在多数情况下，我们可能会规避走到这一步，比方说那把视图设置得大一点，但如果必须这样，那可以想到的解决办法就是在ListView的Item中的父视图指定一片稍大的区域当做这个图标的代理，然后把此区域中的所有触摸事件都传给那个图标。其实系统早已针对这种情况给出了解决方案，我们只需调用父视图的<code>setTouchDelegate</code>方法，传入一个用供代理事件的矩形区域和需要被代理的child来初始化的触摸代理对象就可以了。在触摸代理内部它会对每一个进入到父视图的事件进行检查， 判断此事件的位置是否落在了定义的矩形区域内， 是的话， 那就把事件的坐标稍作处理，用触摸代理传送到那个按钮中， 至于此处按钮会有怎样的反应，那就要看按钮自身的触摸事件处理过程了。</p>
@@ -682,7 +682,7 @@
       var disqus_shortname = 'http-linjiang-tech';
       var disqus_identifier = '2017/03/27/Touch summary and critical details of custom-event/';
       var disqus_title = "Touch事件概述及自定义事件处理的被忽视的重要细节";
-      var disqus_url = 'http://yoursite.com/2017/03/27/Touch summary and critical details of custom-event/';
+      var disqus_url = 'https://linjiang.tech/2017/03/27/Touch summary and critical details of custom-event/';
 
       function run_disqus_script(disqus_script){
         var dsq = document.createElement('script');

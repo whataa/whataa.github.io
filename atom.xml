@@ -5,9 +5,9 @@
   
   <link href="/atom.xml" rel="self"/>
   
-  <link href="http://yoursite.com/"/>
+  <link href="https://linjiang.tech/"/>
   <updated>2020-01-20T06:24:29.370Z</updated>
-  <id>http://yoursite.com/</id>
+  <id>https://linjiang.tech/</id>
   
   <author>
     <name>linjiang</name>
@@ -18,8 +18,8 @@
   
   <entry>
     <title>从R文件索引看资源优化</title>
-    <link href="http://yoursite.com/2020/01/20/r-resources-arsc/"/>
-    <id>http://yoursite.com/2020/01/20/r-resources-arsc/</id>
+    <link href="https://linjiang.tech/2020/01/20/r-resources-arsc/"/>
+    <id>https://linjiang.tech/2020/01/20/r-resources-arsc/</id>
     <published>2020-01-20T02:00:00.000Z</published>
     <updated>2020-01-20T06:24:29.370Z</updated>
     
@@ -30,17 +30,17 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="资源优化" scheme="http://yoursite.com/tags/%E8%B5%84%E6%BA%90%E4%BC%98%E5%8C%96/"/>
+      <category term="资源优化" scheme="https://linjiang.tech/tags/%E8%B5%84%E6%BA%90%E4%BC%98%E5%8C%96/"/>
     
   </entry>
   
   <entry>
     <title>LeakCanary2.0解析</title>
-    <link href="http://yoursite.com/2019/12/25/leakcanary/"/>
-    <id>http://yoursite.com/2019/12/25/leakcanary/</id>
+    <link href="https://linjiang.tech/2019/12/25/leakcanary/"/>
+    <id>https://linjiang.tech/2019/12/25/leakcanary/</id>
     <published>2019-12-25T02:00:00.000Z</published>
     <updated>2019-12-25T00:59:19.690Z</updated>
     
@@ -51,17 +51,17 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="performance" scheme="http://yoursite.com/tags/performance/"/>
+      <category term="performance" scheme="https://linjiang.tech/tags/performance/"/>
     
   </entry>
   
   <entry>
     <title>Matrix-TraceCanary的设计和原理分析手册</title>
-    <link href="http://yoursite.com/2019/11/12/matrix-trace-canary/"/>
-    <id>http://yoursite.com/2019/11/12/matrix-trace-canary/</id>
+    <link href="https://linjiang.tech/2019/11/12/matrix-trace-canary/"/>
+    <id>https://linjiang.tech/2019/11/12/matrix-trace-canary/</id>
     <published>2019-11-12T02:00:00.000Z</published>
     <updated>2019-12-16T08:36:37.835Z</updated>
     
@@ -72,19 +72,19 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="matrix" scheme="http://yoursite.com/tags/matrix/"/>
+      <category term="performance" scheme="https://linjiang.tech/tags/performance/"/>
     
-      <category term="performance" scheme="http://yoursite.com/tags/performance/"/>
+      <category term="matrix" scheme="https://linjiang.tech/tags/matrix/"/>
     
   </entry>
   
   <entry>
     <title>Choreographer机制概述</title>
-    <link href="http://yoursite.com/2019/10/18/choreographer/"/>
-    <id>http://yoursite.com/2019/10/18/choreographer/</id>
+    <link href="https://linjiang.tech/2019/10/18/choreographer/"/>
+    <id>https://linjiang.tech/2019/10/18/choreographer/</id>
     <published>2019-10-18T02:00:00.000Z</published>
     <updated>2019-10-23T07:49:02.408Z</updated>
     
@@ -95,17 +95,17 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="View" scheme="http://yoursite.com/tags/View/"/>
+      <category term="View" scheme="https://linjiang.tech/tags/View/"/>
     
   </entry>
   
   <entry>
     <title>Dart的学习笔记</title>
-    <link href="http://yoursite.com/2019/03/21/dart/"/>
-    <id>http://yoursite.com/2019/03/21/dart/</id>
+    <link href="https://linjiang.tech/2019/03/21/dart/"/>
+    <id>https://linjiang.tech/2019/03/21/dart/</id>
     <published>2019-03-21T02:00:00.000Z</published>
     <updated>2019-09-19T07:26:01.297Z</updated>
     
@@ -116,19 +116,19 @@
     </summary>
     
     
-      <category term="Dart" scheme="http://yoursite.com/categories/Dart/"/>
+      <category term="Dart" scheme="https://linjiang.tech/categories/Dart/"/>
     
     
-      <category term="Flutter" scheme="http://yoursite.com/tags/Flutter/"/>
+      <category term="Dart" scheme="https://linjiang.tech/tags/Dart/"/>
     
-      <category term="Dart" scheme="http://yoursite.com/tags/Dart/"/>
+      <category term="Flutter" scheme="https://linjiang.tech/tags/Flutter/"/>
     
   </entry>
   
   <entry>
     <title>使用InheritedWidget被忽略的要点</title>
-    <link href="http://yoursite.com/2019/02/25/flutter_inherited_note/"/>
-    <id>http://yoursite.com/2019/02/25/flutter_inherited_note/</id>
+    <link href="https://linjiang.tech/2019/02/25/flutter_inherited_note/"/>
+    <id>https://linjiang.tech/2019/02/25/flutter_inherited_note/</id>
     <published>2019-02-25T02:00:00.000Z</published>
     <updated>2019-02-25T06:08:53.792Z</updated>
     
@@ -139,19 +139,19 @@
     </summary>
     
     
-      <category term="Flutter" scheme="http://yoursite.com/categories/Flutter/"/>
+      <category term="Flutter" scheme="https://linjiang.tech/categories/Flutter/"/>
     
     
-      <category term="Flutter" scheme="http://yoursite.com/tags/Flutter/"/>
+      <category term="Flutter" scheme="https://linjiang.tech/tags/Flutter/"/>
     
-      <category term="Widget" scheme="http://yoursite.com/tags/Widget/"/>
+      <category term="Widget" scheme="https://linjiang.tech/tags/Widget/"/>
     
   </entry>
   
   <entry>
     <title>一种巧妙的drawable.xml替代方案-效果篇</title>
-    <link href="http://yoursite.com/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88-%E6%95%88%E6%9E%9C%E7%AF%87/"/>
-    <id>http://yoursite.com/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88-%E6%95%88%E6%9E%9C%E7%AF%87/</id>
+    <link href="https://linjiang.tech/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88-%E6%95%88%E6%9E%9C%E7%AF%87/"/>
+    <id>https://linjiang.tech/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88-%E6%95%88%E6%9E%9C%E7%AF%87/</id>
     <published>2018-09-08T15:52:00.000Z</published>
     <updated>2018-09-08T15:55:37.195Z</updated>
     
@@ -162,17 +162,17 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="开源项目" scheme="http://yoursite.com/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/"/>
+      <category term="开源项目" scheme="https://linjiang.tech/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/"/>
     
   </entry>
   
   <entry>
     <title>一种巧妙的drawable.xml替代方案</title>
-    <link href="http://yoursite.com/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88/"/>
-    <id>http://yoursite.com/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88/</id>
+    <link href="https://linjiang.tech/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88/"/>
+    <id>https://linjiang.tech/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88/</id>
     <published>2018-09-08T15:40:00.000Z</published>
     <updated>2018-09-08T15:42:32.630Z</updated>
     
@@ -183,17 +183,17 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="开源项目" scheme="http://yoursite.com/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/"/>
+      <category term="开源项目" scheme="https://linjiang.tech/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/"/>
     
   </entry>
   
   <entry>
     <title>Large Database Queries on Android[译]</title>
-    <link href="http://yoursite.com/2018/03/10/[%E8%AF%91]Large%20Database%20Queries%20on%20Android/"/>
-    <id>http://yoursite.com/2018/03/10/[%E8%AF%91]Large%20Database%20Queries%20on%20Android/</id>
+    <link href="https://linjiang.tech/2018/03/10/[%E8%AF%91]Large%20Database%20Queries%20on%20Android/"/>
+    <id>https://linjiang.tech/2018/03/10/[%E8%AF%91]Large%20Database%20Queries%20on%20Android/</id>
     <published>2018-03-10T02:00:00.000Z</published>
     <updated>2018-03-10T03:34:20.930Z</updated>
     
@@ -204,19 +204,19 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="Android" scheme="http://yoursite.com/tags/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/tags/Android/"/>
     
-      <category term="译文" scheme="http://yoursite.com/tags/%E8%AF%91%E6%96%87/"/>
+      <category term="译文" scheme="https://linjiang.tech/tags/%E8%AF%91%E6%96%87/"/>
     
   </entry>
   
   <entry>
     <title>使用sublime提升mars-xlog日志文件分析效率</title>
-    <link href="http://yoursite.com/2017/08/06/Use%20sublime%20to%20enhance%20the%20efficiency%20of%20analyzing%20mars-xlog%20log%20files/"/>
-    <id>http://yoursite.com/2017/08/06/Use%20sublime%20to%20enhance%20the%20efficiency%20of%20analyzing%20mars-xlog%20log%20files/</id>
+    <link href="https://linjiang.tech/2017/08/06/Use%20sublime%20to%20enhance%20the%20efficiency%20of%20analyzing%20mars-xlog%20log%20files/"/>
+    <id>https://linjiang.tech/2017/08/06/Use%20sublime%20to%20enhance%20the%20efficiency%20of%20analyzing%20mars-xlog%20log%20files/</id>
     <published>2017-08-06T15:50:00.000Z</published>
     <updated>2018-01-28T08:57:59.058Z</updated>
     
@@ -227,17 +227,17 @@
     </summary>
     
     
-      <category term="工具插件" scheme="http://yoursite.com/categories/%E5%B7%A5%E5%85%B7%E6%8F%92%E4%BB%B6/"/>
+      <category term="工具插件" scheme="https://linjiang.tech/categories/%E5%B7%A5%E5%85%B7%E6%8F%92%E4%BB%B6/"/>
     
     
-      <category term="log" scheme="http://yoursite.com/tags/log/"/>
+      <category term="log" scheme="https://linjiang.tech/tags/log/"/>
     
   </entry>
   
   <entry>
     <title>Touch事件概述及自定义事件处理的被忽视的重要细节</title>
-    <link href="http://yoursite.com/2017/03/27/Touch%20summary%20and%20critical%20details%20of%20custom-event/"/>
-    <id>http://yoursite.com/2017/03/27/Touch%20summary%20and%20critical%20details%20of%20custom-event/</id>
+    <link href="https://linjiang.tech/2017/03/27/Touch%20summary%20and%20critical%20details%20of%20custom-event/"/>
+    <id>https://linjiang.tech/2017/03/27/Touch%20summary%20and%20critical%20details%20of%20custom-event/</id>
     <published>2017-03-27T02:00:00.000Z</published>
     <updated>2018-01-28T08:57:59.057Z</updated>
     
@@ -248,19 +248,19 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="View" scheme="http://yoursite.com/tags/View/"/>
+      <category term="View" scheme="https://linjiang.tech/tags/View/"/>
     
-      <category term="手势事件" scheme="http://yoursite.com/tags/%E6%89%8B%E5%8A%BF%E4%BA%8B%E4%BB%B6/"/>
+      <category term="手势事件" scheme="https://linjiang.tech/tags/%E6%89%8B%E5%8A%BF%E4%BA%8B%E4%BB%B6/"/>
     
   </entry>
   
   <entry>
     <title>【Fragment】对Fragment、FragmentManager和BackStackRecord的字段全解析</title>
-    <link href="http://yoursite.com/2017/02/18/Fragment-Study%20and%20Analysis%20of%20Fragment%20fields/"/>
-    <id>http://yoursite.com/2017/02/18/Fragment-Study%20and%20Analysis%20of%20Fragment%20fields/</id>
+    <link href="https://linjiang.tech/2017/02/18/Fragment-Study%20and%20Analysis%20of%20Fragment%20fields/"/>
+    <id>https://linjiang.tech/2017/02/18/Fragment-Study%20and%20Analysis%20of%20Fragment%20fields/</id>
     <published>2017-02-18T02:00:00.000Z</published>
     <updated>2018-01-28T08:57:59.057Z</updated>
     
@@ -271,19 +271,19 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="Fragment" scheme="http://yoursite.com/tags/Fragment/"/>
+      <category term="Fragment" scheme="https://linjiang.tech/tags/Fragment/"/>
     
-      <category term="字段解析" scheme="http://yoursite.com/tags/%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/"/>
+      <category term="字段解析" scheme="https://linjiang.tech/tags/%E5%AD%97%E6%AE%B5%E8%A7%A3%E6%9E%90/"/>
     
   </entry>
   
   <entry>
     <title>【Fragment】对Fragment的BackStackRecord事务的分析</title>
-    <link href="http://yoursite.com/2017/01/21/Fragment-BackStackRecord/"/>
-    <id>http://yoursite.com/2017/01/21/Fragment-BackStackRecord/</id>
+    <link href="https://linjiang.tech/2017/01/21/Fragment-BackStackRecord/"/>
+    <id>https://linjiang.tech/2017/01/21/Fragment-BackStackRecord/</id>
     <published>2017-01-21T02:00:00.000Z</published>
     <updated>2018-01-28T08:57:59.056Z</updated>
     
@@ -294,17 +294,17 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="Fragment" scheme="http://yoursite.com/tags/Fragment/"/>
+      <category term="Fragment" scheme="https://linjiang.tech/tags/Fragment/"/>
     
   </entry>
   
   <entry>
     <title>【Fragment】对Fragment的状态保存恢复机制原理的分析</title>
-    <link href="http://yoursite.com/2017/01/04/Fragment-Save%20and%20Restroe%20State/"/>
-    <id>http://yoursite.com/2017/01/04/Fragment-Save%20and%20Restroe%20State/</id>
+    <link href="https://linjiang.tech/2017/01/04/Fragment-Save%20and%20Restroe%20State/"/>
+    <id>https://linjiang.tech/2017/01/04/Fragment-Save%20and%20Restroe%20State/</id>
     <published>2017-01-04T02:00:00.000Z</published>
     <updated>2018-01-28T08:57:59.056Z</updated>
     
@@ -315,19 +315,19 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="Fragment" scheme="http://yoursite.com/tags/Fragment/"/>
+      <category term="Fragment" scheme="https://linjiang.tech/tags/Fragment/"/>
     
-      <category term="状态保存" scheme="http://yoursite.com/tags/%E7%8A%B6%E6%80%81%E4%BF%9D%E5%AD%98/"/>
+      <category term="状态保存" scheme="https://linjiang.tech/tags/%E7%8A%B6%E6%80%81%E4%BF%9D%E5%AD%98/"/>
     
   </entry>
   
   <entry>
     <title>以Patch的形式更新Android Studio</title>
-    <link href="http://yoursite.com/2016/12/30/Android%20Studio%20Patches%20Update/"/>
-    <id>http://yoursite.com/2016/12/30/Android%20Studio%20Patches%20Update/</id>
+    <link href="https://linjiang.tech/2016/12/30/Android%20Studio%20Patches%20Update/"/>
+    <id>https://linjiang.tech/2016/12/30/Android%20Studio%20Patches%20Update/</id>
     <published>2016-12-30T02:00:00.000Z</published>
     <updated>2019-09-19T07:25:08.124Z</updated>
     
@@ -338,17 +338,17 @@
     </summary>
     
     
-      <category term="工具插件" scheme="http://yoursite.com/categories/%E5%B7%A5%E5%85%B7%E6%8F%92%E4%BB%B6/"/>
+      <category term="工具插件" scheme="https://linjiang.tech/categories/%E5%B7%A5%E5%85%B7%E6%8F%92%E4%BB%B6/"/>
     
     
-      <category term="Android-Studio" scheme="http://yoursite.com/tags/Android-Studio/"/>
+      <category term="Android-Studio" scheme="https://linjiang.tech/tags/Android-Studio/"/>
     
   </entry>
   
   <entry>
     <title>App&#39;s ClassLoader的来源</title>
-    <link href="http://yoursite.com/2016/10/31/App&#39;s%20ClassLoader%E7%9A%84%E6%9D%A5%E6%BA%90/"/>
-    <id>http://yoursite.com/2016/10/31/App&#39;s%20ClassLoader%E7%9A%84%E6%9D%A5%E6%BA%90/</id>
+    <link href="https://linjiang.tech/2016/10/31/App&#39;s%20ClassLoader%E7%9A%84%E6%9D%A5%E6%BA%90/"/>
+    <id>https://linjiang.tech/2016/10/31/App&#39;s%20ClassLoader%E7%9A%84%E6%9D%A5%E6%BA%90/</id>
     <published>2016-10-31T02:00:00.000Z</published>
     <updated>2018-01-28T08:57:59.055Z</updated>
     
@@ -359,19 +359,19 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="ClassLoader" scheme="http://yoursite.com/tags/ClassLoader/"/>
+      <category term="ClassLoader" scheme="https://linjiang.tech/tags/ClassLoader/"/>
     
-      <category term="Hotfix&amp;Plugin" scheme="http://yoursite.com/tags/Hotfix-Plugin/"/>
+      <category term="Hotfix&amp;Plugin" scheme="https://linjiang.tech/tags/Hotfix-Plugin/"/>
     
   </entry>
   
   <entry>
     <title>多手指Touch变化处理原则基础</title>
-    <link href="http://yoursite.com/2016/09/26/%E5%A4%9A%E6%89%8B%E6%8C%87Touch%E5%8F%98%E5%8C%96%E5%A4%84%E7%90%86%E5%8E%9F%E5%88%99%E5%9F%BA%E7%A1%80/"/>
-    <id>http://yoursite.com/2016/09/26/%E5%A4%9A%E6%89%8B%E6%8C%87Touch%E5%8F%98%E5%8C%96%E5%A4%84%E7%90%86%E5%8E%9F%E5%88%99%E5%9F%BA%E7%A1%80/</id>
+    <link href="https://linjiang.tech/2016/09/26/%E5%A4%9A%E6%89%8B%E6%8C%87Touch%E5%8F%98%E5%8C%96%E5%A4%84%E7%90%86%E5%8E%9F%E5%88%99%E5%9F%BA%E7%A1%80/"/>
+    <id>https://linjiang.tech/2016/09/26/%E5%A4%9A%E6%89%8B%E6%8C%87Touch%E5%8F%98%E5%8C%96%E5%A4%84%E7%90%86%E5%8E%9F%E5%88%99%E5%9F%BA%E7%A1%80/</id>
     <published>2016-09-26T02:00:00.000Z</published>
     <updated>2018-01-28T08:57:59.058Z</updated>
     
@@ -382,19 +382,19 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="View" scheme="http://yoursite.com/tags/View/"/>
+      <category term="View" scheme="https://linjiang.tech/tags/View/"/>
     
-      <category term="手势事件" scheme="http://yoursite.com/tags/%E6%89%8B%E5%8A%BF%E4%BA%8B%E4%BB%B6/"/>
+      <category term="手势事件" scheme="https://linjiang.tech/tags/%E6%89%8B%E5%8A%BF%E4%BA%8B%E4%BB%B6/"/>
     
   </entry>
   
   <entry>
     <title>Coloring Buttons with ThemeOverlays and Background Tints[译]</title>
-    <link href="http://yoursite.com/2016/08/13/[%E8%AF%91]Coloring%20Buttons%20with%20ThemeOverlays%20&amp;%20Background%20Tints/"/>
-    <id>http://yoursite.com/2016/08/13/[%E8%AF%91]Coloring%20Buttons%20with%20ThemeOverlays%20&amp;%20Background%20Tints/</id>
+    <link href="https://linjiang.tech/2016/08/13/[%E8%AF%91]Coloring%20Buttons%20with%20ThemeOverlays%20&amp;%20Background%20Tints/"/>
+    <id>https://linjiang.tech/2016/08/13/[%E8%AF%91]Coloring%20Buttons%20with%20ThemeOverlays%20&amp;%20Background%20Tints/</id>
     <published>2016-08-13T02:00:00.000Z</published>
     <updated>2018-01-28T08:57:59.058Z</updated>
     
@@ -405,19 +405,19 @@
     </summary>
     
     
-      <category term="Android" scheme="http://yoursite.com/categories/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
     
     
-      <category term="Android" scheme="http://yoursite.com/tags/Android/"/>
+      <category term="Android" scheme="https://linjiang.tech/tags/Android/"/>
     
-      <category term="译文" scheme="http://yoursite.com/tags/%E8%AF%91%E6%96%87/"/>
+      <category term="译文" scheme="https://linjiang.tech/tags/%E8%AF%91%E6%96%87/"/>
     
   </entry>
   
   <entry>
     <title>Hello Hexo</title>
-    <link href="http://yoursite.com/2015/06/30/hello-world/"/>
-    <id>http://yoursite.com/2015/06/30/hello-world/</id>
+    <link href="https://linjiang.tech/2015/06/30/hello-world/"/>
+    <id>https://linjiang.tech/2015/06/30/hello-world/</id>
     <published>2015-06-30T11:07:43.000Z</published>
     <updated>2018-09-26T03:23:54.457Z</updated>
     

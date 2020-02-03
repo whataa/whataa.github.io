@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="matrix,performance," />
+  <meta name="keywords" content="performance,matrix," />
 
 
 
@@ -87,10 +87,10 @@
 
 
 <meta name="description" content="matrix是微信开源的APM方案，其中TraceCannery是一套用于监控应用卡顿和帧率并提供精确化的日志捕捉和分析能力的模块。本文以手册形式对其设计方案的选择和功能背后的原理进行分析说明，以期对Android端性能检测和优化有更加透彻的理解。">
-<meta name="keywords" content="matrix,performance">
+<meta name="keywords" content="performance,matrix">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Matrix-TraceCanary的设计和原理分析手册">
-<meta property="og:url" content="http://yoursite.com/2019/11/12/matrix-trace-canary/index.html">
+<meta property="og:url" content="https://linjiang.tech/2019/11/12/matrix-trace-canary/index.html">
 <meta property="og:site_name" content="linjiang&#39;s blog">
 <meta property="og:description" content="matrix是微信开源的APM方案，其中TraceCannery是一套用于监控应用卡顿和帧率并提供精确化的日志捕捉和分析能力的模块。本文以手册形式对其设计方案的选择和功能背后的原理进行分析说明，以期对Android端性能检测和优化有更加透彻的理解。">
 <meta property="og:locale" content="zh-Hans">
@@ -118,7 +118,7 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2019/11/12/matrix-trace-canary/"/>
+  <link rel="canonical" href="https://linjiang.tech/2019/11/12/matrix-trace-canary/"/>
 
 
   <title> Matrix-TraceCanary的设计和原理分析手册 | linjiang's blog </title>
@@ -325,7 +325,7 @@
 <p> VSYNC事件触发UI相关的操作实际也是通过主线程Handler来完成的，最终执行点是doFrame方法，该方法里是按照INPUT、ANIMATION、TRAVERSAL三种事件依次回调的，从每个事件的队列中取出符合执行时间的集合并执行；这里的问题就是符合时间的事件是取决于doFrame开始执行的时间戳，没法提前知道，即无法成对地向队列尾部插入事件。<br>因此考虑另一种方案：从INPUT队列第一个事件开始执行到ANIMATION队列的第一个事件开始执行刚好就是此次所有INPUT事件的执行时间，以此类推即可计算出三种事件的耗时；但是TRAVERSAL之后就结束了，TRAVERSAL的耗时没法在此次doFrame事件的回调中完成统计，所以我们增加一个标识符，在下一个message事件开始时根据标识符来结束对TRAVERSAL的耗时统计。</p>
 </li>
 </ol>
-<p>关于Choreographer的运行机制参考：<a href="http://linjiang.tech/2019/10/18/choreographer/" target="_blank" rel="noopener">http://linjiang.tech/2019/10/18/choreographer/</a></p>
+<p>关于Choreographer的运行机制参考：<a href="http://linjiang.tech/2019/10/18/choreographer/">http://linjiang.tech/2019/10/18/choreographer/</a></p>
 <p><a name="mDhyo"></a></p>
 <h3 id="matrix-trace-plugin："><a href="#matrix-trace-plugin：" class="headerlink" title="matrix-trace-plugin："></a>matrix-trace-plugin：</h3><p><a name="87dVT"></a></p>
 <h4 id="配置参数"><a href="#配置参数" class="headerlink" title="配置参数"></a>配置参数</h4><ul>
@@ -445,9 +445,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/matrix/" rel="tag">#matrix</a>
-          
             <a href="/tags/performance/" rel="tag">#performance</a>
+          
+            <a href="/tags/matrix/" rel="tag">#matrix</a>
           
         </div>
       
@@ -726,7 +726,7 @@
       var disqus_shortname = 'http-linjiang-tech';
       var disqus_identifier = '2019/11/12/matrix-trace-canary/';
       var disqus_title = "Matrix-TraceCanary的设计和原理分析手册";
-      var disqus_url = 'http://yoursite.com/2019/11/12/matrix-trace-canary/';
+      var disqus_url = 'https://linjiang.tech/2019/11/12/matrix-trace-canary/';
 
       function run_disqus_script(disqus_script){
         var dsq = document.createElement('script');
