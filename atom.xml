@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://linjiang.tech/"/>
-  <updated>2020-01-20T06:24:29.370Z</updated>
+  <updated>2020-02-26T13:38:26.993Z</updated>
   <id>https://linjiang.tech/</id>
   
   <author>
@@ -15,6 +15,29 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>优化 Gradle 构建速度汇总</title>
+    <link href="https://linjiang.tech/2020/02/26/gradle-build/"/>
+    <id>https://linjiang.tech/2020/02/26/gradle-build/</id>
+    <published>2020-02-26T02:00:00.000Z</published>
+    <updated>2020-02-26T13:38:26.993Z</updated>
+    
+    <summary type="html">
+    
+      本文罗列了目前社区中常规的 gradle 构建速度优化方案，作为开发的参考。
+    
+    </summary>
+    
+    
+      <category term="Android" scheme="https://linjiang.tech/categories/Android/"/>
+    
+    
+      <category term="performance" scheme="https://linjiang.tech/tags/performance/"/>
+    
+      <category term="gradle" scheme="https://linjiang.tech/tags/gradle/"/>
+    
+  </entry>
   
   <entry>
     <title>从R文件索引看资源优化</title>

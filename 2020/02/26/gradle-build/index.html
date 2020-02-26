@@ -1,0 +1,718 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="performance,gradle," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="linjiang's blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.2" />
+
+
+
+
+
+
+<meta name="description" content="本文罗列了目前社区中常规的 gradle 构建速度优化方案，作为开发的参考。">
+<meta name="keywords" content="performance,gradle">
+<meta property="og:type" content="article">
+<meta property="og:title" content="优化 Gradle 构建速度汇总">
+<meta property="og:url" content="https://linjiang.tech/2020/02/26/gradle-build/index.html">
+<meta property="og:site_name" content="linjiang&#39;s blog">
+<meta property="og:description" content="本文罗列了目前社区中常规的 gradle 构建速度优化方案，作为开发的参考。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2020-02-26T13:38:26.993Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="优化 Gradle 构建速度汇总">
+<meta name="twitter:description" content="本文罗列了目前社区中常规的 gradle 构建速度优化方案，作为开发的参考。">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"right","display":"hide"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="https://linjiang.tech/2020/02/26/gradle-build/"/>
+
+
+  <title> 优化 Gradle 构建速度汇总 | linjiang's blog </title>
+</head>
+
+<body itemscope itemtype="//schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-right page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="//schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">linjiang's blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="//schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                优化 Gradle 构建速度汇总
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2020-02-26T10:00:00+08:00" content="2020-02-26">
+              2020-02-26
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index">
+                    <span itemprop="name">Android</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2020/02/26/gradle-build/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2020/02/26/gradle-build/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本文罗列了目前社区中常规的 gradle 构建速度优化方案，作为开发的参考。<br>更新于：2020-2-26</p>
+<p><a name="2hPkS"></a></p>
+<h3 id="gradle配置"><a href="#gradle配置" class="headerlink" title="gradle配置"></a>gradle配置</h3><p><a name="WQV9Q"></a></p>
+<h4 id="1-daemon"><a href="#1-daemon" class="headerlink" title="1. daemon"></a>1. daemon</h4><p>无需每次执行构建相关任务时都重新启动一个新的gradle进程，从而增加了相应的非必要耗时。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在项目的gradle.properties 增加 </span></span><br><span class="line">org.gradle.daemon=<span class="literal">true</span> </span><br><span class="line"><span class="comment">// 或通过命令行传递参数 </span></span><br><span class="line">./gradlew --daemon</span><br></pre></td></tr></table></figure></p>
+<p>如果在长时间多次编译后速度变得缓慢，可以通过 <code>./gradlew --stop</code> 结束已有daemon进程。</p>
+<p><a name="6dQcW"></a></p>
+<h4 id="2-parallel"><a href="#2-parallel" class="headerlink" title="2. parallel"></a>2. parallel</h4><p>基本上大部分项目都包含了多个module，gradle默认情况下是串行执行的，可以通过以下方式开启并行构建，可以加入参数 –profile 在生成的html中看到total build time 和 task execution的时间差异。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在项目的gradle.properties 增加 </span></span><br><span class="line">org.gradle.parallel=<span class="literal">true</span> </span><br><span class="line"><span class="comment">// 或通过命令行传递参数 </span></span><br><span class="line">./gradlew --parallel</span><br></pre></td></tr></table></figure></p>
+<p><a name="32cGr"></a></p>
+<h4 id="3-configure-on-demand"><a href="#3-configure-on-demand" class="headerlink" title="3. configure on demand"></a>3. configure on demand</h4><p>gradle的构建包含初始化、配置、执行三大流程，CoD用于配置阶段，仅配置与所选任务相关的module。<br>例如module-A compile module-B，则B会被配置；或者task-A dependOn module-B‘s task 则B也会被配置。</p>
+<blockquote>
+<p>但是我们大部分情况是在IDE中执行的 <code>sync</code> 触发了配置所有module，因此CoD并没起什么作用。Gradle团队也决定废弃它，并计划通过一个新的模式来替代：<a href="https://github.com/gradle/gradle/issues/2868#issuecomment-384373780" target="_blank" rel="noopener">issue</a></p>
+</blockquote>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在项目的gradle.properties 增加 </span></span><br><span class="line">org.gradle.configureondemand=<span class="literal">true</span> </span><br><span class="line"><span class="comment">// 或通过命令行传递参数 </span></span><br><span class="line">./gradlew --configure-on-demand</span><br></pre></td></tr></table></figure>
+<p><a name="NAwuA"></a></p>
+<h4 id="4-offline"><a href="#4-offline" class="headerlink" title="4. offline"></a>4. offline</h4><p>每次构建都会去下载本地缓存没有的依赖或检查缓存已有依赖是否存在最新版本，另外一些三方插件在构建期间也会发起网络请求，例如一些会上传匿名统计信息、一些会上传混淆的mapping文件等等。但是由于国内糟糕的网络环境，网络经常超时重试占用大量构建时间。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 在IDE中的gradle panel里 toggle offline mode</span></span><br><span class="line"><span class="comment">// 2. 或通过命令行传递参数 </span></span><br><span class="line">./gradlew --offline</span><br></pre></td></tr></table></figure></p>
+<p><a name="vd2pN"></a></p>
+<h4 id="5-buildCache"><a href="#5-buildCache" class="headerlink" title="5. buildCache"></a>5. buildCache</h4><p>gradle的构建缓存机制 会缓存构建的输出（build-in 和 符合的三方task），并以输入作为参数生成唯一的key生成对应的缓存文件，这样在后续的构建过程中如果输入没有变化就可以直接利用这些缓存加快构建速度。<br><strong>特别是clean之后重新构建时，实测有无缓存的时间相差将近 2/3 </strong>。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在项目的gradle.properties 增加 </span></span><br><span class="line">org.gradle.caching=<span class="literal">true</span> </span><br><span class="line"><span class="comment">// 或通过命令行传递参数 </span></span><br><span class="line">./gradlew --build-cache</span><br><span class="line"><span class="comment">// 如果在开启了caching，想临时测试关闭构建缓存的执行效果</span></span><br><span class="line">./gradlew --no-build-cache</span><br></pre></td></tr></table></figure></p>
+<p>生成的缓存默认存储在 <code>&lt;user-home&gt;/.android/build-cache/</code> 可以通过以下方式进行修改或删除：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 修改位置：</span></span><br><span class="line"><span class="comment">// 在setting.gradle中增加</span></span><br><span class="line">buildCache &#123;</span><br><span class="line">    local &#123;</span><br><span class="line">        directory = new File(rootDir, <span class="string">'build-cache'</span>)</span><br><span class="line">        removeUnusedEntriesAfterDays = <span class="number">30</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 2. 删除构建缓存：</span></span><br><span class="line">./gradlew cleanBuildCache</span><br></pre></td></tr></table></figure></p>
+<p>与增量编译（incremental build）机制一个很明显的区别就是在构建的输出日志中，增量编译的task之后显示的是 <code>UP-TO-DATE</code> ，而构建缓存显示的是 <code>FROM-CACHE</code> 。</p>
+<p><a name="BoMOz"></a></p>
+<h4 id="6-jvmargs"><a href="#6-jvmargs" class="headerlink" title="6. jvmargs"></a>6. jvmargs</h4><p>由于构建所处的进程也是一个JVM，因此通常Java开发对JVM的调优参数也适用此构建进程，可以根据自身电脑的配置传递合适的jvm参数：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在项目的gradle.properties 增加 </span></span><br><span class="line">org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=<span class="number">512</span>m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF<span class="number">-8</span></span><br></pre></td></tr></table></figure></p>
+<p><a name="coFgH"></a></p>
+<h3 id="AGP配置"><a href="#AGP配置" class="headerlink" title="AGP配置"></a>AGP配置</h3><p><a name="69wTG"></a></p>
+<h4 id="1-minSdkVersion-21"><a href="#1-minSdkVersion-21" class="headerlink" title="1. minSdkVersion 21"></a>1. minSdkVersion 21</h4><p>64K问题导致针对5.0以下的设备需要通过multiDex方案来兼容，构建期间在拆分dex的同时还需要 花费一些时间 来决定哪些class需要放入primary dex以避免启动发生Crash。而从5.0开始虽然构建期间依然会拆分dex，但由于应用在安装时这些dex会被优化为一个 <code>.oat</code> 文件，也就无需再区分primary dex。<br>因此如果当前调试的设备版本&gt;=5.0，完全可以仅在debug下将 <code>minSdkVersion</code> 指定为 <strong>21</strong> 来避免前述的耗时。</p>
+<p><a name="ADwtE"></a></p>
+<h4 id="2-resConfigs"><a href="#2-resConfigs" class="headerlink" title="2. resConfigs"></a>2. resConfigs</h4><p>除非是针对不同语言或特定设备显示效果的特定测试，一般情况下我们开发环境仅包含一套资源即可，尽量减少aapt的编译耗时。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在app.gradle中的 defaultConfig 或特定 flavor 中</span></span><br><span class="line">resConfigs <span class="string">"en"</span>, <span class="string">"xxhdpi"</span></span><br></pre></td></tr></table></figure></p>
+<p><a name="ihXbj"></a></p>
+<h4 id="3-crunchPngs"><a href="#3-crunchPngs" class="headerlink" title="3. crunchPngs"></a>3. crunchPngs</h4><p>在构建期间 aapt 会自动对 png 图片进行压缩处理，但这在开发环境下一般是没必要的，因此可以停用。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在AGP3.0.0以下</span></span><br><span class="line">aaptOptions &#123;</span><br><span class="line">    cruncherEnabled <span class="literal">false</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 从AGP3.0.0开始，buildType为debug时默认已经关闭，如果有自定义type，可增加如下</span></span><br><span class="line">crunchPngs <span class="literal">false</span></span><br></pre></td></tr></table></figure></p>
+<p><a name="qD6p1"></a></p>
+<h4 id="4-静态化"><a href="#4-静态化" class="headerlink" title="4. 静态化"></a>4. 静态化</h4><p>我们可能经常会将一些动态信息通过 app.gradle 配置写入到 manifest.xml 或 BuildConfig.java 文件中，例如绑定编译时间、git提交版本等，但是这些属性往往会触发全量构建，即使每次只是修改了一行项目内的代码。<br>因此在开发环境尽量避免这些行为，可以通过判断是否release来分别配置。</p>
+<p><a name="Cg74p"></a></p>
+<h3 id="Kotlin配置"><a href="#Kotlin配置" class="headerlink" title="Kotlin配置"></a>Kotlin配置</h3><p>现在很多项目都接入了Kotlin享受其带来的开发收益，但其编译速度却大受诟病，不过随着语言的迭代其编译速度也一直在优化。<br><a name="fHw0E"></a></p>
+<h4 id="from-1-2-21"><a href="#from-1-2-21" class="headerlink" title="from 1.2.21"></a>from 1.2.21</h4><p>从该版本开始，Kotlin的编译任务也支持了 buildCache 特性，所以在开启buildCache 的前提下直接 <strong>升级到最新版本</strong> 就能享受到期带来的收益。<br>另外即使开启了buildCache，注解处理器 kapt 的缓存默认也是禁用的，因此需要手动开启：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kapt &#123;</span><br><span class="line">    useBuildCache = <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><a name="1Afhv"></a></p>
+<h4 id="from-1-2-60"><a href="#from-1-2-60" class="headerlink" title="from 1.2.60"></a>from 1.2.60</h4><p>从该版本开始，对kapt利用gradle的work api实现并行任务处理进行了优化，开启方式如下：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在gradle.properties 中</span></span><br><span class="line">kapt.use.work.api=<span class="literal">true</span></span><br></pre></td></tr></table></figure></p>
+<p><a name="yDkil"></a></p>
+<h4 id="from-1-3-20"><a href="#from-1-3-20" class="headerlink" title="from 1.3.20"></a>from 1.3.20</h4><p>从该版本开始，针对kapt引用了 Compile Avoidance 特性来避免一些情况下的注解处理任务，具体<a href="https://docs.gradle.org/current/userguide/java_plugin.html#sec:java_compile_avoidance" target="_blank" rel="noopener">规则链接</a>。但前提是需要注解处理器显式地声明使用kapt处理，因此通过以下方式来禁止在编译路径下自动搜索注解处理器：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在gradle.properties 中</span></span><br><span class="line">kapt.include.compile.classpath=<span class="literal">false</span></span><br></pre></td></tr></table></figure></p>
+<p><a name="DFDXP"></a></p>
+<h4 id="from-1-3-30"><a href="#from-1-3-30" class="headerlink" title="from 1.3.30"></a>from 1.3.30</h4><p>从该版本开始，kapt支持增量注解处理，通过以下方式开启：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在gradle.properties 中</span></span><br><span class="line">kapt.incremental.apt=<span class="literal">true</span></span><br></pre></td></tr></table></figure></p>
+<p>截止目前（1.3.61），以上特性由于还处于实验阶段，因此需要手动开启，不过随着版本的更新优化还在继续，也许在今后的某些版本中就会修改为默认开启。</p>
+<p><a name="zdJ0N"></a></p>
+<h3 id="其它实践"><a href="#其它实践" class="headerlink" title="其它实践"></a>其它实践</h3><p><a name="mMkjy"></a></p>
+<h4 id="1-版本问题"><a href="#1-版本问题" class="headerlink" title="1. 版本问题"></a>1. 版本问题</h4><p>对于AS 和 AGP，除了新需求外新版本相对老版本一般都有性能方面的优化。</p>
+<ul>
+<li>例如老版的AS对于包含多个buildType和flavor配置的项目，每次sync都会将所有组合同步一遍（可以在build目录中看到所有组合的相关目录），非常耗时，而从AS3.3 + AGP3.3.0开始，在gradle文件发生变化时默认仅sync当前指定的flavor。</li>
+<li>又如AGP 3.5.0 和AS 3.5.0 实施了 Project Marble 计划，主要针对的就是对构建速度的优化。</li>
+</ul>
+<p>因此在没有严重BUG的情况下，保持开发环境为最新版本能得到最新的性能优化。</p>
+<p><a name="2bdjK"></a></p>
+<h4 id="2-精简module"><a href="#2-精简module" class="headerlink" title="2. 精简module"></a>2. 精简module</h4><p>每增加一个module（模块）都会引入对应的 初始化 和 配置 tasks，大量的模块会对整个构建时间产生不可忽略的影响。可以挨个审查项目中的模块，能移除的尽量移除；对于基本上不会变动的模块，可以考虑打包为aar形式的依赖，AGP的构建缓存机制可以对其进行<a href="https://developer.android.com/studio/build/build-cache#disable_build_cache" target="_blank" rel="noopener">缓存</a>以提升构建速度。</p>
+<p><a name="U4gZM"></a></p>
+<h4 id="3-三方库"><a href="#3-三方库" class="headerlink" title="3. 三方库"></a>3. 三方库</h4><p><a name="PLhUI"></a></p>
+<h5 id="Firebase-Crashlytics-Fabric"><a href="#Firebase-Crashlytics-Fabric" class="headerlink" title="Firebase Crashlytics (Fabric)"></a>Firebase Crashlytics (Fabric)</h5><p>Crashlytics是用于收集bug的sdk，在国内使用也相当普遍，但是以下注意点会对构建速度产生影响：<br>crashlytics 会在每次构建期间构造一个ID来标识唯一性，但该ID是存储在manifest中所以会导致全量构建，可以在 buildType 中使用  <code>ext.alwaysUpdateBuildId = false</code> 在开发期间关闭。</p>
+<p><a name="yTZ9k"></a></p>
+<h4 id="4-command-line"><a href="#4-command-line" class="headerlink" title="4. command-line"></a>4. command-line</h4><p>建议尽量通过命令行来执行构建任务。通过IDE形式开启构建会将任务的执行进度、状态以及日志等信息与UI进行同步，根据电脑配置的不同该方案对构建性能有一定的影响。</p>
+<p><a name="De0B6"></a></p>
+<h4 id="5-其它方案"><a href="#5-其它方案" class="headerlink" title="5. 其它方案"></a>5. 其它方案</h4><ul>
+<li><a href="https://github.com/alibaba/freeline" target="_blank" rel="noopener">freeline</a>：当年前东家的项目中集成使用过，在生效的基础上单从速度而言确实比当时的instant run快，可以缓解部分情况下的问题。但是由于增量条件严苛（例如需要建立app进程和电脑socket通信所以首次插上时得全量编译、资源变化也会降级为全量等等），再加上仍然存在BUG（例如显示生效了但app中并没有变化，此时只能全量重编）实际上不适合作为常规开发解决方案。</li>
+<li><a href="https://github.com/typ0520/fastdex" target="_blank" rel="noopener">fastdex</a></li>
+</ul>
+<p>虽然以上两种方式由于AGP的升级和一些其它限制导致事实上不再适用现在大部分项目，但其优化方案是值得学习和借鉴的。</p>
+<p><a name="dORSb"></a></p>
+<h3 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h3><p><strong><code>--profile</code></strong> 可以获取当次构建的结果报告，包含所有task的具体执行时间，可以以此分析可优化的点；生成的文件一般位于项目根路径下的 reports 目录下。<br><strong><code>--info</code></strong> 可以获得更详细的构建输出日志，例如其中就包含了一些task为什么被执行的原因。<br><strong><code>&gt;&gt; &lt;file path&gt;</code></strong> 构建过程的日志非常多，难以详细定位，可以通过该方式将日志输出到指定的文件中。</p>
+<p>针对某一项的优化措施需要排除其它因素干扰，可以通过以下方式获取全量构建：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">./gradlew clean</span><br><span class="line">./gradlew --stop</span><br><span class="line">./gradlew --profile --offline --no-build-cache --rerun-tasks assembleXXX</span><br></pre></td></tr></table></figure></p>
+<p>其中 <code>--rerun-tasks</code> 强制重新执行所有相关task并忽略任何task优化。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/performance/" rel="tag">#performance</a>
+          
+            <a href="/tags/gradle/" rel="tag">#gradle</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/01/20/r-resources-arsc/" rel="next" title="从R文件索引看资源优化">
+                <i class="fa fa-chevron-left"></i> 从R文件索引看资源优化
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="//schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/my_avatar.jpg"
+               alt="linjiang" />
+          <p class="site-author-name" itemprop="name">linjiang</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/whataa" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#gradle配置"><span class="nav-number">1.</span> <span class="nav-text">gradle配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-daemon"><span class="nav-number">1.1.</span> <span class="nav-text">1. daemon</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-parallel"><span class="nav-number">1.2.</span> <span class="nav-text">2. parallel</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-configure-on-demand"><span class="nav-number">1.3.</span> <span class="nav-text">3. configure on demand</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-offline"><span class="nav-number">1.4.</span> <span class="nav-text">4. offline</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-buildCache"><span class="nav-number">1.5.</span> <span class="nav-text">5. buildCache</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-jvmargs"><span class="nav-number">1.6.</span> <span class="nav-text">6. jvmargs</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AGP配置"><span class="nav-number">2.</span> <span class="nav-text">AGP配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-minSdkVersion-21"><span class="nav-number">2.1.</span> <span class="nav-text">1. minSdkVersion 21</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-resConfigs"><span class="nav-number">2.2.</span> <span class="nav-text">2. resConfigs</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-crunchPngs"><span class="nav-number">2.3.</span> <span class="nav-text">3. crunchPngs</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-静态化"><span class="nav-number">2.4.</span> <span class="nav-text">4. 静态化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Kotlin配置"><span class="nav-number">3.</span> <span class="nav-text">Kotlin配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#from-1-2-21"><span class="nav-number">3.1.</span> <span class="nav-text">from 1.2.21</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#from-1-2-60"><span class="nav-number">3.2.</span> <span class="nav-text">from 1.2.60</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#from-1-3-20"><span class="nav-number">3.3.</span> <span class="nav-text">from 1.3.20</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#from-1-3-30"><span class="nav-number">3.4.</span> <span class="nav-text">from 1.3.30</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#其它实践"><span class="nav-number">4.</span> <span class="nav-text">其它实践</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-版本问题"><span class="nav-number">4.1.</span> <span class="nav-text">1. 版本问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-精简module"><span class="nav-number">4.2.</span> <span class="nav-text">2. 精简module</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-三方库"><span class="nav-number">4.3.</span> <span class="nav-text">3. 三方库</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Firebase-Crashlytics-Fabric"><span class="nav-number">4.3.1.</span> <span class="nav-text">Firebase Crashlytics (Fabric)</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-command-line"><span class="nav-number">4.4.</span> <span class="nav-text">4. command-line</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-其它方案"><span class="nav-number">4.5.</span> <span class="nav-text">5. 其它方案</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#性能分析"><span class="nav-number">5.</span> <span class="nav-text">性能分析</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">linjiang</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<span id="busuanzi_container_site_pv">
+    &nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;总访问: <span id="busuanzi_value_site_pv"></span>次
+</span>
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.2"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.2"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'http-linjiang-tech';
+      var disqus_identifier = '2020/02/26/gradle-build/';
+      var disqus_title = "优化 Gradle 构建速度汇总";
+      var disqus_url = 'https://linjiang.tech/2020/02/26/gradle-build/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        var disqus_config = function () {
+            this.page.url = disqus_url;
+            this.page.identifier = disqus_identifier;
+            this.page.title = disqus_title;
+        };
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+</body>
+</html>
