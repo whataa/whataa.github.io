@@ -19,7 +19,7 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"linjiang.tech","root":"/","scheme":"Mist","version":"7.7.2","exturl":false,"sidebar":{"position":"right","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+    var CONFIG = {"hostname":"linjiang.tech","root":"/","scheme":"Mist","version":"7.7.2","exturl":false,"sidebar":{"position":"right","display":"remove","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
   <meta name="description" content="Paging Library的背景知识：Android中的分页加载SQLiteCursor存在的问题和限制。">
@@ -116,22 +116,12 @@
   <ul id="menu" class="menu">
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section">Archives</a>
-
-  </li>
-        <li class="menu-item menu-item-categories">
-
-    <a href="/categories/" rel="section">Categories</a>
-
-  </li>
-        <li class="menu-item menu-item-tags">
-
-    <a href="/tags/" rel="section">Tags</a>
+    <a href="/archives/" rel="section">ARCHIVES</a>
 
   </li>
         <li class="menu-item menu-item-about">
 
-    <a href="/about/" rel="section">About</a>
+    <a href="/about/" rel="section">ABOUT</a>
 
   </li>
         <li class="menu-item menu-item-rss">
@@ -141,7 +131,7 @@
   </li>
         <li class="menu-item menu-item-github">
 
-    <a href="https://github.com/whataa" rel="noopener" target="_blank">Github</a>
+    <a href="https://github.com/whataa" rel="noopener" target="_blank">GITHUB</a>
 
   </li>
   </ul>
@@ -191,18 +181,13 @@
 
         <div class="post-meta">
             <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
               
+              <span class="post-meta-item-text">Posted on</span>
 
-              <time title="Created: 2018-03-10 10:00:00 / Modified: 11:34:20" itemprop="dateCreated datePublished" datetime="2018-03-10T10:00:00+08:00">2018-03-10</time>
+              <time title="Created: 2018-03-10 10:00:00" itemprop="dateCreated datePublished" datetime="2018-03-10T10:00:00+08:00">2018-03-10</time>
             </span>
             <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
+              
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
@@ -360,81 +345,6 @@
 </script>
 
         </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
-
-  <aside class="sidebar">
-    <div class="sidebar-inner">
-
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          Table of Contents
-        </li>
-        <li class="sidebar-nav-overview">
-          Overview
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#SQLiteCursor-and-CursorAdapter"><span class="nav-number">1.</span> <span class="nav-text">SQLiteCursor and CursorAdapter</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Problems-with-paging-within-SQLiteCursor"><span class="nav-number">2.</span> <span class="nav-text">Problems with paging within SQLiteCursor</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-SQLiteCursor-doesn’t-hold-any-database-transaction-open"><span class="nav-number">2.1.</span> <span class="nav-text">1. SQLiteCursor doesn’t hold any database transaction open</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-SQLiteCursor-getCount-is-required-and-scans-entire-query"><span class="nav-number">2.2.</span> <span class="nav-text">2. SQLiteCursor.getCount() is required, and scans entire query</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-QLiteCursor-getCount-always-loads-the-first-window-of-rows"><span class="nav-number">2.3.</span> <span class="nav-text">3. QLiteCursor.getCount() always loads the first window of rows</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-SQLiteCursor-may-load-data-you-didn’t-ask-for"><span class="nav-number">2.4.</span> <span class="nav-text">4. SQLiteCursor may load data you didn’t ask for</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-SQLiteCursor-loading-position-can-be-unpredictable"><span class="nav-number">2.5.</span> <span class="nav-text">5. SQLiteCursor loading position can be unpredictable</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-Cursors-require-closure"><span class="nav-number">2.6.</span> <span class="nav-text">6. Cursors require closure</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-SQLiteCursor-does-not-know-data-has-changed"><span class="nav-number">2.7.</span> <span class="nav-text">7. SQLiteCursor does not know data has changed</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Avoiding-the-Problems"><span class="nav-number">3.</span> <span class="nav-text">Avoiding the Problems</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Android-Platform"><span class="nav-number">4.</span> <span class="nav-text">Android Platform</span></a></li></ol></div>
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">linjiang</p>
-  <div class="site-description" itemprop="description"></div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
-        
-          <span class="site-state-item-count">21</span>
-          <span class="site-state-item-name">posts</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-            <a href="/categories/">
-          
-        <span class="site-state-item-count">4</span>
-        <span class="site-state-item-name">categories</span></a>
-      </div>
-      <div class="site-state-item site-state-tags">
-            <a href="/tags/">
-          
-        <span class="site-state-item-count">19</span>
-        <span class="site-state-item-name">tags</span></a>
-      </div>
-  </nav>
-</div>
-  <div class="links-of-author motion-element">
-      <span class="links-of-author-item">
-        <a href="https://github.com/whataa" title="GitHub → https://github.com/whataa" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="mailto:linjiang.me@gmail.com" title="E-Mail → mailto:linjiang.me@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
-      </span>
-  </div>
-  <div class="cc-license motion-element" itemprop="license">
-    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
-  </div>
-
-
-
-      </div>
-
-    </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
-
-
       </div>
     </main>
 
@@ -449,7 +359,7 @@
   &copy; 2015 – 
   <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
-    <i class="fa fa-user"></i>
+    <i class="fa fa-"></i>
   </span>
   <span class="author" itemprop="copyrightHolder">linjiang</span>
 </div>

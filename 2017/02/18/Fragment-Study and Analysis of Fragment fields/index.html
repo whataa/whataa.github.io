@@ -19,7 +19,7 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"linjiang.tech","root":"/","scheme":"Mist","version":"7.7.2","exturl":false,"sidebar":{"position":"right","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+    var CONFIG = {"hostname":"linjiang.tech","root":"/","scheme":"Mist","version":"7.7.2","exturl":false,"sidebar":{"position":"right","display":"remove","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
   <meta name="description" content="Fragment、FragmentManager以及BackStackRecord是Fragment组件包中最主要的三个类，几乎包含了Fragment体系中所有的功能和知识点。从主流使用流程出发的源码分析对解决问题快速有效，但是一段时间后其中细节点可能就会慢慢的遗忘，只剩下一个感性的认知。本篇从字段入手，对这三个类的所有字段从含义、作用、使用方式以及所涉及的额外知识点几个方面的进行了详细的分析记录">
@@ -116,22 +116,12 @@
   <ul id="menu" class="menu">
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section">Archives</a>
-
-  </li>
-        <li class="menu-item menu-item-categories">
-
-    <a href="/categories/" rel="section">Categories</a>
-
-  </li>
-        <li class="menu-item menu-item-tags">
-
-    <a href="/tags/" rel="section">Tags</a>
+    <a href="/archives/" rel="section">ARCHIVES</a>
 
   </li>
         <li class="menu-item menu-item-about">
 
-    <a href="/about/" rel="section">About</a>
+    <a href="/about/" rel="section">ABOUT</a>
 
   </li>
         <li class="menu-item menu-item-rss">
@@ -141,7 +131,7 @@
   </li>
         <li class="menu-item menu-item-github">
 
-    <a href="https://github.com/whataa" rel="noopener" target="_blank">Github</a>
+    <a href="https://github.com/whataa" rel="noopener" target="_blank">GITHUB</a>
 
   </li>
   </ul>
@@ -191,24 +181,13 @@
 
         <div class="post-meta">
             <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
+              
               <span class="post-meta-item-text">Posted on</span>
 
               <time title="Created: 2017-02-18 10:00:00" itemprop="dateCreated datePublished" datetime="2017-02-18T10:00:00+08:00">2017-02-18</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2018-01-28 16:57:59" itemprop="dateModified" datetime="2018-01-28T16:57:59+08:00">2018-01-28</time>
-              </span>
             <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
+              
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
@@ -674,81 +653,6 @@
 </script>
 
         </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
-
-  <aside class="sidebar">
-    <div class="sidebar-inner">
-
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          Table of Contents
-        </li>
-        <li class="sidebar-nav-overview">
-          Overview
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#起因"><span class="nav-number">1.</span> <span class="nav-text">起因</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Fragment"><span class="nav-number"></span> <span class="nav-text">Fragment</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#mAnimatingAway-amp-amp-mStateAfterAnimating"><span class="nav-number">1.</span> <span class="nav-text">mAnimatingAway &amp;&amp; mStateAfterAnimating</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mIndex"><span class="nav-number">2.</span> <span class="nav-text">mIndex</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mWho"><span class="nav-number">3.</span> <span class="nav-text">mWho</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mArguments"><span class="nav-number">4.</span> <span class="nav-text">mArguments</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mTarget-amp-amp-mTargetIndex-amp-amp-mTargetRequestCode"><span class="nav-number">5.</span> <span class="nav-text">mTarget &amp;&amp; mTargetIndex &amp;&amp; mTargetRequestCode</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mAdded"><span class="nav-number">6.</span> <span class="nav-text">mAdded</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mRemoving"><span class="nav-number">7.</span> <span class="nav-text">mRemoving</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mFromLayout"><span class="nav-number">8.</span> <span class="nav-text">mFromLayout</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mInLayout"><span class="nav-number">9.</span> <span class="nav-text">mInLayout</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么需要阻止？"><span class="nav-number">9.1.</span> <span class="nav-text">为什么需要阻止？</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mRestored"><span class="nav-number">10.</span> <span class="nav-text">mRestored</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mBackStackNesting"><span class="nav-number">11.</span> <span class="nav-text">mBackStackNesting</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mFragmentManager"><span class="nav-number">12.</span> <span class="nav-text">mFragmentManager</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mHost"><span class="nav-number">13.</span> <span class="nav-text">mHost</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mChildFragmentManager"><span class="nav-number">14.</span> <span class="nav-text">mChildFragmentManager</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mChildNonConfig"><span class="nav-number">15.</span> <span class="nav-text">mChildNonConfig</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mParentFragment"><span class="nav-number">16.</span> <span class="nav-text">mParentFragment</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mFragmentId"><span class="nav-number">17.</span> <span class="nav-text">mFragmentId</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mContainerId"><span class="nav-number">18.</span> <span class="nav-text">mContainerId</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mTag"><span class="nav-number">19.</span> <span class="nav-text">mTag</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mHidden"><span class="nav-number">20.</span> <span class="nav-text">mHidden</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mDetached"><span class="nav-number">21.</span> <span class="nav-text">mDetached</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mRetainInstance-amp-amp-mRetaining"><span class="nav-number">22.</span> <span class="nav-text">mRetainInstance &amp;&amp; mRetaining</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mHasMenu-amp-amp-mMenuVisible"><span class="nav-number">23.</span> <span class="nav-text">mHasMenu &amp;&amp; mMenuVisible</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#原理"><span class="nav-number">23.1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#附：OptionMenu的使用方法"><span class="nav-number">23.2.</span> <span class="nav-text">附：OptionMenu的使用方法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mNextAnim"><span class="nav-number">24.</span> <span class="nav-text">mNextAnim</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#联系"><span class="nav-number">24.1.</span> <span class="nav-text">联系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#区别"><span class="nav-number">24.2.</span> <span class="nav-text">区别</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mContainer"><span class="nav-number">25.</span> <span class="nav-text">mContainer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#结论"><span class="nav-number">25.1.</span> <span class="nav-text">结论</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mView"><span class="nav-number">26.</span> <span class="nav-text">mView</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mInnerView"><span class="nav-number">27.</span> <span class="nav-text">mInnerView</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mDeferStart-amp-amp-mUserVisibleHint"><span class="nav-number">28.</span> <span class="nav-text">mDeferStart &amp;&amp; mUserVisibleHint</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#方式1：调用setUserVisibleHint"><span class="nav-number">28.1.</span> <span class="nav-text">方式1：调用setUserVisibleHint</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#方式2：loader未开始-或-加载完成-销毁时"><span class="nav-number">28.2.</span> <span class="nav-text">方式2：loader未开始 或 加载完成/销毁时</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#方式3：相关事务的执行完毕时"><span class="nav-number">28.3.</span> <span class="nav-text">方式3：相关事务的执行完毕时</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#方式4：Fragment-pop返回栈时"><span class="nav-number">28.4.</span> <span class="nav-text">方式4：Fragment pop返回栈时</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#xxTransitionxx"><span class="nav-number">29.</span> <span class="nav-text">xxTransitionxx</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#参考"><span class="nav-number">29.1.</span> <span class="nav-text">参考</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FragmentManager"><span class="nav-number"></span> <span class="nav-text">FragmentManager</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#mPendingActions"><span class="nav-number">1.</span> <span class="nav-text">mPendingActions</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#原理-1"><span class="nav-number">1.1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#存在的意义"><span class="nav-number">1.2.</span> <span class="nav-text">存在的意义</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mTmpActions"><span class="nav-number">2.</span> <span class="nav-text">mTmpActions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mExecutingActions"><span class="nav-number">3.</span> <span class="nav-text">mExecutingActions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mActive"><span class="nav-number">4.</span> <span class="nav-text">mActive</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mAdded-1"><span class="nav-number">5.</span> <span class="nav-text">mAdded</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mAvailIndices"><span class="nav-number">6.</span> <span class="nav-text">mAvailIndices</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mBackStack"><span class="nav-number">7.</span> <span class="nav-text">mBackStack</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mCreatedMenus"><span class="nav-number">8.</span> <span class="nav-text">mCreatedMenus</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mBackStackIndices"><span class="nav-number">9.</span> <span class="nav-text">mBackStackIndices</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mAvailBackStackIndices"><span class="nav-number">10.</span> <span class="nav-text">mAvailBackStackIndices</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#集合中的ID的来源"><span class="nav-number">10.1.</span> <span class="nav-text">集合中的ID的来源</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#可用ID是如何被使用的"><span class="nav-number">10.2.</span> <span class="nav-text">可用ID是如何被使用的</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#该链表的意义"><span class="nav-number">10.3.</span> <span class="nav-text">该链表的意义</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mBackStackChangeListeners"><span class="nav-number">11.</span> <span class="nav-text">mBackStackChangeListeners</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mCurState"><span class="nav-number">12.</span> <span class="nav-text">mCurState</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mHost-1"><span class="nav-number">13.</span> <span class="nav-text">mHost</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mController"><span class="nav-number">14.</span> <span class="nav-text">mController</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mContainer-1"><span class="nav-number">15.</span> <span class="nav-text">mContainer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mParent"><span class="nav-number">16.</span> <span class="nav-text">mParent</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#sAnimationListenerField"><span class="nav-number">17.</span> <span class="nav-text">sAnimationListenerField</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mNeedMenuInvalidate"><span class="nav-number">18.</span> <span class="nav-text">mNeedMenuInvalidate</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mStateSaved"><span class="nav-number">19.</span> <span class="nav-text">mStateSaved</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mDestroyed"><span class="nav-number">20.</span> <span class="nav-text">mDestroyed</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mNoTransactionsBecause"><span class="nav-number">21.</span> <span class="nav-text">mNoTransactionsBecause</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mHavePendingDeferredStart"><span class="nav-number">22.</span> <span class="nav-text">mHavePendingDeferredStart</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mStateBundle"><span class="nav-number">23.</span> <span class="nav-text">mStateBundle</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mStateArray"><span class="nav-number">24.</span> <span class="nav-text">mStateArray</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mExecCommit"><span class="nav-number">25.</span> <span class="nav-text">mExecCommit</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BackStackRecord"><span class="nav-number"></span> <span class="nav-text">BackStackRecord</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Op"><span class="nav-number">1.</span> <span class="nav-text">Op</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mHead-amp-amp-mTail-amp-amp-mNumOp"><span class="nav-number">2.</span> <span class="nav-text">mHead &amp;&amp; mTail &amp;&amp; mNumOp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#xxxAnim"><span class="nav-number">3.</span> <span class="nav-text">xxxAnim</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mTransition-amp-amp-mTransitionStyle"><span class="nav-number">4.</span> <span class="nav-text">mTransition &amp;&amp; mTransitionStyle</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mAddToBackStack"><span class="nav-number">5.</span> <span class="nav-text">mAddToBackStack</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mAllowAddToBackStack"><span class="nav-number">6.</span> <span class="nav-text">mAllowAddToBackStack</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mName"><span class="nav-number">7.</span> <span class="nav-text">mName</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mCommitted"><span class="nav-number">8.</span> <span class="nav-text">mCommitted</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mIndex-1"><span class="nav-number">9.</span> <span class="nav-text">mIndex</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#xxxBreadCrumbxxx"><span class="nav-number">10.</span> <span class="nav-text">xxxBreadCrumbxxx</span></a></li></ol></div>
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">linjiang</p>
-  <div class="site-description" itemprop="description"></div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
-        
-          <span class="site-state-item-count">21</span>
-          <span class="site-state-item-name">posts</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-            <a href="/categories/">
-          
-        <span class="site-state-item-count">4</span>
-        <span class="site-state-item-name">categories</span></a>
-      </div>
-      <div class="site-state-item site-state-tags">
-            <a href="/tags/">
-          
-        <span class="site-state-item-count">19</span>
-        <span class="site-state-item-name">tags</span></a>
-      </div>
-  </nav>
-</div>
-  <div class="links-of-author motion-element">
-      <span class="links-of-author-item">
-        <a href="https://github.com/whataa" title="GitHub → https://github.com/whataa" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="mailto:linjiang.me@gmail.com" title="E-Mail → mailto:linjiang.me@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
-      </span>
-  </div>
-  <div class="cc-license motion-element" itemprop="license">
-    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
-  </div>
-
-
-
-      </div>
-
-    </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
-
-
       </div>
     </main>
 
@@ -763,7 +667,7 @@
   &copy; 2015 – 
   <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
-    <i class="fa fa-user"></i>
+    <i class="fa fa-"></i>
   </span>
   <span class="author" itemprop="copyrightHolder">linjiang</span>
 </div>

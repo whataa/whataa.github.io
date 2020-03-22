@@ -19,7 +19,7 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"linjiang.tech","root":"/","scheme":"Mist","version":"7.7.2","exturl":false,"sidebar":{"position":"right","display":"hide","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+    var CONFIG = {"hostname":"linjiang.tech","root":"/","scheme":"Mist","version":"7.7.2","exturl":false,"sidebar":{"position":"right","display":"remove","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
   <meta name="description" content="文章如同标题所述主要分为两部分，前半部分主要是一个流程和Touch相关知识点的概述，期间罗列了一些常见例子帮助分析，差不多都是点到为止，后半部分则是在实际开发中，对手势处理的一些很容易被忽视的细节点，当然并不是说不了解这些细节点就无法进行自定义处理逻辑，但是掌握有助于理清处理手势的一些步骤，因此从整体而言，本篇也算是一篇不错的初学者入门篇。">
@@ -116,22 +116,12 @@
   <ul id="menu" class="menu">
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section">Archives</a>
-
-  </li>
-        <li class="menu-item menu-item-categories">
-
-    <a href="/categories/" rel="section">Categories</a>
-
-  </li>
-        <li class="menu-item menu-item-tags">
-
-    <a href="/tags/" rel="section">Tags</a>
+    <a href="/archives/" rel="section">ARCHIVES</a>
 
   </li>
         <li class="menu-item menu-item-about">
 
-    <a href="/about/" rel="section">About</a>
+    <a href="/about/" rel="section">ABOUT</a>
 
   </li>
         <li class="menu-item menu-item-rss">
@@ -141,7 +131,7 @@
   </li>
         <li class="menu-item menu-item-github">
 
-    <a href="https://github.com/whataa" rel="noopener" target="_blank">Github</a>
+    <a href="https://github.com/whataa" rel="noopener" target="_blank">GITHUB</a>
 
   </li>
   </ul>
@@ -191,24 +181,13 @@
 
         <div class="post-meta">
             <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
+              
               <span class="post-meta-item-text">Posted on</span>
 
               <time title="Created: 2017-03-27 10:00:00" itemprop="dateCreated datePublished" datetime="2017-03-27T10:00:00+08:00">2017-03-27</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2018-01-28 16:57:59" itemprop="dateModified" datetime="2018-01-28T16:57:59+08:00">2018-01-28</time>
-              </span>
             <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
+              
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
@@ -411,81 +390,6 @@
 </script>
 
         </div>
-          
-  
-  <div class="toggle sidebar-toggle">
-    <span class="toggle-line toggle-line-first"></span>
-    <span class="toggle-line toggle-line-middle"></span>
-    <span class="toggle-line toggle-line-last"></span>
-  </div>
-
-  <aside class="sidebar">
-    <div class="sidebar-inner">
-
-      <ul class="sidebar-nav motion-element">
-        <li class="sidebar-nav-toc">
-          Table of Contents
-        </li>
-        <li class="sidebar-nav-overview">
-          Overview
-        </li>
-      </ul>
-
-      <!--noindex-->
-      <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#MotionEvent"><span class="nav-number">1.</span> <span class="nav-text">MotionEvent</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事件的传递流程"><span class="nav-number">2.</span> <span class="nav-text">事件的传递流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事件的分发：dispatchTouchEvent"><span class="nav-number">3.</span> <span class="nav-text">事件的分发：dispatchTouchEvent()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事件的拦截：onInterceptTouchEvent"><span class="nav-number">4.</span> <span class="nav-text">事件的拦截：onInterceptTouchEvent()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事件的屏蔽：requestDisallowTouchIntercept"><span class="nav-number">5.</span> <span class="nav-text">事件的屏蔽：requestDisallowTouchIntercept()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事件处理的重写"><span class="nav-number">6.</span> <span class="nav-text">事件处理的重写</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事件的一些检测常量：ViewConfiguration"><span class="nav-number">7.</span> <span class="nav-text">事件的一些检测常量：ViewConfiguration</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#touchSlop"><span class="nav-number">7.1.</span> <span class="nav-text">touchSlop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Fling"><span class="nav-number">7.2.</span> <span class="nav-text">Fling</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#scaledPagingTouchSlop"><span class="nav-number">7.3.</span> <span class="nav-text">scaledPagingTouchSlop</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#多点触摸事件"><span class="nav-number">8.</span> <span class="nav-text">多点触摸事件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事件的混合"><span class="nav-number">9.</span> <span class="nav-text">事件的混合</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#触摸代理"><span class="nav-number">10.</span> <span class="nav-text">触摸代理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事件自定义处理的重要细节"><span class="nav-number">11.</span> <span class="nav-text">事件自定义处理的重要细节</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#事件的传递方向"><span class="nav-number">11.1.</span> <span class="nav-text">事件的传递方向</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#onTouch相关方法的返回值的具体意义"><span class="nav-number">11.2.</span> <span class="nav-text">onTouch相关方法的返回值的具体意义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#从onTouch相关方法看，拦截事件的时机点的不同对流向自己的事件的影响"><span class="nav-number">11.3.</span> <span class="nav-text">从onTouch相关方法看，拦截事件的时机点的不同对流向自己的事件的影响</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#从拦截方法看，拦截前后流向自己的事件的变化"><span class="nav-number">11.4.</span> <span class="nav-text">从拦截方法看，拦截前后流向自己的事件的变化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#禁止parent拦截事件的方法的正确使用方式"><span class="nav-number">11.5.</span> <span class="nav-text">禁止parent拦截事件的方法的正确使用方式</span></a></li></ol></li></ol></div>
-      </div>
-      <!--/noindex-->
-
-      <div class="site-overview-wrap sidebar-panel">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">linjiang</p>
-  <div class="site-description" itemprop="description"></div>
-</div>
-<div class="site-state-wrap motion-element">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
-        
-          <span class="site-state-item-count">21</span>
-          <span class="site-state-item-name">posts</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-            <a href="/categories/">
-          
-        <span class="site-state-item-count">4</span>
-        <span class="site-state-item-name">categories</span></a>
-      </div>
-      <div class="site-state-item site-state-tags">
-            <a href="/tags/">
-          
-        <span class="site-state-item-count">19</span>
-        <span class="site-state-item-name">tags</span></a>
-      </div>
-  </nav>
-</div>
-  <div class="links-of-author motion-element">
-      <span class="links-of-author-item">
-        <a href="https://github.com/whataa" title="GitHub → https://github.com/whataa" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="mailto:linjiang.me@gmail.com" title="E-Mail → mailto:linjiang.me@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
-      </span>
-  </div>
-  <div class="cc-license motion-element" itemprop="license">
-    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
-  </div>
-
-
-
-      </div>
-
-    </div>
-  </aside>
-  <div id="sidebar-dimmer"></div>
-
-
       </div>
     </main>
 
@@ -500,7 +404,7 @@
   &copy; 2015 – 
   <span itemprop="copyrightYear">2020</span>
   <span class="with-love">
-    <i class="fa fa-user"></i>
+    <i class="fa fa-"></i>
   </span>
   <span class="author" itemprop="copyrightHolder">linjiang</span>
 </div>
