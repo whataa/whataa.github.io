@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://linjiang.tech/2020/04/08/kotlin-delegate-with-proxy/</loc>
+    
+    <lastmod>2020-04-08T02:58:48.288Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://linjiang.tech/2020/04/01/kotlin-nullable-infered/</loc>
     
     <lastmod>2020-04-01T09:03:20.133Z</lastmod>
