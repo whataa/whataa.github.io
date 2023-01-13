@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    
+
+<meta charset="utf-8" >
+
+<title>从R文件索引看资源优化</title>
+<meta name="keywords" content="从R文件索引看资源优化, linjiang&#39;s blog">
+<meta name="description" content="包体积的优化是一个老生常谈的话题，除了官方文档的最佳实践，社区也探索出了一系列优化方案，例如效果显著的微信AndResGuard，对资源索引表和资源路径进行了缩减，可让原本已经优化过的apk再立减好几M；又例如针对特定场景优化的booster，其中对R文件的处理可以进一步减少class文件冗余。不管哪种，都建立在R字段对资源的索引基础之上，本文就来简单阐述其具体过程和优化方案。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" href="/style/main.css">
+
+
+<link rel="stylesheet" href="/style/jquery.fancybox.min.css">
+
+
+
+
+
+
+
+  <meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="linjiang's blog" type="application/atom+xml">
+</head>
+  <body>
+    <div id="app" class="main">
+
+<div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://linjiang.tech">
+        <img class="avatar" src="/images/avatar.png" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://linjiang.tech">
+        <h1 class="site-title">linjiang&#39;s blog</h1>
+      </a>
+    </div>
+    <div class="right">
+        <i class="icon menu-switch icon-menu-outline" ></i>
+    </div>
+  </div>
+</div>
+
+<div class="menu-container" style="height: 0;opacity: 0;">
+<nav class="menu-list">
+  
+    
+      <a href="/" class="menu purple-link">
+        HOME
+      </a>
+    
+  
+    
+      <a href="/tips" class="menu purple-link">
+        TIPS
+      </a>
+    
+  
+    
+      <a href="/archives" class="menu purple-link">
+        ARCHIVES
+      </a>
+    
+  
+    
+      <a href="/about" class="menu purple-link">
+        ABOUT ME
+      </a>
+    
+  
+</nav>
+</div>
+
+
+
+  <div class="content-container">
+    <div class="post-detail">
+      
+      <h2 class="post-title">从R文件索引看资源优化</h2>
+      <div class="post-info post-detail-info">
+        <span><i class="icon icon-calendar-outline"></i> 2020-01-20</span>
+        
+          <span>
+          <i class="icon icon-pricetags-outline"></i>
+            
+              <a href="/tags/%E8%B5%84%E6%BA%90%E4%BC%98%E5%8C%96/">
+              资源优化
+                
+              </a>
+            
+          </span>
+        
+      </div>
+      <div class="post-content-wrapper">
+        <div class="post-content">
+          <p>包体积的优化是一个老生常谈的话题，除了官方文档的最佳实践，社区也探索出了一系列优化方案，例如效果显著的微信 AndResGuard，对资源索引表和资源路径进行了缩减，可让原本已经优化过的 apk 再立减好几 M；又例如针对特定场景优化的 booster，其中对 R 文件的处理可以进一步减少 class 文件冗余。不管哪种，都建立在 R 字段对资源的索引基础之上，本文就来简单阐述其具体过程和优化方案。</p>
+<p>在开发过程中，对于资源文件，我们只需要将其放入 res 下相应目录便可以在代码中通过引用 R 类中自动生成的相应字段来获取对应的资源，从使用角度而言非常简单方便，也就是说，R 文件用于为每个资源提供了一个全局独一无二的 ID 以供索引，而 R 文件具体是如何生成的则依赖 AAPT。</p>
+<p>一般项目中都会包含多个模块（这里及以下都特指<code>com.android.library</code>），对于存在资源文件的模块 AAPT 会根据资源类型为其生成对应包名下的 R 文件，这样模块中就可以直接使用 R 类了，但这里就会有个棘手的问题，每个模块中的资源 ID 默认都是从 <code>0x7f+resTypeId+0001</code> 开始的，那么不同模块中的不同资源不出意外很可能会被分配相同的 ID，需要明白的是，我们使用 R.xx.xxx 时是通过其 ID 而不是这个字段名去引用资源，因此若不处理就会导致资源冲突的问题。为了解决该问题，AAPT 的逻辑是将 ID 的最终分配延迟到编译的打包期间，因此开发过程中 app 之外的模块生成的 R.java 中的字段都被声明为了非 final 类型，具体的 ID 此时并不重要，仅仅是为了能在开发中正常使用 R.xx.xxx 的形式引用资源，当执行编译时，R.java 中的这些字段由于是非常量类型所以并不会被内联为具体 ID 值，并且编译后的 R.class 也会被丢弃，这是为了以最终确定的 ID 为准，具体的形式就是重新为这些模块生成相应包名下包含最终 ID 的 R.class，当然由于 app 模块引用了这些模块因此所有 ID 也会体现到 app 模块下的 R.class 中。<br />从该流程可以看到，不管是 R 字段还是 R 文件本身都存在可优化的地方，分别如下：</p>
+<ul>
+<li>对于其余模块的 R.xx.xx 形式的代码调用，虽然在最终 ID 确定之前无法被内联，但是在确定后其实仍然是可以被优化为相应常量的；</li>
+<li>由于为了采用最终的 ID 在构建初期删除了其余模块下的 R.class，因此在确定 ID 后为了防止运行无法找到相应 R 类又为相应模块生成了一份对应包下的 R.class，如果把其余模块对 R 的引用内联，那么这些 R.class 就非常冗余了，因为 app 模块已经有一份包含了所有最终 ID 的 R.class。（如果项目本身不存在通过反射 R 获取 ID 的情况，app 模块下的这份 R.class 也是可以删除的）</li>
+</ul>
+<p>当然，R 文件仅仅只是得到的资源对应的 ID，ID 如何索引到具体资源文件则是通过  <code>resources.arsc</code> 来实现的。resources.arsc 也是 AAPT 的产物之一，本质上是一张映射表，包含了从 <code>ID &lt;---&gt; name &lt;---&gt; value</code> 的映射关系，其中如果资源是文件则 value 表示的就是打包后 res 文件夹下中对应的文件路径，那么获取资源文件其实就是为了得到这个 value，从中我们也可以了解到 Android 资源获取的流程：R 文件是 ID 和字段名的映射、resources.arsc 是 ID &lt;—&gt; name &lt;—&gt; res.path 的映射，所以资源获取有两条路径，一是代码中通过 R.class 字段名得到资源 ID，然后在 resources.arsc 中通过 ID 得到资源在 res 中的路径；二是通过 getIdentifier 方法传入 name 直接在 resources.arsc 映射表中得到资源的路径。<br />从 resources.arsc 文件的组成和资源获取的方式不难发现，resources.arsc 也存在优化的空间：</p>
+<ul>
+<li>不管是通过 ID 还是 name 获取资源时，res 目录对于开发者而言是透明的，那么我们完全可以缩短资源路径，只要保证 resources.arsc 中存放的资源路径和 res 中实际的文件位置能够对应上即可，例如将形如 res/drawable/avatar.png 的路径压缩为 a/b/avatar.png 的形式，这样存放在 resources.arsc 的 path 所占用的空间将大大减少；</li>
+<li>对于除了反射（getIdentifier）的资源外，resources.arsc 中保存的 name 其实并不重要，因为 ID 可以直接映射到资源的路径，所以可以将资源 name 缩短以减少 resources.arsc 的大小，并且由于 name 并没有和 path 中的 name 产生关联，所有还可以将其修改为同一个 string 以减小常量池。</li>
+</ul>
+<p>至此整个资源索引流程结束，可以通过下图来总结资源索引和优化的关系：</p>
+<p><img src="https://raw.githubusercontent.com/whataa/PicsRepo/master/r_resources_raw.png" alt="r_resources"></p>
+
+        </div>
+        <div class="top-div">
+          
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="next-post">
+        <a class="purple-link" href="/2019/12/25/leakcanary/">
+          <h3 class="post-title">
+            下一篇：LeakCanary2.0解析
+          </h3>
+        </a>
+      </div>
+    
+  </div>
+
+
+
+
+<footer>
+<div class="site-footer">
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/whataa" target="_blank">
+          <i class="icon icon-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  
+  
+  
+  
+  
+  
+</div>
+</footer>
+
+
+      </div>
+      
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery.fancybox.min.js"></script>
+
+
+
+    <script>window.is_post = true;</script>
+
+
+<script src="/js/main.js"></script>
+
+
+
+
+
+    </div>
+  </body>
+</html>
+

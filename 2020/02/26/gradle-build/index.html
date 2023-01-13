@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    
+
+<meta charset="utf-8" >
+
+<title>优化 Gradle 构建速度汇总</title>
+<meta name="keywords" content="优化 Gradle 构建速度汇总, linjiang&#39;s blog">
+<meta name="description" content="本文罗列了目前社区中常规的 gradle 构建速度优化方案，作为开发的参考。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" href="/style/main.css">
+
+
+<link rel="stylesheet" href="/style/jquery.fancybox.min.css">
+
+
+
+
+
+
+
+  <meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="linjiang's blog" type="application/atom+xml">
+</head>
+  <body>
+    <div id="app" class="main">
+
+<div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://linjiang.tech">
+        <img class="avatar" src="/images/avatar.png" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://linjiang.tech">
+        <h1 class="site-title">linjiang&#39;s blog</h1>
+      </a>
+    </div>
+    <div class="right">
+        <i class="icon menu-switch icon-menu-outline" ></i>
+    </div>
+  </div>
+</div>
+
+<div class="menu-container" style="height: 0;opacity: 0;">
+<nav class="menu-list">
+  
+    
+      <a href="/" class="menu purple-link">
+        HOME
+      </a>
+    
+  
+    
+      <a href="/tips" class="menu purple-link">
+        TIPS
+      </a>
+    
+  
+    
+      <a href="/archives" class="menu purple-link">
+        ARCHIVES
+      </a>
+    
+  
+    
+      <a href="/about" class="menu purple-link">
+        ABOUT ME
+      </a>
+    
+  
+</nav>
+</div>
+
+
+
+  <div class="content-container">
+    <div class="post-detail">
+      
+      <h2 class="post-title">优化 Gradle 构建速度汇总</h2>
+      <div class="post-info post-detail-info">
+        <span><i class="icon icon-calendar-outline"></i> 2020-02-26</span>
+        
+          <span>
+          <i class="icon icon-pricetags-outline"></i>
+            
+              <a href="/tags/performance/">
+              performance
+                
+                  ，
+                
+              </a>
+            
+              <a href="/tags/gradle/">
+              gradle
+                
+              </a>
+            
+          </span>
+        
+      </div>
+      <div class="post-content-wrapper">
+        <div class="post-content">
+          <p>本文罗列了目前社区中常规的 gradle 构建速度优化方案，作为开发的参考。<br>更新于：2020-2-26</p>
+<p><a name="2hPkS"></a></p>
+<h3 id="gradle配置"><a href="#gradle配置" class="headerlink" title="gradle配置"></a>gradle配置</h3><p><a name="WQV9Q"></a></p>
+<h4 id="1-daemon"><a href="#1-daemon" class="headerlink" title="1. daemon"></a>1. daemon</h4><p>无需每次执行构建相关任务时都重新启动一个新的gradle进程，从而增加了相应的非必要耗时。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在项目的gradle.properties 增加 </span></span><br><span class="line">org.gradle.daemon=<span class="literal">true</span> </span><br><span class="line"><span class="comment">// 或通过命令行传递参数 </span></span><br><span class="line">./gradlew --daemon</span><br></pre></td></tr></table></figure><br>如果在长时间多次编译后速度变得缓慢，可以通过 <code>./gradlew --stop</code> 结束已有daemon进程。</p>
+<p><a name="6dQcW"></a></p>
+<h4 id="2-parallel"><a href="#2-parallel" class="headerlink" title="2. parallel"></a>2. parallel</h4><p>基本上大部分项目都包含了多个module，gradle默认情况下是串行执行的，可以通过以下方式开启并行构建，可以加入参数 –profile 在生成的html中看到total build time 和 task execution的时间差异。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在项目的gradle.properties 增加 </span></span><br><span class="line">org.gradle.parallel=<span class="literal">true</span> </span><br><span class="line"><span class="comment">// 或通过命令行传递参数 </span></span><br><span class="line">./gradlew --parallel</span><br></pre></td></tr></table></figure></p>
+<p><a name="32cGr"></a></p>
+<h4 id="3-configure-on-demand"><a href="#3-configure-on-demand" class="headerlink" title="3. configure on demand"></a>3. configure on demand</h4><p>gradle的构建包含初始化、配置、执行三大流程，CoD用于配置阶段，仅配置与所选任务相关的module。<br />例如module-A compile module-B，则B会被配置；或者task-A dependOn module-B‘s task 则B也会被配置。</p>
+<blockquote>
+<p>但是我们大部分情况是在IDE中执行的 <code>sync</code> 触发了配置所有module，因此CoD并没起什么作用。Gradle团队也决定废弃它，并计划通过一个新的模式来替代：<a target="_blank" rel="noopener" href="https://github.com/gradle/gradle/issues/2868#issuecomment-384373780">issue</a></p>
+</blockquote>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在项目的gradle.properties 增加 </span></span><br><span class="line">org.gradle.configureondemand=<span class="literal">true</span> </span><br><span class="line"><span class="comment">// 或通过命令行传递参数 </span></span><br><span class="line">./gradlew --configure-on-demand</span><br></pre></td></tr></table></figure>
+<p><a name="NAwuA"></a></p>
+<h4 id="4-offline"><a href="#4-offline" class="headerlink" title="4. offline"></a>4. offline</h4><p>每次构建都会去下载本地缓存没有的依赖或检查缓存已有依赖是否存在最新版本，另外一些三方插件在构建期间也会发起网络请求，例如一些会上传匿名统计信息、一些会上传混淆的mapping文件等等。但是由于国内糟糕的网络环境，网络经常超时重试占用大量构建时间。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 在IDE中的gradle panel里 toggle offline mode</span></span><br><span class="line"><span class="comment">// 2. 或通过命令行传递参数 </span></span><br><span class="line">./gradlew --offline</span><br></pre></td></tr></table></figure></p>
+<p><a name="vd2pN"></a></p>
+<h4 id="5-buildCache"><a href="#5-buildCache" class="headerlink" title="5. buildCache"></a>5. buildCache</h4><p>gradle的构建缓存机制 会缓存构建的输出（build-in 和 符合的三方task），并以输入作为参数生成唯一的key生成对应的缓存文件，这样在后续的构建过程中如果输入没有变化就可以直接利用这些缓存加快构建速度。<br /><strong>特别是clean之后重新构建时，实测有无缓存的时间相差将近 2/3 </strong>。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在项目的gradle.properties 增加 </span></span><br><span class="line">org.gradle.caching=<span class="literal">true</span> </span><br><span class="line"><span class="comment">// 或通过命令行传递参数 </span></span><br><span class="line">./gradlew --build-cache</span><br><span class="line"><span class="comment">// 如果在开启了caching，想临时测试关闭构建缓存的执行效果</span></span><br><span class="line">./gradlew --no-build-cache</span><br></pre></td></tr></table></figure></p>
+<p>生成的缓存默认存储在 <code>&lt;user-home&gt;/.android/build-cache/</code> 可以通过以下方式进行修改或删除：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 修改位置：</span></span><br><span class="line"><span class="comment">// 在setting.gradle中增加</span></span><br><span class="line">buildCache &#123;</span><br><span class="line">    local &#123;</span><br><span class="line">        directory = new File(rootDir, <span class="string">&#x27;build-cache&#x27;</span>)</span><br><span class="line">        removeUnusedEntriesAfterDays = <span class="number">30</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 2. 删除构建缓存：</span></span><br><span class="line">./gradlew cleanBuildCache</span><br></pre></td></tr></table></figure></p>
+<p>与增量编译（incremental build）机制一个很明显的区别就是在构建的输出日志中，增量编译的task之后显示的是 <code>UP-TO-DATE</code> ，而构建缓存显示的是 <code>FROM-CACHE</code> 。</p>
+<p><a name="BoMOz"></a></p>
+<h4 id="6-jvmargs"><a href="#6-jvmargs" class="headerlink" title="6. jvmargs"></a>6. jvmargs</h4><p>由于构建所处的进程也是一个JVM，因此通常Java开发对JVM的调优参数也适用此构建进程，可以根据自身电脑的配置传递合适的jvm参数：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在项目的gradle.properties 增加 </span></span><br><span class="line">org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-<span class="number">8</span></span><br></pre></td></tr></table></figure></p>
+<p><a name="coFgH"></a></p>
+<h3 id="AGP配置"><a href="#AGP配置" class="headerlink" title="AGP配置"></a>AGP配置</h3><p><a name="69wTG"></a></p>
+<h4 id="1-minSdkVersion-21"><a href="#1-minSdkVersion-21" class="headerlink" title="1. minSdkVersion 21"></a>1. minSdkVersion 21</h4><p>64K问题导致针对5.0以下的设备需要通过multiDex方案来兼容，构建期间在拆分dex的同时还需要 花费一些时间 来决定哪些class需要放入primary dex以避免启动发生Crash。而从5.0开始虽然构建期间依然会拆分dex，但由于应用在安装时这些dex会被优化为一个 <code>.oat</code> 文件，也就无需再区分primary dex。<br />因此如果当前调试的设备版本&gt;=5.0，完全可以仅在debug下将 <code>minSdkVersion</code> 指定为 <strong>21</strong> 来避免前述的耗时。</p>
+<p><a name="ADwtE"></a></p>
+<h4 id="2-resConfigs"><a href="#2-resConfigs" class="headerlink" title="2. resConfigs"></a>2. resConfigs</h4><p>除非是针对不同语言或特定设备显示效果的特定测试，一般情况下我们开发环境仅包含一套资源即可，尽量减少aapt的编译耗时。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在app.gradle中的 defaultConfig 或特定 flavor 中</span></span><br><span class="line">resConfigs <span class="string">&quot;en&quot;</span>, <span class="string">&quot;xxhdpi&quot;</span></span><br></pre></td></tr></table></figure></p>
+<p><a name="ihXbj"></a></p>
+<h4 id="3-crunchPngs"><a href="#3-crunchPngs" class="headerlink" title="3. crunchPngs"></a>3. crunchPngs</h4><p>在构建期间 aapt 会自动对 png 图片进行压缩处理，但这在开发环境下一般是没必要的，因此可以停用。<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在AGP3.0.0以下</span></span><br><span class="line">aaptOptions &#123;</span><br><span class="line">    cruncherEnabled <span class="literal">false</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 从AGP3.0.0开始，buildType为debug时默认已经关闭，如果有自定义type，可增加如下</span></span><br><span class="line">crunchPngs <span class="literal">false</span></span><br></pre></td></tr></table></figure></p>
+<p><a name="qD6p1"></a></p>
+<h4 id="4-静态化"><a href="#4-静态化" class="headerlink" title="4. 静态化"></a>4. 静态化</h4><p>我们可能经常会将一些动态信息通过 app.gradle 配置写入到 manifest.xml 或 BuildConfig.java 文件中，例如绑定编译时间、git提交版本等，但是这些属性往往会触发全量构建，即使每次只是修改了一行项目内的代码。<br />因此在开发环境尽量避免这些行为，可以通过判断是否release来分别配置。</p>
+<p><a name="Cg74p"></a></p>
+<h3 id="Kotlin配置"><a href="#Kotlin配置" class="headerlink" title="Kotlin配置"></a>Kotlin配置</h3><p>现在很多项目都接入了Kotlin享受其带来的开发收益，但其编译速度却大受诟病，不过随着语言的迭代其编译速度也一直在优化。<br><a name="fHw0E"></a></p>
+<h4 id="from-1-2-21"><a href="#from-1-2-21" class="headerlink" title="from 1.2.21"></a>from 1.2.21</h4><p>从该版本开始，Kotlin的编译任务也支持了 buildCache 特性，所以在开启buildCache 的前提下直接 <strong>升级到最新版本</strong> 就能享受到期带来的收益。<br />另外即使开启了buildCache，注解处理器 kapt 的缓存默认也是禁用的，因此需要手动开启：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kapt &#123;</span><br><span class="line">    useBuildCache = <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><a name="1Afhv"></a></p>
+<h4 id="from-1-2-60"><a href="#from-1-2-60" class="headerlink" title="from 1.2.60"></a>from 1.2.60</h4><p>从该版本开始，对kapt利用gradle的work api实现并行任务处理进行了优化，开启方式如下：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在gradle.properties 中</span></span><br><span class="line">kapt.use.work.api=<span class="literal">true</span></span><br></pre></td></tr></table></figure></p>
+<p><a name="yDkil"></a></p>
+<h4 id="from-1-3-20"><a href="#from-1-3-20" class="headerlink" title="from 1.3.20"></a>from 1.3.20</h4><p>从该版本开始，针对kapt引用了 Compile Avoidance 特性来避免一些情况下的注解处理任务，具体<a target="_blank" rel="noopener" href="https://docs.gradle.org/current/userguide/java_plugin.html#sec:java_compile_avoidance">规则链接</a>。但前提是需要注解处理器显式地声明使用kapt处理，因此通过以下方式来禁止在编译路径下自动搜索注解处理器：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在gradle.properties 中</span></span><br><span class="line">kapt.include.compile.classpath=<span class="literal">false</span></span><br></pre></td></tr></table></figure></p>
+<p><a name="DFDXP"></a></p>
+<h4 id="from-1-3-30"><a href="#from-1-3-30" class="headerlink" title="from 1.3.30"></a>from 1.3.30</h4><p>从该版本开始，kapt支持增量注解处理，通过以下方式开启：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在gradle.properties 中</span></span><br><span class="line">kapt.incremental.apt=<span class="literal">true</span></span><br></pre></td></tr></table></figure></p>
+<p>截止目前（1.3.61），以上特性由于还处于实验阶段，因此需要手动开启，不过随着版本的更新优化还在继续，也许在今后的某些版本中就会修改为默认开启。</p>
+<p><a name="zdJ0N"></a></p>
+<h3 id="其它实践"><a href="#其它实践" class="headerlink" title="其它实践"></a>其它实践</h3><p><a name="mMkjy"></a></p>
+<h4 id="1-版本问题"><a href="#1-版本问题" class="headerlink" title="1. 版本问题"></a>1. 版本问题</h4><p>对于AS 和 AGP，除了新需求外新版本相对老版本一般都有性能方面的优化。</p>
+<ul>
+<li>例如老版的AS对于包含多个buildType和flavor配置的项目，每次sync都会将所有组合同步一遍（可以在build目录中看到所有组合的相关目录），非常耗时，而从AS3.3 + AGP3.3.0开始，在gradle文件发生变化时默认仅sync当前指定的flavor。</li>
+<li>又如AGP 3.5.0 和AS 3.5.0 实施了 Project Marble 计划，主要针对的就是对构建速度的优化。</li>
+</ul>
+<p>因此在没有严重BUG的情况下，保持开发环境为最新版本能得到最新的性能优化。</p>
+<p><a name="2bdjK"></a></p>
+<h4 id="2-精简module"><a href="#2-精简module" class="headerlink" title="2. 精简module"></a>2. 精简module</h4><p>每增加一个module（模块）都会引入对应的 初始化 和 配置 tasks，大量的模块会对整个构建时间产生不可忽略的影响。可以挨个审查项目中的模块，能移除的尽量移除；对于基本上不会变动的模块，可以考虑打包为aar形式的依赖，AGP的构建缓存机制可以对其进行<a target="_blank" rel="noopener" href="https://developer.android.com/studio/build/build-cache#disable_build_cache">缓存</a>以提升构建速度。</p>
+<p><a name="U4gZM"></a></p>
+<h4 id="3-三方库"><a href="#3-三方库" class="headerlink" title="3. 三方库"></a>3. 三方库</h4><p><a name="PLhUI"></a></p>
+<h5 id="Firebase-Crashlytics-Fabric"><a href="#Firebase-Crashlytics-Fabric" class="headerlink" title="Firebase Crashlytics (Fabric)"></a>Firebase Crashlytics (Fabric)</h5><p>Crashlytics是用于收集bug的sdk，在国内使用也相当普遍，但是以下注意点会对构建速度产生影响：<br />crashlytics 会在每次构建期间构造一个ID来标识唯一性，但该ID是存储在manifest中所以会导致全量构建，可以在 buildType 中使用  <code>ext.alwaysUpdateBuildId = false</code> 在开发期间关闭。</p>
+<p><a name="yTZ9k"></a></p>
+<h4 id="4-command-line"><a href="#4-command-line" class="headerlink" title="4. command-line"></a>4. command-line</h4><p>建议尽量通过命令行来执行构建任务。通过IDE形式开启构建会将任务的执行进度、状态以及日志等信息与UI进行同步，根据电脑配置的不同该方案对构建性能有一定的影响。</p>
+<p><a name="De0B6"></a></p>
+<h4 id="5-其它方案"><a href="#5-其它方案" class="headerlink" title="5. 其它方案"></a>5. 其它方案</h4><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/alibaba/freeline">freeline</a>：当年前东家的项目中集成使用过，在生效的基础上单从速度而言确实比当时的instant run快，可以缓解部分情况下的问题。但是由于增量条件严苛（例如需要建立app进程和电脑socket通信所以首次插上时得全量编译、资源变化也会降级为全量等等），再加上仍然存在BUG（例如显示生效了但app中并没有变化，此时只能全量重编）实际上不适合作为常规开发解决方案。</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/typ0520/fastdex">fastdex</a></li>
+</ul>
+<p>虽然以上两种方式由于AGP的升级和一些其它限制导致事实上不再适用现在大部分项目，但其优化方案是值得学习和借鉴的。</p>
+<p><a name="dORSb"></a></p>
+<h3 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h3><p><strong><code>--profile</code></strong> 可以获取当次构建的结果报告，包含所有task的具体执行时间，可以以此分析可优化的点；生成的文件一般位于项目根路径下的 reports 目录下。<br /><strong><code>--info</code></strong> 可以获得更详细的构建输出日志，例如其中就包含了一些task为什么被执行的原因。<br /><strong><code>&gt;&gt; &lt;file path&gt;</code></strong> 构建过程的日志非常多，难以详细定位，可以通过该方式将日志输出到指定的文件中。</p>
+<p>针对某一项的优化措施需要排除其它因素干扰，可以通过以下方式获取全量构建：<br><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">./gradlew clean</span><br><span class="line">./gradlew --stop</span><br><span class="line">./gradlew --profile --offline --no-build-cache --rerun-tasks assembleXXX</span><br></pre></td></tr></table></figure><br>其中 <code>--rerun-tasks</code> 强制重新执行所有相关task并忽略任何task优化。</p>
+
+        </div>
+        <div class="top-div">
+          <ol class="top-box"><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#gradle%E9%85%8D%E7%BD%AE"><span class="top-box-text">gradle配置</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#AGP%E9%85%8D%E7%BD%AE"><span class="top-box-text">AGP配置</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#Kotlin%E9%85%8D%E7%BD%AE"><span class="top-box-text">Kotlin配置</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#%E5%85%B6%E5%AE%83%E5%AE%9E%E8%B7%B5"><span class="top-box-text">其它实践</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90"><span class="top-box-text">性能分析</span></a></li></ol>
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="next-post">
+        <a class="purple-link" href="/2020/01/20/r-resources-arsc/">
+          <h3 class="post-title">
+            下一篇：从R文件索引看资源优化
+          </h3>
+        </a>
+      </div>
+    
+  </div>
+
+
+
+
+<footer>
+<div class="site-footer">
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/whataa" target="_blank">
+          <i class="icon icon-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  
+  
+  
+  
+  
+  
+</div>
+</footer>
+
+
+      </div>
+      
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery.fancybox.min.js"></script>
+
+
+
+    <script>window.is_post = true;</script>
+
+
+<script src="/js/main.js"></script>
+
+
+
+
+
+    </div>
+  </body>
+</html>
+

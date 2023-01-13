@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    
+
+<meta charset="utf-8" >
+
+<title>一种巧妙的drawable.xml替代方案-效果篇</title>
+<meta name="keywords" content="一种巧妙的drawable.xml替代方案-效果篇, linjiang&#39;s blog">
+<meta name="description" content="本篇接上一篇，以演示代码和效果呈现。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" href="/style/main.css">
+
+
+<link rel="stylesheet" href="/style/jquery.fancybox.min.css">
+
+
+
+
+
+
+
+  <meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="linjiang's blog" type="application/atom+xml">
+</head>
+  <body>
+    <div id="app" class="main">
+
+<div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://linjiang.tech">
+        <img class="avatar" src="/images/avatar.png" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://linjiang.tech">
+        <h1 class="site-title">linjiang&#39;s blog</h1>
+      </a>
+    </div>
+    <div class="right">
+        <i class="icon menu-switch icon-menu-outline" ></i>
+    </div>
+  </div>
+</div>
+
+<div class="menu-container" style="height: 0;opacity: 0;">
+<nav class="menu-list">
+  
+    
+      <a href="/" class="menu purple-link">
+        HOME
+      </a>
+    
+  
+    
+      <a href="/tips" class="menu purple-link">
+        TIPS
+      </a>
+    
+  
+    
+      <a href="/archives" class="menu purple-link">
+        ARCHIVES
+      </a>
+    
+  
+    
+      <a href="/about" class="menu purple-link">
+        ABOUT ME
+      </a>
+    
+  
+</nav>
+</div>
+
+
+
+  <div class="content-container">
+    <div class="post-detail">
+      
+      <h2 class="post-title">一种巧妙的drawable.xml替代方案-效果篇</h2>
+      <div class="post-info post-detail-info">
+        <span><i class="icon icon-calendar-outline"></i> 2018-09-08</span>
+        
+          <span>
+          <i class="icon icon-pricetags-outline"></i>
+            
+              <a href="/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/">
+              开源项目
+                
+              </a>
+            
+          </span>
+        
+      </div>
+      <div class="post-content-wrapper">
+        <div class="post-content">
+          <blockquote>
+<p>接上一原理篇：<a href="http://linjiang.tech/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88/">一种巧妙的drawable.xml替代方案</a></p>
+</blockquote>
+<p>在上一篇文章中，我们详细了解到了一种利用DataBinding来替代drawable.xml的方案，但是并没有任何真正的演示代码和效果来呈现，本篇就是此目的。</p>
+<p>本文将以上一篇方案所对应的库<code>NoDrawable</code>来演示，具体的用法请点击链接 <a target="_blank" rel="noopener" href="https://github.com/whataa/noDrawable">https://github.com/whataa/noDrawable</a> 查看。以大部分App中都有的登录页为例，以下为设计图：</p>
+<p><img src="https://note.youdao.com/yws/api/personal/file/WEB47eb0205a805ab3c719e4ec0eaf4b643?method=download&amp;shareKey=f2797e4084769c4dd0fd558c1ac87378" alt="image"></p>
+<p>这是一张很常见（正常）的设计图，但是从实现角度来看，按照传统方式，我们至少得新建8个drawable.xml资源文件（没想到吧）：</p>
+<ol>
+<li>整体背景的渐变色；</li>
+<li>输入框的普通状态背景和选中状态背景；</li>
+<li>登录按钮的背景；</li>
+<li>“第三方登录”左右两边的“尾翼”资源，各一个（没办法，即使小，还是得做啊）；</li>
+<li>微信和QQ的按钮各一个（不同的按压效果）；</li>
+</ol>
+<p>可以看出来，仅一张设计图就新建了8个文件，那项目中的其它页面呢？即使按照规范将文件名起得整整齐齐的，保不齐下一次圆角大小变了、同样的圆角单背景色变了…枯燥无味吧。</p>
+<p>现在我们直接用<code>NoDrawable</code>来试试到底能不能达到一个drawable文件都不用创建的效果。</p>
+<blockquote>
+<p>为节约篇幅，以下演示片段均展示与drawable相关的属性，其余省略</p>
+</blockquote>
+<h3 id="1-整体背景的渐变色"><a href="#1-整体背景的渐变色" class="headerlink" title="1. 整体背景的渐变色"></a>1. 整体背景的渐变色</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;android.support.constraint.ConstraintLayout </span><br><span class="line">    drawable_endColor=&quot;@&#123;0xff3e91ee&#125;&quot;</span><br><span class="line">    drawable_orientation=&quot;@&#123;@integer/orientation_bottom_top&#125;&quot;</span><br><span class="line">    drawable_startColor=&quot;@&#123;0xff02144e&#125;&quot;</span><br><span class="line">    ...</span><br><span class="line">    &gt;</span><br></pre></td></tr></table></figure>
+<h3 id="2-输入框状态"><a href="#2-输入框状态" class="headerlink" title="2. 输入框状态"></a>2. 输入框状态</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;EditText</span><br><span class="line">    drawable_focused_strokeColor=&quot;@&#123;@color/color_green&#125;&quot;</span><br><span class="line">    drawable_focused_strokeDash=&quot;@&#123;4&#125;&quot;</span><br><span class="line">    drawable_focused_strokeDashGap=&quot;@&#123;4&#125;&quot;</span><br><span class="line">    drawable_focused_strokeWidth=&quot;@&#123;2&#125;&quot;</span><br><span class="line">    drawable_focused_marginLeft=&quot;@&#123;-3&#125;&quot;</span><br><span class="line">    drawable_focused_marginTop=&quot;@&#123;-3&#125;&quot;</span><br><span class="line">    drawable_focused_marginRight=&quot;@&#123;-3&#125;&quot;</span><br><span class="line">    drawable_radius=&quot;@&#123;21&#125;&quot;</span><br><span class="line">    drawable_solidColor=&quot;@&#123;0x7fffffff&#125;&quot;</span><br><span class="line">    ...</span><br><span class="line">    /&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="3-登录按钮的背景"><a href="#3-登录按钮的背景" class="headerlink" title="3. 登录按钮的背景"></a>3. 登录按钮的背景</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;Button</span><br><span class="line">    drawable_radius=&quot;@&#123;21&#125;&quot;</span><br><span class="line">    drawable_solidColor=&quot;@&#123;0xff818385&#125;&quot;</span><br><span class="line">    drawable_enabled_radius=&quot;@&#123;21&#125;&quot;</span><br><span class="line">    drawable_enabled_solidColor=&quot;@&#123;0xff59c8d8&#125;&quot;</span><br><span class="line">    ...</span><br><span class="line">    /&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="4-“第三方登录”左右两边的“尾翼”"><a href="#4-“第三方登录”左右两边的“尾翼”" class="headerlink" title="4. “第三方登录”左右两边的“尾翼”"></a>4. “第三方登录”左右两边的“尾翼”</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;View</span><br><span class="line">    drawable_endColor=&quot;@&#123;0x00000000&#125;&quot;</span><br><span class="line">    drawable_orientation=&quot;@&#123;@integer/orientation_right_left&#125;&quot;</span><br><span class="line">    drawable_startColor=&quot;@&#123;0xffffffff&#125;&quot;</span><br><span class="line">    ...</span><br><span class="line">    /&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="5-微信按钮按压效果"><a href="#5-微信按钮按压效果" class="headerlink" title="5. 微信按钮按压效果"></a>5. 微信按钮按压效果</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;ImageView</span><br><span class="line">    drawable_pressed_shapeMode=&quot;@&#123;@integer/shapeMode_oval&#125;&quot;</span><br><span class="line">    drawable_pressed_solidColor=&quot;@&#123;0xff54B536&#125;&quot;</span><br><span class="line">    drawable_shapeMode=&quot;@&#123;1&#125;&quot;</span><br><span class="line">    drawable_solidColor=&quot;@&#123;0xffDCDFE8&#125;&quot;</span><br><span class="line">    ...</span><br><span class="line">    /&gt;</span><br></pre></td></tr></table></figure>
+<p>结合 <a target="_blank" rel="noopener" href="https://github.com/whataa/noDrawable">NoDrawable</a> 的属性文档，不知大家是否可以理解到位。根据上述代码片段，我们可以总结到该方案的两大特性：</p>
+<ol>
+<li>高可读性</li>
+</ol>
+<p>直接在布局中的View标签声明drawable属性，对View最终效果一目了然；</p>
+<ol>
+<li>适配任意View</li>
+</ol>
+<p>像使用View自身的属性一样，作用于任何View；</p>
+<p>效果图就不贴了，和设计图一模一样。大家如果有具体需求，可直接到<code>NoDrawable</code>仓库地址查看，其demo包含本文完整的代码及效果预览，最后，感谢阅读。</p>
+
+        </div>
+        <div class="top-div">
+          <ol class="top-box"><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#1-%E6%95%B4%E4%BD%93%E8%83%8C%E6%99%AF%E7%9A%84%E6%B8%90%E5%8F%98%E8%89%B2"><span class="top-box-text">1. 整体背景的渐变色</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#2-%E8%BE%93%E5%85%A5%E6%A1%86%E7%8A%B6%E6%80%81"><span class="top-box-text">2. 输入框状态</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#3-%E7%99%BB%E5%BD%95%E6%8C%89%E9%92%AE%E7%9A%84%E8%83%8C%E6%99%AF"><span class="top-box-text">3. 登录按钮的背景</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#4-%E2%80%9C%E7%AC%AC%E4%B8%89%E6%96%B9%E7%99%BB%E5%BD%95%E2%80%9D%E5%B7%A6%E5%8F%B3%E4%B8%A4%E8%BE%B9%E7%9A%84%E2%80%9C%E5%B0%BE%E7%BF%BC%E2%80%9D"><span class="top-box-text">4. “第三方登录”左右两边的“尾翼”</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#5-%E5%BE%AE%E4%BF%A1%E6%8C%89%E9%92%AE%E6%8C%89%E5%8E%8B%E6%95%88%E6%9E%9C"><span class="top-box-text">5. 微信按钮按压效果</span></a></li></ol>
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="next-post">
+        <a class="purple-link" href="/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88/">
+          <h3 class="post-title">
+            下一篇：一种巧妙的drawable.xml替代方案
+          </h3>
+        </a>
+      </div>
+    
+  </div>
+
+
+
+
+<footer>
+<div class="site-footer">
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/whataa" target="_blank">
+          <i class="icon icon-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  
+  
+  
+  
+  
+  
+</div>
+</footer>
+
+
+      </div>
+      
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery.fancybox.min.js"></script>
+
+
+
+    <script>window.is_post = true;</script>
+
+
+<script src="/js/main.js"></script>
+
+
+
+
+
+    </div>
+  </body>
+</html>
+

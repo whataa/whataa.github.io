@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    
+
+<meta charset="utf-8" >
+
+<title>LeakCanary2.0解析</title>
+<meta name="keywords" content="LeakCanary2.0解析, linjiang&#39;s blog">
+<meta name="description" content="LeakCanary是square公司开源的内存泄漏检测工具，近期发布了2.0正式版，并带来了全新的内存分析工具shark，本文旨在梳理其整个工作流程。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" href="/style/main.css">
+
+
+<link rel="stylesheet" href="/style/jquery.fancybox.min.css">
+
+
+
+
+
+
+
+  <meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="linjiang's blog" type="application/atom+xml">
+</head>
+  <body>
+    <div id="app" class="main">
+
+<div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://linjiang.tech">
+        <img class="avatar" src="/images/avatar.png" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://linjiang.tech">
+        <h1 class="site-title">linjiang&#39;s blog</h1>
+      </a>
+    </div>
+    <div class="right">
+        <i class="icon menu-switch icon-menu-outline" ></i>
+    </div>
+  </div>
+</div>
+
+<div class="menu-container" style="height: 0;opacity: 0;">
+<nav class="menu-list">
+  
+    
+      <a href="/" class="menu purple-link">
+        HOME
+      </a>
+    
+  
+    
+      <a href="/tips" class="menu purple-link">
+        TIPS
+      </a>
+    
+  
+    
+      <a href="/archives" class="menu purple-link">
+        ARCHIVES
+      </a>
+    
+  
+    
+      <a href="/about" class="menu purple-link">
+        ABOUT ME
+      </a>
+    
+  
+</nav>
+</div>
+
+
+
+  <div class="content-container">
+    <div class="post-detail">
+      
+      <h2 class="post-title">LeakCanary2.0解析</h2>
+      <div class="post-info post-detail-info">
+        <span><i class="icon icon-calendar-outline"></i> 2019-12-25</span>
+        
+          <span>
+          <i class="icon icon-pricetags-outline"></i>
+            
+              <a href="/tags/performance/">
+              performance
+                
+              </a>
+            
+          </span>
+        
+      </div>
+      <div class="post-content-wrapper">
+        <div class="post-content">
+          <blockquote>
+<p>本文涉及的源码基于LeakCanary2.0：<a target="_blank" rel="noopener" href="https://github.com/square/leakcanary">https://github.com/square/leakcanary</a></p>
+</blockquote>
+<p>LeakCanary是square公司开源的内存泄漏检测工具，近期发布了2.0正式版，并带来了全新的内存分析工具shark，本文旨在梳理其整个工作流程。</p>
+<p><a name="elDTD"></a></p>
+<h3 id="注册监听"><a href="#注册监听" class="headerlink" title="注册监听"></a>注册监听</h3><p>LeakCanary利用了ContentProvider的随进程启动实例化的特性实现无感知初始化。整个初始化流程位于 <code>InternalAppWatcher</code> 的install方法：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">install</span><span class="params">(application: <span class="type">Application</span>)</span></span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    ActivityDestroyWatcher.install(application, objectWatcher, configProvider)</span><br><span class="line">    FragmentDestroyWatcher.install(application, objectWatcher, configProvider)</span><br><span class="line">    onAppWatcherInstalled(application)</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到主要分为注册监听和通知回调两个步骤。注册监听的目的是为了能实时感知关键对象的销毁时机，以进一步检测对象是否发生泄漏。对于Android应用，Activity和Fragment无外乎是交互最为频繁的组件了，因此这里通过两个对应的watcher向其注册了生命周期回调。</p>
+<p>注册监听的逻辑分为两部分，对于Activity，Application本身就对其生命周期变化提供了标准的回调接口，但对Fragment而言就稍显复杂了些，Fragment本身存在多个版本：集成于SDK的标准组件 / support包 / androidX，且早期版本并未提供Fragment的生命周期回调接口，因此FragmentDestroyWatcher包含了诸多兼容性处理实现了对位于Android O及其以上、support版本（&gt;=25.1.0）以及AndroidX版本的Fragment的监控能力，最后依据Fragment依赖Activity的特性，在Activity的onCreate回调中通过FragmentManager的registerActivityLifecycleCallbacks方法对上述各种Fragment统一注册回调。这样每当组件销毁时，组件对象便会被放入<code>objectWatcher</code> 的观察集合，objectWatcher用于初步判断对象是否发生泄漏，具体实现稍后再谈。</p>
+<p>完成注册后，接下来继续剩余的初始化流程。 <code>InternalLeakCanary</code> 类实现了 (Application) -&gt; Unit 接口并在InternalAppWatcher的构造方法中被反射注册为<code>onAppWatcherInstalled</code> 对象，以接收初始化通知，InternalLeakCanary的初始化逻辑如下：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">invoke</span><span class="params">(application: <span class="type">Application</span>)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 注册监听对象可能泄漏的消息</span></span><br><span class="line">    AppWatcher.objectWatcher.addOnObjectRetainedListener(<span class="keyword">this</span>)</span><br><span class="line">	...</span><br><span class="line">    <span class="comment">// 实例化核心类，</span></span><br><span class="line">    heapDumpTrigger = HeapDumpTrigger(</span><br><span class="line">        application, backgroundHandler, AppWatcher.objectWatcher, gcTrigger, heapDumper,</span><br><span class="line">        configProvider</span><br><span class="line">    )</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 添加Shortcut快捷入口</span></span><br><span class="line">    addDynamicShortcut(application)</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>InternalLeakCanary的职责主要是接收来自objectWatcher的 “存在尚未销毁的对象” 的消息并驱动<code>HeapDumpTrigger</code> 进行堆转储（dump heap），分析内存快照并发布最终的结果（当然这里并非就是立即堆转储，后面再说）。这里有一个疑惑：既然都知道了哪个对象未销毁，为什么还要堆转储进一步分析？其实这和objectWatcher的实现有关。</p>
+<p><a name="wbEUS"></a></p>
+<h3 id="判断泄漏"><a href="#判断泄漏" class="headerlink" title="判断泄漏"></a>判断泄漏</h3><p>objectWatcher具体方案是利用弱引用 <code>WeakReference</code> 的特性来实现的，我们知道软引用 <code>SoftReference</code> 、弱引用以及虚引用 <code>PhantomReference</code> 可以关联一个引用队列 <code>ReferenceQueue</code> ，当引用reference的对象referent确定将被回收时，该reference会先被放入到所关联的queue中，因此可以利用该特性来确定对象最终是否被回收。</p>
+<blockquote>
+<p>选用弱引用而不是虚引用的原因：排除必须等到内存将满时才被回收的软引用，对于虚引用，reference在被加入到关联的queue时，reference内部所持有的referent并不会被置为null，因此需要手动调用clear()方法。</p>
+</blockquote>
+<p>对于销毁的组件，如果能正常入队就表示确被回收反之可初步认为发生了泄漏。但是GC机制是主动的，因此对象什么时候被回收是无法确定的，LeakCanary采取了默认等待5s再判断所watch的对象是否被回收的方案来获得一个可能结果，虽然是一个佛系数字，但正常的GC运行还是使得在给定的时间内大部分情况下对象都得到了回收，有效减少了堆转储的必要，毕竟是一个耗费资源和影响体验的操作：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">val</span> checkRetainedExecutor = Executor &#123;<span class="comment">// 主线程post一个5s延迟消息</span></span><br><span class="line">    mainHandler.postDelayed(it, AppWatcher.config.watchDurationMillis)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// ObjectWatcher</span></span><br><span class="line"><span class="meta">@Synchronized</span> <span class="function"><span class="keyword">fun</span> <span class="title">watch</span><span class="params">(watchedObject: <span class="type">Any</span>, name: <span class="type">String</span>)</span></span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">val</span> key = UUID.randomUUID().toString()</span><br><span class="line">    <span class="keyword">val</span> reference = KeyedWeakReference(watchedObject, key, name, watchUptimeMillis, queue)</span><br><span class="line">    watchedObjects[key] = reference</span><br><span class="line">    checkRetainedExecutor.execute &#123;<span class="comment">// postDelayed</span></span><br><span class="line">        moveToRetained(key)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上述片段可以看到，<code>watchedObjects</code>存放的就是被观察的对象引用。每watch一个对象，就会在5s后再通过<code>moveToRetained</code> 检测一遍是否被回收，其具体逻辑就是遍历引用队列queue，将其中的reference（若存在）依次从watchedObjects中移除，最后看看watchedObjects中是否还存在该对象引用，如果存在就表示该对象有可能无法被回收。但GC的时机毕竟无法预知，假如某个对象在第6s的时候才被回收，也就是说，objectWatcher得出的 “存在尚未销毁的对象”只是一个初步结果，还不能完全确定这些对象是否能够真正被回收。</p>
+<p>回到InternalLeakCanary，对于这些尚未被回收的对象，转交给HeapDumpTrigger做进一步判定。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">checkRetainedObjects</span><span class="params">(reason: <span class="type">String</span>)</span></span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">if</span> (retainedReferenceCount &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        gcTrigger.runGc() <span class="comment">// 0: 内部Runtime.getRuntime().gc()并Thread.sleep(100)</span></span><br><span class="line">        retainedReferenceCount = objectWatcher.retainedObjectCount</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (checkRetainedCount(retainedReferenceCount, config.retainedVisibleThreshold)) <span class="keyword">return</span></span><br><span class="line">	... <span class="comment">// 1</span></span><br><span class="line">    <span class="keyword">val</span> heapDumpFile = heapDumper.dumpHeap()</span><br><span class="line">    ... <span class="comment">// 2</span></span><br><span class="line">    HeapAnalyzerService.runAnalysis(application, heapDumpFile)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可见HeapDumpTrigger并不急着立即触发dump堆内存并分析堆转储文件，而是先尝试触发一次GC，虽然GC无法手动执行；并且也因为GC无法手动执行，所以触发后先等待一小段时间（默认100ms），当然我们的前提是假定虚拟机收到消息后会尽快执行GC，这样在小段时间之后我们再通过<code>checkRetainedCount</code>检查引用集合中是否仍然存在活着的对象就可以判断是否有对象无法被回收。</p>
+<p>checkRetainedCount除了判断存活的对象个数是否为0外，还通过指定的阈值（默认5）个数来限制短时间内反复触发后续的dump heap，例如一个Activity+N个Fragment，当Activity被关闭时，假使Activity确实无法释放，那么短时间内每个组件对象最后都会依次触发dump heap导致生成多个hprof文件。</p>
+<p>由此可见，这一次的判断虽然可以进一步排除“假”泄漏对象，但依然不是完全确定的，GC毕竟无法人为控制，我们前面只是基于假设GC在触发后立即得到了执行，到此只能祭出最后的杀手锏了。</p>
+<p>接下来继续后面的流程，在上述片段注释1处开始dump出内存快照，<code>dumpHeap()</code> 内部很简单，就是弹出toast并调用系统接口 <code>Debug.dumpHprofData</code> 生成堆转储<code>hprof</code>文件。生成的文件接下来交给注释2出的<code>HeapAnalyzerService</code>来执行分析。HeapAnalyzerService是一个前台IntentService（可配置到其它进程以降低对主进程的影响），为分析堆转储文件提供运行环境，其内部逻辑简单明了，就是调用<code>HeapAnalyzer</code>执行分析并得到分析结果，然后通过<code>OnHeapAnalyzedListener</code>回调。HeapAnalyzer位于Shark模块，我们先来看看shark是什么。</p>
+<p><a name="Od9bI"></a></p>
+<h3 id="shark"><a href="#shark" class="headerlink" title="shark"></a>shark</h3><p>此前LeakCanary用于分析hprof的工具依次包括HAHA、HAHA2以及perflib。shark是square团队开发的一款全新的分析hprof文件的工具，其官方宣布比Android Studio用于memory profiler的核心库<code>perflib</code> 要快8倍并且内存占用少10倍，更加适合手机端的分析工具。其目的就是提供快速解析hprof文件和分析快照的能力，并找出真正的泄漏对象以及对象到GcRoot的最短引用路径链，以便帮助开发者更加直观的找出泄漏的真正原因。</p>
+<blockquote>
+<p>由此可知，先前初步分析得到的泄漏对象与这里的堆分析和得到的真正泄漏对象并没有依赖关系，先前的初步分析仅仅只是一个触发堆转储和分析操作的过滤。</p>
+</blockquote>
+<p>hprof文件的标准协议主要由head和body组成，head包含一些元信息，例如文件协议的版本、开始的时间戳等。body则是由一系列不同类型的Record组成，Record主要用于描述trace、object（实例 / 数组 / 类 / …）、thread等信息，依次分为4个部分：TAG、TIMESTAMP、LENGTH、BODY，其中TAG就是表示Record类型，LENGTH用于指示BODY的长度。Record之间依次排列或嵌套，最终组成hprof文件。</p>
+<p>在Shark库的设计中，<code>Hprof</code>类就是用于描述从内存中dump出的<code>.hprof</code>文件；密封类<code>HprofRecord</code>的各个子类一一对应上述协议中的各种Record；真正的解析则由<code>HprofReader</code>实现，核心方法为<code>readHprofRecords</code>()：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">readHprofRecords</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    recordTypes: <span class="type">Set</span>&lt;<span class="type">KClass</span>&lt;<span class="type">out</span> <span class="type">HprofRecord</span>&gt;&gt;, <span class="comment">// 关心的record类型</span></span></span></span><br><span class="line"><span class="params"><span class="function">    listener: <span class="type">OnHprofRecordListener</span> <span class="comment">// 回传解析得到的record映射对象</span></span></span></span><br><span class="line"><span class="params"><span class="function">  )</span></span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">while</span> (!exhausted()) &#123; <span class="comment">// 循环读取标签，直至结束</span></span><br><span class="line">	  ...</span><br><span class="line">      <span class="keyword">when</span> (tag) &#123;</span><br><span class="line">          STRING_IN_UTF8 -&gt; &#123;...&#125;</span><br><span class="line">          ...</span><br><span class="line">          HEAP_DUMP, HEAP_DUMP_SEGMENT -&gt; &#123;</span><br><span class="line">              <span class="keyword">val</span> heapDumpTag = readUnsignedByte()</span><br><span class="line">              <span class="keyword">when</span> (heapDumpTag) &#123;</span><br><span class="line">                  ...</span><br><span class="line">                  ROOT_THREAD_OBJECT -&gt; &#123;</span><br><span class="line">                    <span class="keyword">if</span> (readGcRootRecord) &#123;</span><br><span class="line">                      <span class="keyword">val</span> recordPosition = position</span><br><span class="line">                      <span class="keyword">val</span> gcRootRecord = GcRootRecord(</span><br><span class="line">                          gcRoot = ThreadObject(</span><br><span class="line">                              id = readId(),</span><br><span class="line">                              threadSerialNumber = readInt(),</span><br><span class="line">                              stackTraceSerialNumber = readInt()</span><br><span class="line">                          )</span><br><span class="line">                      )</span><br><span class="line">                      listener.onHprofRecord(recordPosition, gcRootRecord)</span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                      skip(identifierByteSize + intByteSize + intByteSize)</span><br><span class="line">                    &#125;</span><br><span class="line">                  &#125;</span><br><span class="line">                  ...</span><br><span class="line">              &#125;</span><br><span class="line">              ...</span><br><span class="line">          &#125;</span><br><span class="line">          ...</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>不难看出，readHprofRecords就是一个遵从协议实现的通用提取器，Record的类型有很多，通过指定关心的record类型和回调接口就可以将hprof文件转化为Record对象集合。</p>
+<p>解析得到的records被进一步抽象为<code>HprofMemoryIndex</code>，Index的作用就是就是将得到的record按类型进行归类和计数，并通过特定规则进行排序；最终Index和Hprof一起再组成<code>HprofGraph</code>，graph做为hprof的最上层描述，将所有堆中数据抽象为了 <code>gcRoots、objects、classes、instances</code> 4种集合，并提供了快速定位dump堆中具体对象的能力。</p>
+<p><a name="QXesj"></a></p>
+<h3 id="HeapAnalyzer"><a href="#HeapAnalyzer" class="headerlink" title="HeapAnalyzer"></a>HeapAnalyzer</h3><p>heapAnalyzer作为shark模块的出入口，衔接解析和分析两大流程，核心逻辑如下：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Hprof.<span class="keyword">open</span>(heapDumpFile)</span><br><span class="line">    .use &#123; hprof -&gt;</span><br><span class="line">        <span class="keyword">val</span> graph = HprofHeapGraph.indexHprof(hprof, proguardMapping)</span><br><span class="line">		...</span><br><span class="line">        <span class="keyword">val</span> findLeakInput = FindLeakInput(graph, leakFinders, referenceMatchers, computeRetainedHeapSize, objectInspectors)</span><br><span class="line">        <span class="keyword">val</span> (applicationLeaks, libraryLeaks) = findLeakInput.findLeaks()</span><br><span class="line">        ...</span><br><span class="line">        <span class="keyword">return</span> HeapAnalysisSuccess(</span><br><span class="line">            heapDumpFile, System.currentTimeMillis(), since(analysisStartNanoTime), metadata,</span><br><span class="line">            applicationLeaks, libraryLeaks</span><br><span class="line">        )</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>整个流程非常清晰：首先通过indexHprof解析得到graph，然后构造 <code>FindLeakInput</code> 开始分析并找出泄漏，最后包装分析结果返回。<br />graph的组成和功能我们已经清楚了，我们直接来看<code>findLeaks</code>具体是如何工作的。整个流程分为了三个步骤，分别对应三个关键方法：<code>findRetainedObjects</code>、<code>findPathsFromGcRoots</code>、<code>buildLeakTraces</code>。</p>
+<p><a name="HpK0P"></a></p>
+<h4 id="findRetainedObjects"><a href="#findRetainedObjects" class="headerlink" title="findRetainedObjects"></a>findRetainedObjects</h4><p>顾名思义就是找到存活（泄漏）的所有对象，具体逻辑就是遍历由graph提供的objects集合，通过特定规则进行标记过滤，最后得到一组由存活对象id构成的集合。<br />这里的特定规则由多个<code>ObjectInspector</code> 组成，根据LeakCanary的文档描述，默认的Inspector是建立在AOSP / libraries / JDK / …等基础上的开发经验和知识总结而来的，即对于Android而言（具体类<code>AndroidObjectInspectors</code>），我们知道哪些地方是可以造成内存泄漏的，因此只需要在内存快照中依次遍历特定的对象查看其是否 <strong>满足 / 肯定不满足</strong> 泄漏条件即可知道具体的泄漏对象，这些特定对象包括：</p>
+<ul>
+<li>android.widget.View间接引用的Activity的mDestroyed字段；</li>
+<li>android.widget.Editor内部的mTextView字段；</li>
+<li>android.app.Activity的mDestoryed字段；</li>
+<li>android.content.ContextWrapper间接引用的Activity的mDestroyed字段；</li>
+<li>android.app.Dialog的mDecor字段；</li>
+<li>Fragment的mFragmentManager字段；</li>
+<li>android.os.MessageQueue的mQuitting字段；</li>
+<li>android.view.ViewRootImpl的mView字段；</li>
+<li>android.view.Window的mDestroyed字段；</li>
+<li>android.widget.Toast中的mTN对象内部的mWM字段和mView字段；</li>
+</ul>
+<p>对于JDK而言（具体类<code>ObjectInspectors</code>），我们知道哪些地方肯定不会泄漏，例如：ClassLoader、Class、匿名Class等，以及对于单例而言（具体类<code>AppSingletonInspector</code>），对象肯定不属于泄漏。</p>
+<p>上述规则其实不难理解，内存泄漏的大致定义是：<br /><strong>无效的对象仍然与GcRoot保持了可达的引用路径，导致其无法被GC释放。</strong><br />而「无效」是逻辑上的概念，GC是无法理解的，但作为开发人员是知道的，例如在Android平台上，应用具体的场景切换中我们是知道哪些对象的状态会转变为无效，例如销毁的Activity，因此才会在初始化时对其进行watch。</p>
+<p><a name="nkzfo"></a></p>
+<h4 id="findPathsFromGcRoots"><a href="#findPathsFromGcRoots" class="headerlink" title="findPathsFromGcRoots"></a>findPathsFromGcRoots</h4><p>接下来就是找出所有从泄漏对象到GcRoot的引用路径链。总体思路是采用 <strong>广度优先遍历</strong> 算法从Roots向下查找，直到到达泄漏对象。由于涉及的代码繁多，这里仅阐述主要逻辑，整个过程是先从graph中得到的gcRoots被抽象为node按照优先级依次入队，作为队列的初始数据构成树根，然后开始从根节点开始遍历，对每个节点依据类型的不同采取对应的模式进行访问并得到所引用的对象集合，引用集合继续被抽象为node加入队列构成子节点以待后续遍历，如此反复直到当前遍历的node对象属于第一步中的泄漏对象，期间所经过的所有node便构成了从泄漏对象到GcRoot的引用路径。</p>
+<p>上述过程中，用于维护遍历顺序的队列是通过toVisist、toVisitLast两对Queue和Set来构造的，其中Set用于保证树的遍历顺序始终遵从“从上至下”，使最终引用链结果不会包含更长的路径；两种Queue则提供一个优先级分级的概念，用于保证GcRoots中的ThreadObject优先于JavaFrame被遍历（当然也用于降低遍历LibraryLeak类型的泄漏的优先级），这样也是为了得到离泄漏对象最近的引用路径，避免得到形如thread-…-&gt;frame-…&gt;thread-…&gt;obj这样的结果。</p>
+<p>除此之外，针对已知泄露（例如Android Framework内部的一些已知泄漏）的剔除也是在这里实现的，避免检测过程中反复打扰。已知泄漏使用<code>ReferenceMatcher</code>来描述，泄漏的具体引用使用<code>ReferencePattern</code>描述，分为threadLocal-variable、static-field、instance-field和native-globalVariable四种类型，并在遍历入队过程中，根据对象的类型不同，针对HeapClass、HeapInstance、HeapObjectArray提取对应的name在相应的已知泄漏集合中进行判断，以决定是否剔除。</p>
+<p>当然还包括一些其它细节，例如在遍历入队过程中对基本类型和String等对象的剔除，都是为了得到更短更低重复性的路径集合。</p>
+<p><a name="cME06"></a></p>
+<h4 id="buildLeakTraces"><a href="#buildLeakTraces" class="headerlink" title="buildLeakTraces"></a>buildLeakTraces</h4><p>我们知道，一个对象被多个对象引用是很常见的行为，前面得到的引用路径集合泄漏对象和GcRoot之间可能存在多条路径，为了更利于分析，还需要进行裁剪。<br />裁剪的过程并不复杂，首先先将路径链反转为从GcRoot到泄漏对象的方向，然后通过<code>updateTrie</code>方法转化为一个以无效node为根节点的树，最后再通过 <strong>深度优先遍历</strong> 算法得到从根节点（无效node的children）到叶子节点的所有路径，即为最终的最短路径。其中裁剪的逻辑就发生在构造树的过程中：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">deduplicateShortestPaths</span><span class="params">(inputPathResults: <span class="type">List</span>&lt;<span class="type">ReferencePathNode</span>&gt;)</span></span>: List&lt;ReferencePathNode&gt; &#123;</span><br><span class="line">    <span class="keyword">val</span> rootTrieNode = ParentNode(<span class="number">0</span>)</span><br><span class="line">    <span class="keyword">for</span> (pathNode <span class="keyword">in</span> inputPathResults) &#123;</span><br><span class="line">        ...<span class="comment">// 这里的path是已经反转后的路径</span></span><br><span class="line">        updateTrie(pathNode, path, <span class="number">0</span>, rootTrieNode)</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">updateTrie</span><span class="params">(pathNode: <span class="type">ReferencePathNode</span>, path: <span class="type">List</span>&lt;<span class="type">Long</span>&gt;, pathIndex: <span class="type">Int</span>, parentNode: <span class="type">ParentNode</span>)</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> objectId = path[pathIndex]</span><br><span class="line">    <span class="keyword">if</span> (pathIndex == path.lastIndex) &#123;</span><br><span class="line">        <span class="comment">// 1</span></span><br><span class="line">        parentNode.children[objectId] = LeafNode(objectId, pathNode)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">val</span> childNode = parentNode.children[objectId] ?: &#123;</span><br><span class="line">            <span class="keyword">val</span> newChildNode = ParentNode(objectId)</span><br><span class="line">            parentNode.children[objectId] = newChildNode</span><br><span class="line">            newChildNode</span><br><span class="line">        &#125;()</span><br><span class="line">        <span class="keyword">if</span> (childNode <span class="keyword">is</span> ParentNode) &#123;</span><br><span class="line">            updateTrie(pathNode, path, pathIndex + <span class="number">1</span>, childNode)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>方法<code>deduplicateShortestPaths</code>中的<code>rootTrieNode</code>作为树的根节点，其children指向所有的GcRoot；在注释1处，如果某条路径遍历到最后一个节点时发现起父节点parentNode的children中已经存在自身，即GcRoot和泄漏对象相同，说明此前已有一条相等或更长的重复路径，那么此处的覆盖就将更长的引用链丢弃（裁剪）了。</p>
+<p>至此主要工作结束，剩余的逻辑主要是为引用路径链的每个节点赋予详细的描述信息，包括通过objectInspectors重新inspect等，最终构建为applicationLeaks和LibraryLeaks两种形式的泄露描述并得到HeapAnalysis，在Service中通过DefaultOnHeapAnalyzedListener写入数据库并Notification提示，这些后续逻辑相对简单，就不一一细说了。</p>
+<p><a name="4JLtU"></a></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>LeakCanary的整个工作流程从向Activity/Fragment注册生命周期监听开始，当组件销毁时触发对对应对象的观察，利用WeakReference和手动触发GC双重机制来判断对象是否泄露，并在对象可能确实泄露时dump内存快照利用shark进行解析和分析，整个分析过程分为三个流程，先依据Android平台的特性和开发经验找出目标（泄露）对象，然后从GcRoot开始遍历，采用广度优先遍历算法得到所有符合条件的引用路径链，最终裁剪得到泄露对象到GcRoot的最短引用路径链，整个流程结束。</p>
+<p>为了更详细地阐述整个流程，本文省略了很多旁枝末节和代码，但不妨碍理解，可以看到从注册对关键对象的观察，到判断对象是否泄漏，再到最后dump内存快照进行分析直至确定最后结果，LeakCanary的实现逻辑还是非常清晰和高效的。但同时我们也发现，LeakCanary也不是万能的，如何确定一个对象是否有效，它的规则并不能覆盖到所有的业务场景。</p>
+<p><a name="0iTdU"></a></p>
+<h3 id="参考："><a href="#参考：" class="headerlink" title="参考："></a>参考：</h3><ul>
+<li><a target="_blank" rel="noopener" href="http://hg.openjdk.java.net/jdk6/jdk6/jdk/raw-file/tip/src/share/demo/jvmti/hprof/manual.html#mozTocId848088">Binary Dump Format (format=b)</a></li>
+<li><a target="_blank" rel="noopener" href="https://android.googlesource.com/platform/tools/base/+/studio-master-dev/perflib/src/main/java/com/android/tools/perflib">Android Hprof format parser</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.squareup.com/blog/announcing-shark-smart-heap-analysis-reports-for-kotlin">Announcing Shark: Smart Heap Analysis Reports for Kotlin</a></li>
+</ul>
+
+        </div>
+        <div class="top-div">
+          <ol class="top-box"><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#%E6%B3%A8%E5%86%8C%E7%9B%91%E5%90%AC"><span class="top-box-text">注册监听</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#%E5%88%A4%E6%96%AD%E6%B3%84%E6%BC%8F"><span class="top-box-text">判断泄漏</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#shark"><span class="top-box-text">shark</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#HeapAnalyzer"><span class="top-box-text">HeapAnalyzer</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#%E6%80%BB%E7%BB%93"><span class="top-box-text">总结</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#%E5%8F%82%E8%80%83%EF%BC%9A"><span class="top-box-text">参考：</span></a></li></ol>
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="next-post">
+        <a class="purple-link" href="/2019/11/12/matrix-trace-canary/">
+          <h3 class="post-title">
+            下一篇：Matrix-TraceCanary的设计和原理分析手册
+          </h3>
+        </a>
+      </div>
+    
+  </div>
+
+
+
+
+<footer>
+<div class="site-footer">
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/whataa" target="_blank">
+          <i class="icon icon-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  
+  
+  
+  
+  
+  
+</div>
+</footer>
+
+
+      </div>
+      
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery.fancybox.min.js"></script>
+
+
+
+    <script>window.is_post = true;</script>
+
+
+<script src="/js/main.js"></script>
+
+
+
+
+
+    </div>
+  </body>
+</html>
+

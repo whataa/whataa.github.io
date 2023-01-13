@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    
+
+<meta charset="utf-8" >
+
+<title>linjiang&#39;s blog</title>
+<meta name="keywords" content="linjiang&#39;s blog, linjiang&#39;s blog">
+<meta name="description" content="linjiang's blog">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" href="/style/main.css">
+
+
+<link rel="stylesheet" href="/style/jquery.fancybox.min.css">
+
+
+
+
+
+
+
+  <meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="linjiang's blog" type="application/atom+xml">
+</head>
+  <body>
+    <div id="app" class="main">
+
+<div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://linjiang.tech">
+        <img class="avatar" src="/images/avatar.png" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://linjiang.tech">
+        <h1 class="site-title">linjiang&#39;s blog</h1>
+      </a>
+    </div>
+    <div class="right">
+        <i class="icon menu-switch icon-menu-outline" ></i>
+    </div>
+  </div>
+</div>
+
+<div class="menu-container" style="height: 0;opacity: 0;">
+<nav class="menu-list">
+  
+    
+      <a href="/" class="menu purple-link">
+        HOME
+      </a>
+    
+  
+    
+      <a href="/tips" class="menu purple-link">
+        TIPS
+      </a>
+    
+  
+    
+      <a href="/archives" class="menu purple-link">
+        ARCHIVES
+      </a>
+    
+  
+    
+      <a href="/about" class="menu purple-link">
+        ABOUT ME
+      </a>
+    
+  
+</nav>
+</div>
+
+
+
+  <div class="content-container">
+
+    
+
+<section class="post-item">
+    <div class="content">
+      <a href="/2016/12/30/Android%20Studio%20Patches%20Update/">
+        <h2 class="post-title">以Patch的形式更新Android Studio</h2>
+      </a>
+      <a href="/2016/12/30/Android%20Studio%20Patches%20Update/">
+          <div class="post-abstract">
+            
+                本文是一篇纯技巧型的文章，非常方便没有VPN / 公司采用沙盒机制无法连接网络等场景下的使用。Patch的方式使得我们不用面对在每次IDE更新后就重新下载动辄上G的全量安装文件、或者由于配置的麻烦不想去更新而无法体验到最新的特性这些问题。
+			
+          </div>
+      </a>
+      <div class="post-info">
+        <span><i class="icon icon-calendar-outline"></i> 2016-12-30</span>
+        
+          <span>
+            <i class="icon icon-pricetags-outline"></i>
+            
+              <a href="/tags/Android-Studio/">
+                Android-Studio
+                
+              </a>
+            
+          </span>
+        
+      </div>
+    </div>
+  </section>
+
+
+
+<section class="post-item">
+    <div class="content">
+      <a href="/2016/10/31/App's%20ClassLoader%E7%9A%84%E6%9D%A5%E6%BA%90/">
+        <h2 class="post-title">App&#39;s ClassLoader的来源</h2>
+      </a>
+      <a href="/2016/10/31/App's%20ClassLoader%E7%9A%84%E6%9D%A5%E6%BA%90/">
+          <div class="post-abstract">
+            
+                Java中每一个类都是通过ClassLoader来加载的。对于基于Java的Android应用，这些ClassLoader是从哪来的呢。研究过Android插件化机制的都知道Android中有PathClassLoader和DexClassLoader这两个类，它们的概念和区别也许我们已经很熟悉了，但是对为什么应用的类加载器是PathClassLoader，它是如何产生的这些问题却是不甚了解。本文就从应用的启动流程出发，来揭开ClassLoader的秘密。
+			
+          </div>
+      </a>
+      <div class="post-info">
+        <span><i class="icon icon-calendar-outline"></i> 2016-10-31</span>
+        
+          <span>
+            <i class="icon icon-pricetags-outline"></i>
+            
+              <a href="/tags/ClassLoader/">
+                ClassLoader
+                
+                  ，
+                
+              </a>
+            
+              <a href="/tags/Hotfix-Plugin/">
+                Hotfix&amp;Plugin
+                
+              </a>
+            
+          </span>
+        
+      </div>
+    </div>
+  </section>
+
+
+
+<section class="post-item">
+    <div class="content">
+      <a href="/2016/09/26/%E5%A4%9A%E6%89%8B%E6%8C%87Touch%E5%8F%98%E5%8C%96%E5%A4%84%E7%90%86%E5%8E%9F%E5%88%99%E5%9F%BA%E7%A1%80/">
+        <h2 class="post-title">多手指Touch变化处理原则基础</h2>
+      </a>
+      <a href="/2016/09/26/%E5%A4%9A%E6%89%8B%E6%8C%87Touch%E5%8F%98%E5%8C%96%E5%A4%84%E7%90%86%E5%8E%9F%E5%88%99%E5%9F%BA%E7%A1%80/">
+          <div class="post-abstract">
+            
+                手势事件的产生、传递及处理也许我们并不陌生，特别是在自定义一些可交互性的`View`时，处理手势是不可避免的。而日常中我们接触得最多的是单指产生的手势事件，在多手指的情况下，是否存在一些我们常常忽略的问题？
+			
+          </div>
+      </a>
+      <div class="post-info">
+        <span><i class="icon icon-calendar-outline"></i> 2016-09-26</span>
+        
+          <span>
+            <i class="icon icon-pricetags-outline"></i>
+            
+              <a href="/tags/View/">
+                View
+                
+                  ，
+                
+              </a>
+            
+              <a href="/tags/%E6%89%8B%E5%8A%BF%E4%BA%8B%E4%BB%B6/">
+                手势事件
+                
+              </a>
+            
+          </span>
+        
+      </div>
+    </div>
+  </section>
+
+
+
+<section class="post-item">
+    <div class="content">
+      <a href="/2016/08/13/%5B%E8%AF%91%5DColoring%20Buttons%20with%20ThemeOverlays%20&%20Background%20Tints/">
+        <h2 class="post-title">Coloring Buttons with ThemeOverlays and Background Tints[译]</h2>
+      </a>
+      <a href="/2016/08/13/%5B%E8%AF%91%5DColoring%20Buttons%20with%20ThemeOverlays%20&%20Background%20Tints/">
+          <div class="post-abstract">
+            
+                如果我们想改变Button的背景色，一般如何实现？本文将介绍两种实现方式。第一种是使用AppCompat的Widget.AppCompat.Button.Colored样式并自定义ThemeOverlay来直接修改Button的背景色，而第二种方式则是使用AppCompat的built-in background tinting support来实现同样的效果。
+			
+          </div>
+      </a>
+      <div class="post-info">
+        <span><i class="icon icon-calendar-outline"></i> 2016-08-13</span>
+        
+          <span>
+            <i class="icon icon-pricetags-outline"></i>
+            
+              <a href="/tags/Android/">
+                Android
+                
+                  ，
+                
+              </a>
+            
+              <a href="/tags/%E8%AF%91%E6%96%87/">
+                译文
+                
+              </a>
+            
+          </span>
+        
+      </div>
+    </div>
+  </section>
+
+
+
+<section class="post-item">
+    <div class="content">
+      <a href="/2015/06/30/hello-world/">
+        <h2 class="post-title">Hello Hexo</h2>
+      </a>
+      <a href="/2015/06/30/hello-world/">
+          <div class="post-abstract">
+            
+                <!---->
+			
+          </div>
+      </a>
+      <div class="post-info">
+        <span><i class="icon icon-calendar-outline"></i> 2015-06-30</span>
+        
+      </div>
+    </div>
+  </section>
+
+
+
+
+    <div class="pagination-container">
+      
+        <a href="/page/3/" class="prev"><i class="icon icon-arrow-ios-back-outline"></i> 上一页</a>
+      
+      
+    </div>
+
+
+
+  </div>
+
+<footer>
+<div class="site-footer">
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/whataa" target="_blank">
+          <i class="icon icon-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  
+  
+  
+  
+  
+  
+</div>
+</footer>
+
+
+      </div>
+      
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/main.js"></script>
+
+
+
+
+
+    </div>
+  </body>
+</html>
+
+

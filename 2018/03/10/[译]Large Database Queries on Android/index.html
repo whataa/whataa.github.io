@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    
+
+<meta charset="utf-8" >
+
+<title>Large Database Queries on Android[译]</title>
+<meta name="keywords" content="Large Database Queries on Android[译], linjiang&#39;s blog">
+<meta name="description" content="Paging Library的背景知识：Android中的分页加载SQLiteCursor存在的问题和限制。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" href="/style/main.css">
+
+
+<link rel="stylesheet" href="/style/jquery.fancybox.min.css">
+
+
+
+
+
+
+
+  <meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="linjiang's blog" type="application/atom+xml">
+</head>
+  <body>
+    <div id="app" class="main">
+
+<div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://linjiang.tech">
+        <img class="avatar" src="/images/avatar.png" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://linjiang.tech">
+        <h1 class="site-title">linjiang&#39;s blog</h1>
+      </a>
+    </div>
+    <div class="right">
+        <i class="icon menu-switch icon-menu-outline" ></i>
+    </div>
+  </div>
+</div>
+
+<div class="menu-container" style="height: 0;opacity: 0;">
+<nav class="menu-list">
+  
+    
+      <a href="/" class="menu purple-link">
+        HOME
+      </a>
+    
+  
+    
+      <a href="/tips" class="menu purple-link">
+        TIPS
+      </a>
+    
+  
+    
+      <a href="/archives" class="menu purple-link">
+        ARCHIVES
+      </a>
+    
+  
+    
+      <a href="/about" class="menu purple-link">
+        ABOUT ME
+      </a>
+    
+  
+</nav>
+</div>
+
+
+
+  <div class="content-container">
+    <div class="post-detail">
+      
+      <h2 class="post-title">Large Database Queries on Android[译]</h2>
+      <div class="post-info post-detail-info">
+        <span><i class="icon icon-calendar-outline"></i> 2018-03-10</span>
+        
+          <span>
+          <i class="icon icon-pricetags-outline"></i>
+            
+              <a href="/tags/Android/">
+              Android
+                
+                  ，
+                
+              </a>
+            
+              <a href="/tags/%E8%AF%91%E6%96%87/">
+              译文
+                
+              </a>
+            
+          </span>
+        
+      </div>
+      <div class="post-content-wrapper">
+        <div class="post-content">
+          <p>译自：<a target="_blank" rel="noopener" href="https://medium.com/google-developers/large-database-queries-on-android-cb043ae626e8">Large Database Queries on Android</a></p>
+<h2 id="SQLiteCursor-and-CursorAdapter"><a href="#SQLiteCursor-and-CursorAdapter" class="headerlink" title="SQLiteCursor and CursorAdapter"></a>SQLiteCursor and CursorAdapter</h2><p><code>SQLiteCursor</code>是Android SQLite数据库查询返回的类型。我们可以耗费固定的初始化加载成本来检索大数据量的查询结果。首次查询将初始化一个通常为2MB大小的缓冲窗口<code>CursorWindow</code>，用于存放从数据库中查询的结果。当我们所要查询的行不位于该缓冲区时，<code>SQLiteCursor</code>就会重新查询数据库并刷新窗口。通过这种方式，<code>SQLiteCursor</code>实现了一种大小固定的分页方式。</p>
+<p>Android API 1 时就提供了一个叫<code>CursorAdapter</code>的类，提供一种简便的方式来方便从<code>Cursor</code>中读取数据绑定到ListView的items中。它的功能是挺好的，<strong>但每次需要加载新数据时，它都是直接在UI线程上查询的数据库</strong>，违背了现代的响应式App思想。那么有人可能会问：我们就不能改造一个在异步线程加载数据的新<code>CursorAdapter</code>吗？毕竟<code>SQLiteCursor</code>已经内置了分页功能。</p>
+<h2 id="Problems-with-paging-within-SQLiteCursor"><a href="#Problems-with-paging-within-SQLiteCursor" class="headerlink" title="Problems with paging within SQLiteCursor"></a>Problems with paging within SQLiteCursor</h2><p>其实，不能基于<code>SQLiteCursor</code>分页的归根结底的原因正是由于它使用了固定缓存大小的窗口来对查询结果进行分页。以下是我们在尝试使用基于<code>SQLiteCursor</code>内部分页的<code>Paging Library</code>时罗列的一些问题：</p>
+<h3 id="1-SQLiteCursor-doesn’t-hold-any-database-transaction-open"><a href="#1-SQLiteCursor-doesn’t-hold-any-database-transaction-open" class="headerlink" title="1. SQLiteCursor doesn’t hold any database transaction open"></a>1. SQLiteCursor doesn’t hold any database transaction open</h3><p>在准备深入了解Paging前，其实我对Android中的SQLite尤其是<code>Cursors</code>不是太了解，所以我只得假设<code>SQLiteCursor</code>在加载了一个窗口后就暂停，当需要时（下个窗口）再恢复。这样的话，访问第10个窗口与访问第1个窗口是一样的效率，其实最终证明这是非常错误的。每次需要读取一个新的窗口时，底层查询都是从0开始并跳过我们不需要的行，最后将结果填充到窗口的。这是因为<code>SQLiteCursor</code>无法恢复一个查询。</p>
+<p>也就是说，假如我们想访问集合中的1000到1050项，我们不得不跳过大量的项，才能访问到下一页，这样子下来，每个后续窗口必须跳过越来越多的查询，严重降低查询速度。这相当于使用SQL OFFSET关键字跳过内容，尽管不是对内容分页最有效的方式，但利用<code>SQLiteCursor</code>来进行分页时无法避免。</p>
+<h3 id="2-SQLiteCursor-getCount-is-required-and-scans-entire-query"><a href="#2-SQLiteCursor-getCount-is-required-and-scans-entire-query" class="headerlink" title="2. SQLiteCursor.getCount() is required, and scans entire query"></a>2. SQLiteCursor.getCount() is required, and scans entire query</h3><p>在读取第一行之前，<code>SQLiteCursor</code>需要通过调用<code>getCount()</code>来进行边界检测，但是SQLite必须检索所查询的整个结果集才能知道其大小（like a linked list），无形加大了开销。如果我们将本地的一组大数据集逐渐分页显示到UI中，用以响应用户的滚动，我们可能根本就不需要知道查询结果的整个大小，那么前面所说的<code>getCount()</code>无疑增加了不必要的前期工作。</p>
+<h3 id="3-QLiteCursor-getCount-always-loads-the-first-window-of-rows"><a href="#3-QLiteCursor-getCount-always-loads-the-first-window-of-rows" class="headerlink" title="3. QLiteCursor.getCount() always loads the first window of rows"></a>3. QLiteCursor.getCount() always loads the first window of rows</h3><p>在上面边界检测步骤中，检索查询结果集时，如果有用，<code>SQLiteCursor</code>同时还会自动地从0开始填充缓冲窗口。</p>
+<p>预加载这些数据，以便它可以提前知道大约多少行对一个窗口适合（下面的更多内容）。如果我们从查询的位置0开始展示数据，则此这种预加载机制是合理的，但是如果触发保存的实例保存和恢复机制，那么恢复的位置可能会从离列表位置0的很远处开始检索，而这个位置已经超出了初始的窗口。如果想要显示第三个内容窗口的数据，则必须首先加载并丢弃2MB数据。</p>
+<p>// code is <a target="_blank" rel="noopener" href="https://android.googlesource.com/platform/frameworks/base/+/fee4546fd648b519ad828ea1f950554c1054699d/core/java/android/database/sqlite/SQLiteCursor.java#130">here</a><br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public int getCount() &#123;</span><br><span class="line">    if (mCount == NO_COUNT) &#123;</span><br><span class="line">        fillWindow(0);</span><br><span class="line">    &#125;</span><br><span class="line">    return mCount;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-SQLiteCursor-may-load-data-you-didn’t-ask-for"><a href="#4-SQLiteCursor-may-load-data-you-didn’t-ask-for" class="headerlink" title="4. SQLiteCursor may load data you didn’t ask for"></a>4. SQLiteCursor may load data you didn’t ask for</h3><p><code>Cursor.moveToPosition()</code>保证所请求的行在窗口中。但是<code>SQLiteCursor</code>并不会在请求发起的位置处开始填充窗口。因为<code>SQLiteCursor</code>不能保证App就一定是向后读取，因此它实际上是从离结果集的目标位置大约1/3处的取出开始填充窗口。这意味着当一个窗口加载完成后，<code>CursorAdapter</code>向后滚动几行时不会触发刷新（重新填充）窗口。这也意味着在第一次加载之后加载的每个2MB数据窗口都加载了约650KB或更多的我们已经看到的数据。</p>
+<p>// code is <a target="_blank" rel="noopener" href="https://android.googlesource.com/platform/frameworks/base/+/fee4546fd648b519ad828ea1f950554c1054699d/core/java/android/database/DatabaseUtils.java#742">here</a><br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public static int cursorPickFillWindowStartPosition(</span><br><span class="line">            int cursorPosition, int cursorWindowCapacity) &#123;</span><br><span class="line">    return Math.max(cursorPosition - cursorWindowCapacity / 3, 0);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="5-SQLiteCursor-loading-position-can-be-unpredictable"><a href="#5-SQLiteCursor-loading-position-can-be-unpredictable" class="headerlink" title="5. SQLiteCursor loading position can be unpredictable"></a>5. SQLiteCursor loading position can be unpredictable</h3><p>前面说到<code>SQLiteCursor</code>尝试加载指定位置数据时，会尝试向前倒推1/3往窗口填充数据，这就意味着它必须猜测一个缓冲窗口大致可以容纳多少行数据，因此它会将查询出所有的行先填充到第一个窗口。但不幸的是，如果我们所查询的内容的行数是不确定的（例如用户评论），那么这种方式就不可靠，<code>SQLiteCursor</code>可能还没到到达指定位置，窗口就填满了，那么就必须丢弃掉已填充的然后再次填充新的。例如假如我们查询的一大段数据，触发重新填充窗口，就有可能加载到窗口的数据只有一小部分。</p>
+<h3 id="6-Cursors-require-closure"><a href="#6-Cursors-require-closure" class="headerlink" title="6. Cursors require closure"></a>6. Cursors require closure</h3><p>Cursor必须显式地调用<code>close()</code>进行关闭，所以无论哪里，都必须在不再需要时调用方法以释放。尤其是<code>CursorAdapter</code>，它内部并没有帮我们实现这些，而是把这个事情交给了开发者，那么为了写入或重用Cursor，就必须编写额外代码来处理情况，例如当Activity stopping时。</p>
+<h3 id="7-SQLiteCursor-does-not-know-data-has-changed"><a href="#7-SQLiteCursor-does-not-know-data-has-changed" class="headerlink" title="7. SQLiteCursor does not know data has changed"></a>7. SQLiteCursor does not know data has changed</h3><p>在窗口首次填充完成后，<code>CursorAdapter</code>并不会track数据库是否改变，也就是说如果我们新增或删除了一些数据，SQLiteCursor’s的缓存就是脏数据了，那么当我们移动到一个未知的行位置时就可能导致Exception或在某些情况下得到不一致的数据。例如假如我们已经加载了N行数据，此时在位置0处插入了一条新的数据，那么当我们尝试读取第N+1行时，结果会导致重复加载第N行。</p>
+<h2 id="Avoiding-the-Problems"><a href="#Avoiding-the-Problems" class="headerlink" title="Avoiding the Problems"></a>Avoiding the Problems</h2><p>由以上所有的问题可知，<code>SQLCursor</code>适用的场景非常有限。不过幸运的是这些问题都有一个简单的解决方案：小查询（small query）。采用刚好装满<code>CursorWindow</code>的查询就可以避免以上问题，这就是为什么我们如此喜欢<code>Paging and Room</code>的原因。通常我们建议一页大小配置为10到20个，并且每次只查询这么多。</p>
+<p>尽管如此，选择每页大小也有一些需要了解的：较大的窗口查询通常可以提高性能，较小的可以减少等待时间并节约内存。如果DB不是瓶颈的话，对于大item一般每次10个差不多，如果每项数据很小的话，每次300可能会更好点，否则的话查询就很浪费了。</p>
+<p>如果正好有谁想使用<code>SQLiteCursor</code>内部的分页机制来懒加载一组大量的数据的打算，我们建议你可以考虑另外的方案：要么使用<code>Paging Library</code>，它可以与<code>Room</code>完美配合；要么就自己实现并且需要确保每次查询的结果足够小，以刚好适配单个<code>CursorWindow</code>的大小。</p>
+<p>如果使用Room和Paging Library将一个大查询分页为多个小查询，我们需要将以下代码：<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">@Dao</span><br><span class="line">interface UserDao &#123;</span><br><span class="line">    // regular list query — falls over with too much data</span><br><span class="line">    @Query(“SELECT * FROM user ORDER BY mAge DESC”)</span><br><span class="line">    LiveData&lt;List&lt;User&gt;&gt; loadUsersByAgeDesc();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><br>改为：<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">@Dao</span><br><span class="line">interface UserDao &#123;</span><br><span class="line">    // paged query — handles arbitrarily large queries</span><br><span class="line">    @Query(“SELECT * FROM user ORDER BY mAge DESC”)</span><br><span class="line">    DataSource.Factory&lt;Integer, User&gt; loadUsersByAgeDesc();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><br>然后通过<code>LivePagedListBuilder</code>包装，得到一个可以处理任意大小的结果集<code>LiveData&lt;PagedList&gt;</code>：<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">LiveData&lt;PagedList&lt;User&gt;&gt; users = new LivePagedListBuilder&lt;&gt;(</span><br><span class="line">        userDao.loadUsersByAgeDesc(), /*page size*/ 20).build();</span><br></pre></td></tr></table></figure><br>上面的代码最终得到的分页结果<code>LiveData</code>，在数据库数据变化时会实时同步给所有已订阅的观察者。</p>
+<p>最后附上参考用例：<a target="_blank" rel="noopener" href="https://github.com/googlesamples/android-architecture-components/tree/master/PagingSample">Google’s Paging sample on Github</a></p>
+<h2 id="Android-Platform"><a href="#Android-Platform" class="headerlink" title="Android Platform"></a>Android Platform</h2><p>“ 我们目前正在考虑在未来的Android版本中改进SQLiteCursor的一些行为。例如将<code>CursorWindow</code>的大小和1/3的加载机制修改为可配置的方案，因为实际使用现状看起来与当时设计SQLiteCursor和CursorAdapter时所想的截然不同。当我们决定更改时，我们同时一定会更新<code>Room Persistence Library</code>以使这些新特性保持查询效率 ”。</p>
+
+        </div>
+        <div class="top-div">
+          <ol class="top-box"><li class="top-box-item top-box-level-2"><a class="top-box-link" href="#SQLiteCursor-and-CursorAdapter"><span class="top-box-text">SQLiteCursor and CursorAdapter</span></a></li><li class="top-box-item top-box-level-2"><a class="top-box-link" href="#Problems-with-paging-within-SQLiteCursor"><span class="top-box-text">Problems with paging within SQLiteCursor</span></a><ol class="top-box-child"><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#1-SQLiteCursor-doesn%E2%80%99t-hold-any-database-transaction-open"><span class="top-box-text">1. SQLiteCursor doesn’t hold any database transaction open</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#2-SQLiteCursor-getCount-is-required-and-scans-entire-query"><span class="top-box-text">2. SQLiteCursor.getCount() is required, and scans entire query</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#3-QLiteCursor-getCount-always-loads-the-first-window-of-rows"><span class="top-box-text">3. QLiteCursor.getCount() always loads the first window of rows</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#4-SQLiteCursor-may-load-data-you-didn%E2%80%99t-ask-for"><span class="top-box-text">4. SQLiteCursor may load data you didn’t ask for</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#5-SQLiteCursor-loading-position-can-be-unpredictable"><span class="top-box-text">5. SQLiteCursor loading position can be unpredictable</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#6-Cursors-require-closure"><span class="top-box-text">6. Cursors require closure</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#7-SQLiteCursor-does-not-know-data-has-changed"><span class="top-box-text">7. SQLiteCursor does not know data has changed</span></a></li></ol></li><li class="top-box-item top-box-level-2"><a class="top-box-link" href="#Avoiding-the-Problems"><span class="top-box-text">Avoiding the Problems</span></a></li><li class="top-box-item top-box-level-2"><a class="top-box-link" href="#Android-Platform"><span class="top-box-text">Android Platform</span></a></li></ol>
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="next-post">
+        <a class="purple-link" href="/2017/08/06/Use%20sublime%20to%20enhance%20the%20efficiency%20of%20analyzing%20mars-xlog%20log%20files/">
+          <h3 class="post-title">
+            下一篇：使用sublime提升mars-xlog日志文件分析效率
+          </h3>
+        </a>
+      </div>
+    
+  </div>
+
+
+
+
+<footer>
+<div class="site-footer">
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/whataa" target="_blank">
+          <i class="icon icon-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  
+  
+  
+  
+  
+  
+</div>
+</footer>
+
+
+      </div>
+      
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery.fancybox.min.js"></script>
+
+
+
+    <script>window.is_post = true;</script>
+
+
+<script src="/js/main.js"></script>
+
+
+
+
+
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    
+
+<meta charset="utf-8" >
+
+<title>一种巧妙的drawable.xml替代方案</title>
+<meta name="keywords" content="一种巧妙的drawable.xml替代方案, linjiang&#39;s blog">
+<meta name="description" content="如何维护（替换）drawable xml是android开发中一个老生常谈的话题。按照标准的Android布局开发模式，我们不得不为各种UI效果新建不同的xml文件进行描述，哪怕是简单的一个圆角。随着项目迭代，成百上千的xml连同那模棱两可的文件名，不仅让开发者复用或清理的成本难以估计，还使得项目体积急剧增大。因此，下面我们探索一种原理巧妙、适配全面的drawable替代方案。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" href="/style/main.css">
+
+
+<link rel="stylesheet" href="/style/jquery.fancybox.min.css">
+
+
+
+
+
+
+
+  <meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="linjiang's blog" type="application/atom+xml">
+</head>
+  <body>
+    <div id="app" class="main">
+
+<div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://linjiang.tech">
+        <img class="avatar" src="/images/avatar.png" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://linjiang.tech">
+        <h1 class="site-title">linjiang&#39;s blog</h1>
+      </a>
+    </div>
+    <div class="right">
+        <i class="icon menu-switch icon-menu-outline" ></i>
+    </div>
+  </div>
+</div>
+
+<div class="menu-container" style="height: 0;opacity: 0;">
+<nav class="menu-list">
+  
+    
+      <a href="/" class="menu purple-link">
+        HOME
+      </a>
+    
+  
+    
+      <a href="/tips" class="menu purple-link">
+        TIPS
+      </a>
+    
+  
+    
+      <a href="/archives" class="menu purple-link">
+        ARCHIVES
+      </a>
+    
+  
+    
+      <a href="/about" class="menu purple-link">
+        ABOUT ME
+      </a>
+    
+  
+</nav>
+</div>
+
+
+
+  <div class="content-container">
+    <div class="post-detail">
+      
+      <h2 class="post-title">一种巧妙的drawable.xml替代方案</h2>
+      <div class="post-info post-detail-info">
+        <span><i class="icon icon-calendar-outline"></i> 2018-09-08</span>
+        
+          <span>
+          <i class="icon icon-pricetags-outline"></i>
+            
+              <a href="/tags/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/">
+              开源项目
+                
+              </a>
+            
+          </span>
+        
+      </div>
+      <div class="post-content-wrapper">
+        <div class="post-content">
+          <p>如何维护（替换）drawable xml是android开发中一个老生常谈的话题。按照标准的Android布局开发模式，我们不得不为各种UI效果新建不同的xml文件进行描述，哪怕是简单的一个圆角。随着项目迭代，成百上千的xml连同那模棱两可的文件名，不仅让开发者复用或清理的成本难以估计，还使得项目体积急剧增大。因此，下面我们探索一种原理巧妙、适配全面的drawable替代方案。</p>
+<h2 id="传统方案总结"><a href="#传统方案总结" class="headerlink" title="传统方案总结"></a>传统方案总结</h2><p>我们先概括下目前市面上已有的方案，大致分为两种实现方式。</p>
+<p>一种是继承某个（或某几个）常用的控件，然后将drawable.xml中的常用属性作为当前控件的自定义属性，最后在控件内部动态生成drawable作为该控件的背景。这种方案的优点很明显：能直观地将drawable效果描述作为控件的属性定义在布局xml中，具有很好的可读性；但是缺点也不可忽视，这些属性并不能应用到任意控件，导致在很多时候还是不得不创建drawable.xml文件。</p>
+<p>另一种方案则是将drawable的常用属性封装为代码API，以动态的方式在代码中生成并赋值给控件。这种方案理论上完全抛弃了drawable.xml，可以适配任意控件，但是若想完全以这种方式达到完全替换xml，个人觉得不可能，代码量大，关联性低是其最大的缺点，单看布局，无从知晓该控件的最终效果。不过，如果两相结合，作为对第一种方案的补充倒是一个不错的方案。</p>
+<h2 id="新方案探索"><a href="#新方案探索" class="headerlink" title="新方案探索"></a>新方案探索</h2><p>上述两种方案各有千秋，但都无法完全解决问题，我们对上述两种方案进行分析，提出以下问题：为什么不能有一种「既具有高可读性，又能全面适配」的drawable.xml替代方案呢？也就是说能同时兼顾前面提到的两种方案的优点，高可读性意味着对drawable的描述需要作为属性定义在布局文件中、全面适配意味这些属性对任意控件都有效。思来想去，答案似乎只有一个：DataBinding。说到这里，可能有些朋友已经隐隐猜到了，不过别急，容我娓娓道来。</p>
+<p>DataBinding是Android官方推出的数据绑定库，尽管已有数年，但是我估计仍有部分开发者还没有接触甚至有些抵触，具体就不细说，但是我希望你暂且能拥抱它，继续阅读。<br>数据绑定让数据变化能直接反映到布局中，对于控件已有的属性，例如TextView的<code>android:text</code>属性，一旦通过DataBinding绑定：<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;TextView</span><br><span class="line">    android:text=&quot;@&#123;name&#125;&quot;</span><br><span class="line">    android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">    android:layout_height=&quot;wrap_content&quot; /&gt;</span><br></pre></td></tr></table></figure><br>在运行时内部就会调用TextView内部的setText方法。其实现原理的关键就是DataBinding通过提供的<code>@BindingAdapter</code>注解，该注解将任意指定的属性和任意指定的方法关联，DataBinding会在编译的时候动态生成的调用关系，而对于常用的控件，DataBinding已经预置了对应的注解方法，例如以下就是TextView的setText方法：<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">@BindingAdapter(&quot;android:text&quot;)</span><br><span class="line">public static void setText(TextView view, CharSequence text) &#123;</span><br><span class="line">    final CharSequence oldText = view.getText();</span><br><span class="line">    if (text == oldText || (text == null &amp;&amp; oldText.length() == 0)) &#123;</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line">    if (text instanceof Spanned) &#123;</span><br><span class="line">        if (text.equals(oldText)) &#123;</span><br><span class="line">            return; // No change in the spans, so don&#x27;t set anything.</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else if (!haveContentsChanged(text, oldText)) &#123;</span><br><span class="line">        return; // No content changes, so don&#x27;t set anything.</span><br><span class="line">    &#125;</span><br><span class="line">    view.setText(text);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>我们需要关注的就是这个<code>@BindingAdapter</code>注解，「任意指定的属性」这个属性并非特指我们在布局中Android提供的标准属性，也就是说，我们可以提供任意字符串作为属性，而任意方法很好理解，上面的代码片段很好的表达了这个意思，我们唯一需要关注的就是这个方法的参数：第一个参数是指定注解中的属性的作用域，后面的参数则是和注解所声明的属性一一对应，那么结合到我们本文的主题，答案也就呼之欲出了：</p>
+<h2 id="新方案实现"><a href="#新方案实现" class="headerlink" title="新方案实现"></a>新方案实现</h2><p>提供一个用<code>@BindingAdapter</code>注解的方法，作用域指定为View（即任意控件）；参数约定为drawable.xml中的属性，不就达到了目的吗。是否是感觉到一丝丝巧妙？既然方案有了，下面我们来看具体实现。</p>
+<p>限于drawable属性的丰富性，本文以常用的属性solid 和 corner为例展开。如以下片段所示：<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">@BindingAdapter(value = &#123;</span><br><span class="line">        &quot;drawable_solidColor&quot;,</span><br><span class="line">        &quot;drawable_radius&quot;,</span><br><span class="line">&#125;, requireAll = false)</span><br><span class="line">public static void setViewBackground(View v, int color, int radius) &#123;</span><br><span class="line">    GradientDrawable drawable = new GradientDrawable();</span><br><span class="line">    drawable.setColor(color);</span><br><span class="line">    drawable.setCornerRadius(radius);</span><br><span class="line">    view.setBackground(drawable);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure><br>上面代码片段定义了两个属性：<code>drawable_solidColor</code>, <code>drawable_radius</code>，分别表示solid的color和corner的radius属性，也就是说稍后我们就就可以在布局文件中为每个View都指定该属性了；</p>
+<p>这里可能有朋友会产生疑问，drawable的属性那么多，这里只定义了两个还好，如果把所有的drawable属性都定义，那岂不是每个控件都要把每个属性都指定一次，即使不需要。所以还需要提一下<code>requireAll</code>参数，它表示是否需要每个属性都必须绑定了数据才会调用<code>setViewBackground</code>方法，设置为false后，就可以在布局文件中只指定需要的属性即可。</p>
+<p>以上几行代码完成了基本定义，下面我们来看看如何使用：<br><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;layout&gt;</span><br><span class="line">    &lt;TextView</span><br><span class="line">        drawable_radius=&quot;@&#123;10&#125;&quot;</span><br><span class="line">        drawable_solidColor=&quot;@&#123;0xffff0000&#125;&quot;</span><br><span class="line">        </span><br><span class="line">        android:layout_width=&quot;60dp&quot;</span><br><span class="line">        android:layout_height=&quot;60dp&quot; /&gt;</span><br><span class="line">&lt;layout/&gt;</span><br></pre></td></tr></table></figure></p>
+<p>不用怀疑，就是这么简单，即使这里不贴出效果图，我想大家脑海中已经浮现出来了，是不是觉得一目了然？以此类推，其它的drawable属性也可以通过本方案逐一实现。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>回顾本文，并没有任何复杂的代码或高深的逻辑组合，仅提出一种巧妙的drawable.xml替代方案，具有「既具有高可读性，又能全面适配」的特点。</p>
+<p>从成本来说，本方案应该是最低的（特别是对一些已经在使用DataBinding的项目）：只需要定义一个方法即可，而效果却是最优的：理论来讲，实现该方案后，可以减少99%的drawable.xml创建。<br>如果非要说出本方案的缺点，那么它的实现原理所依赖的核心库DataBinding可能是有些开发者所不能接受的。</p>
+<p>读到这里，是否觉得意犹未尽？没错，我已依据本文的方案替大家整理好了几乎所有常用的drawable属性提交到了GitHub，核心依然是只有一个方法，直接可用。</p>
+<p>Github地址：<a target="_blank" rel="noopener" href="https://github.com/whataa/noDrawable">https://github.com/whataa/noDrawable</a></p>
+
+        </div>
+        <div class="top-div">
+          <ol class="top-box"><li class="top-box-item top-box-level-2"><a class="top-box-link" href="#%E4%BC%A0%E7%BB%9F%E6%96%B9%E6%A1%88%E6%80%BB%E7%BB%93"><span class="top-box-text">传统方案总结</span></a></li><li class="top-box-item top-box-level-2"><a class="top-box-link" href="#%E6%96%B0%E6%96%B9%E6%A1%88%E6%8E%A2%E7%B4%A2"><span class="top-box-text">新方案探索</span></a></li><li class="top-box-item top-box-level-2"><a class="top-box-link" href="#%E6%96%B0%E6%96%B9%E6%A1%88%E5%AE%9E%E7%8E%B0"><span class="top-box-text">新方案实现</span></a></li><li class="top-box-item top-box-level-2"><a class="top-box-link" href="#%E6%80%BB%E7%BB%93"><span class="top-box-text">总结</span></a></li></ol>
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="next-post">
+        <a class="purple-link" href="/2018/03/10/%5B%E8%AF%91%5DLarge%20Database%20Queries%20on%20Android/">
+          <h3 class="post-title">
+            下一篇：Large Database Queries on Android[译]
+          </h3>
+        </a>
+      </div>
+    
+  </div>
+
+
+
+
+<footer>
+<div class="site-footer">
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/whataa" target="_blank">
+          <i class="icon icon-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  
+  
+  
+  
+  
+  
+</div>
+</footer>
+
+
+      </div>
+      
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery.fancybox.min.js"></script>
+
+
+
+    <script>window.is_post = true;</script>
+
+
+<script src="/js/main.js"></script>
+
+
+
+
+
+    </div>
+  </body>
+</html>
+

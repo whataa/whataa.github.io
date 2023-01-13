@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    
+
+<meta charset="utf-8" >
+
+<title>Matrix-TraceCanary的设计和原理分析手册</title>
+<meta name="keywords" content="Matrix-TraceCanary的设计和原理分析手册, linjiang&#39;s blog">
+<meta name="description" content="matrix是微信开源的APM方案，其中TraceCannery是一套用于监控应用卡顿和帧率并提供精确化的日志捕捉和分析能力的模块。本文以手册形式对其设计方案的选择和功能背后的原理进行分析说明，以期对Android端性能检测和优化有更加透彻的理解。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" href="/style/main.css">
+
+
+<link rel="stylesheet" href="/style/jquery.fancybox.min.css">
+
+
+
+
+
+
+
+  <meta name="generator" content="Hexo 6.3.0"><link rel="alternate" href="/atom.xml" title="linjiang's blog" type="application/atom+xml">
+</head>
+  <body>
+    <div id="app" class="main">
+
+<div class="site-header-container">
+  <div class="site-header">
+    <div class="left">
+      <a href="https://linjiang.tech">
+        <img class="avatar" src="/images/avatar.png" alt="" width="32px" height="32px">
+      </a>
+      <a href="https://linjiang.tech">
+        <h1 class="site-title">linjiang&#39;s blog</h1>
+      </a>
+    </div>
+    <div class="right">
+        <i class="icon menu-switch icon-menu-outline" ></i>
+    </div>
+  </div>
+</div>
+
+<div class="menu-container" style="height: 0;opacity: 0;">
+<nav class="menu-list">
+  
+    
+      <a href="/" class="menu purple-link">
+        HOME
+      </a>
+    
+  
+    
+      <a href="/tips" class="menu purple-link">
+        TIPS
+      </a>
+    
+  
+    
+      <a href="/archives" class="menu purple-link">
+        ARCHIVES
+      </a>
+    
+  
+    
+      <a href="/about" class="menu purple-link">
+        ABOUT ME
+      </a>
+    
+  
+</nav>
+</div>
+
+
+
+  <div class="content-container">
+    <div class="post-detail">
+      
+      <h2 class="post-title">Matrix-TraceCanary的设计和原理分析手册</h2>
+      <div class="post-info post-detail-info">
+        <span><i class="icon icon-calendar-outline"></i> 2019-11-12</span>
+        
+          <span>
+          <i class="icon icon-pricetags-outline"></i>
+            
+              <a href="/tags/performance/">
+              performance
+                
+                  ，
+                
+              </a>
+            
+              <a href="/tags/matrix/">
+              matrix
+                
+              </a>
+            
+          </span>
+        
+      </div>
+      <div class="post-content-wrapper">
+        <div class="post-content">
+          <p>matrix是微信开源的APM方案，其中TraceCannery是一套用于监控应用卡顿和帧率并提供精确化的日志捕捉和分析能力的模块。本文以手册形式对其设计方案的选择和功能背后的原理进行分析说明，以期对Android端性能检测和优化有更加透彻的理解。</p>
+<p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/Tencent/matrix/wiki/Matrix-Android-TraceCanary">https://github.com/Tencent/matrix</a></p>
+<p><a name="kbuS4"></a></p>
+<h2 id="核心组件"><a href="#核心组件" class="headerlink" title="核心组件"></a>核心组件</h2><p><a name="o33xO"></a></p>
+<h3 id="LooperMonitor"><a href="#LooperMonitor" class="headerlink" title="LooperMonitor"></a>LooperMonitor</h3><p>向主线程的Looper注册MessageLogging和IdleHandler，分别对主线程消息模型 <strong>处理每条message</strong> 和 <strong>消息队列空闲时 </strong>进行监听并分发每条message处理的开始和结束事件。</p>
+<p><a name="klufX"></a></p>
+<h3 id="UIThreadMonitor"><a href="#UIThreadMonitor" class="headerlink" title="UIThreadMonitor"></a>UIThreadMonitor</h3><p>TracePlugin模块的核心实现。通过LooperMonitor和Choreographer实现对线程所有UI操作的监控，为具体Tracer提供相应事件的回调和统计。</p>
+<ol>
+<li><p>如何实现对UI操作 <strong>帧级别</strong> 的耗时统计？</p>
+<p> 通过LooperMonitor观察主线程Handler的每条message的回调事件，并在每次事件结束时向 <code>Choreographer</code> 分别插入INPUT、ANIMATION、TRAVERSAL三个事件到对应的队列头部（实际是先插入INPUT，当INPUT执行时再插入ANIMATION和TRAVERSAL），当下次VSYNC到来时触发执行相应回调，以达到对该三个事件执行时间的精确统计。<br />注意：这里的帧定义为系统处理输入、动画以及绘制的总操作，注意和Handler其余message的区别。由于每一帧执行也是通过Handler触发，所以不管是帧的执行还是其余message，只要出现了耗时，都会导致帧未及时执行或执行过长从而引起卡顿。</p>
+</li>
+<li><p>为什么插入到队列头部？</p>
+<p> VSYNC事件触发UI相关的操作实际也是通过主线程Handler来完成的，最终执行点是doFrame方法，该方法里是按照INPUT、ANIMATION、TRAVERSAL三种事件依次回调的，从每个事件的队列中取出符合执行时间的集合并执行；这里的问题就是符合时间的事件是取决于doFrame开始执行的时间戳，没法提前知道，即无法成对地向队列尾部插入事件。<br />因此考虑另一种方案：从INPUT队列第一个事件开始执行到ANIMATION队列的第一个事件开始执行刚好就是此次所有INPUT事件的执行时间，以此类推即可计算出三种事件的耗时；但是TRAVERSAL之后就结束了，TRAVERSAL的耗时没法在此次doFrame事件的回调中完成统计，所以我们增加一个标识符，在下一个message事件开始时根据标识符来结束对TRAVERSAL的耗时统计。</p>
+</li>
+</ol>
+<p>关于Choreographer的运行机制参考：<a href="http://linjiang.tech/2019/10/18/choreographer/">http://linjiang.tech/2019/10/18/choreographer/</a></p>
+<p><a name="mDhyo"></a></p>
+<h3 id="matrix-trace-plugin："><a href="#matrix-trace-plugin：" class="headerlink" title="matrix-trace-plugin："></a>matrix-trace-plugin：</h3><p><a name="87dVT"></a></p>
+<h4 id="配置参数"><a href="#配置参数" class="headerlink" title="配置参数"></a>配置参数</h4><ul>
+<li>mappingOut:</li>
+</ul>
+<p>// gradle默认的压缩混淆输出目录：app/build/outputs/mapping/{buildType}/<br />${globalScope.getBuildDir()}/outputs/mapping/${variantScope.getVariantConfiguration().getDirName()}</p>
+<ul>
+<li>traceClassOut:</li>
+</ul>
+<p>// 插桩后的输出目录（于源文件对应的层级结果，可用于观察每个函数的插桩结果）<br />${globalScope.getBuildDir()}/outputs/traceClassOut/${variantScope.getVariantConfiguration().getDirName()}</p>
+<ul>
+<li>methodMapping.txt</li>
+</ul>
+<p>${mappingOut}/methodMapping.txt<br />插桩结果文件：被插桩的方法集合</p>
+<ul>
+<li>ignoreMethodMapping.txt</li>
+</ul>
+<p>${mappingOut}/ignoreMethodMapping.txt<br />插桩结果文件：忽略了插桩的方法集合</p>
+<ul>
+<li>baseMethodMapFile</li>
+</ul>
+<p>插桩配置文件：可手动指定需要插桩的函数及索引（例如避免函数过于简单而被忽略）</p>
+<ul>
+<li>blackListFile</li>
+</ul>
+<p>插桩配置文件：指定插桩过滤名单，class级别；</p>
+<ul>
+<li>customDexTransformName</li>
+</ul>
+<p>插桩配置文件：指定trace切入的task名，默认是 <code>transformClassesWithDexForXX</code> 或 <code>transformClassesWithDexBuilderForXX</code> ；选择这样的方式是为了在混淆后开始插桩，因为 <code>AppExtension#registerTransform</code> 注册的任务是在混淆之前执行的。</p>
+<ul>
+<li>mapping.txt（开启混淆后Android插件生成的文件）</li>
+</ul>
+<p>开启混淆后的生成文件。</p>
+<p><a name="Jx6c3"></a></p>
+<h4 id="插桩时机和流程"><a href="#插桩时机和流程" class="headerlink" title="插桩时机和流程"></a>插桩时机和流程</h4><p>之所以选择在<strong>混淆后插桩</strong>，是因为在混淆前插桩可能导致某些方法不符合内联规则（编译时内联），无法被proguard（R8）优化，从而导致方法数无法减小，即相对没插桩就是变多。整个插桩过程总体来说分为三大步：<br />一</p>
+<ol>
+<li>解析自定义配置和混淆的输出文件；</li>
+<li>如果baseMethodMapFile存在，就将其中指定的函数映射至对应的混淆后的函数；</li>
+<li>从DictionaryInput和JarInput中解析出变化的<strong>源文件集合</strong>（输入-输出的map）用于下一步的函数收集；<ol>
+<li>其中会把上面两个类的输入文件集合的属性反射修改为指向自定义的输出文件目录，等插桩完成，修改后的文件写入到输出目录并作为下一个transform的输入文件；</li>
+</ol>
+</li>
+</ol>
+<p>二</p>
+<ol>
+<li>从<strong>源文件集合</strong>中根据过滤规则和黑名单的限制，通过ASM找到并收集所有可插桩的method，并分配唯一ID；<ol>
+<li>对于混淆的情况：在判断函数是否需要插桩时会先根据mapping得到原始name再判断；</li>
+<li>过滤规则：空函数（无任何指令）、get/set函数、简单的构造函数（最多就是调用了super）、简单函数（没调用任何其它函数）、黑名单；</li>
+</ol>
+</li>
+<li>将收集的和忽略的通过mapping还原为真实name并输出到methodMapping、ignoreMethodMapping。</li>
+</ol>
+<p>三</p>
+<ol>
+<li>遍历<strong>源文件集合</strong>并通过ASM进行真正的插桩，并将插桩后的文件流保存到对应的输出目录作为下一个transform的输入文件；<ol>
+<li>在函数的入口和出口处分别插入AppMethodBeat.i(id)、AppMethodBeat.o(id)；</li>
+<li>在ASM访问类时，遍历到onWindowFocusChanged时插入AppMethodBeat.at(this, focus)，如果class是Activity的非抽象子类且没有onWindowFocusChanged方法，则同时手动插入对应的方法并插桩；</li>
+<li>这里需要注意的是：在判断某个类是否是Activity的子类时，由于增量式编译plugin得到输入源只包含变化了的类，support库下的相关父类Activity并未参与到ASM的遍历中来，因此可能导致这里的判断失效从而无法插入 at 函数；</li>
+</ol>
+</li>
+</ol>
+<p><a name="kGn7H"></a></p>
+<h3 id="AppMethodBeat"><a href="#AppMethodBeat" class="headerlink" title="AppMethodBeat"></a>AppMethodBeat</h3><p>用于记录运行于 <strong>主线程 </strong>的所有函数的执行时间，具体方案是在函数的入口和出口分别插入对应的调用点(i/o)，在编译阶段通过trace-plugin插桩实现。基于此plugin顺便也实现了对Activity的焦点变化的监控(at)。</p>
+<p>记录函数的执行时间具体来说是开辟了一个固定长度为100w的long型数组用于存储函数开始和结束时的“当前时间点”（以下称记录表），占用内存空间约为: 1_000_000*64/8/1024/1024 ≈ 7.6M，其中将每个long型数组元素从高位到低位分成3部分，最高位0/1分别表示出入口、第43~62位存储methodID、第0~42位存储时间戳；这里可以看到</p>
+<ol>
+<li>函数ID在插桩分配时虽然未作限制，但实际最大只支持20位即大约100多w个，但也绰绰有余了。</li>
+<li>这种将函数和时间绑定在一个long字段上的方案极大地节约了运行空间，值得借鉴。</li>
+</ol>
+<p>另外，这里所说的记录的“当前时间”并非是记录时获取的实时时间，具体原因应该是考虑到大量调用<code>SystemClock.uptimeMillis()</code> 的耗时已不容忽略，因此采用了另外一种更新时间的机制：另起一个HandlerThread线程以每5ms的间隔刷新时间，并通过LooperMonitor的回调即主线程分发message的时刻来作为补充并控制刷新的开始和暂停。也就是说该方案得到的函数耗时至少有±10ms的误差，特别是对5ms以内的函数更是无从统计，但考虑到这种情况的函数并非影响性能的罪魁祸首，所以该方案也是合理的。</p>
+<p>有了每个函数的进入退出记录表，AppMethodBeat还需对外提供真正所需的切片以定位具体的问题函数，具体是由IndexRecord实现，顾名思义，用于外部在需要时记录切入时间片段索引；AppMethodBeat内部维护了一个IndexRecord链表和一个指向记录表最新位置的索引sIndex，当外部需要时就会为其生成一个保存了该时刻索引的IndexRecord对象并按索引递增的顺序插入链表中最后返回，外部可根据该对象从记录表中切出对应的数据切片。</p>
+<p><a name="bODpJ"></a></p>
+<h2 id="Tracer"><a href="#Tracer" class="headerlink" title="Tracer"></a>Tracer</h2><p>从多个场景维度来实现对性能的跟踪监控，以期提供更加精准化的问题分析和优化的能力。<br><a name="tZn4u"></a></p>
+<h3 id="AnrTracer"><a href="#AnrTracer" class="headerlink" title="AnrTracer"></a>AnrTracer</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/Tencent/matrix/wiki/Matrix-Android-TraceCanary">https://github.com/Tencent/matrix/wiki/Matrix-Android-TraceCanary</a></li>
+</ul>
+<p>用于检测主线程的ANR并尝试提供准确的可供分析定位的快照，特别适用于不可复现的卡顿场景（可复现的场景可以通过Trace来得到函数调用栈的快照以进一步分析）。</p>
+<p>开启后向LooperMonitor注册得到主线程的消息分发回调，并初始化了一个私有的HandlerThread用于对每一个消息的执行时间进行监测。具体就是在消息开始处理时post一个5s延迟task（以系统定义主线程无响应规则为基准），当消息处理结束时就移除先前的延迟task，如果task得到执行就表示处理超时，该task的职责就是负责收集当前时刻的运行快照，包括处理器内存情况、主线程堆栈、此次message处理过程的UI事件耗时统计（如果正好可以的话，因为并非每个message都是VSYNC的doFrame） 以及 对应的函数栈执行耗时切片。</p>
+<p>ANR监控是针对“帧”而言，这里的帧在老版本使用Choreographer分发每帧的回调，而新版本使用主线程的Handler-dispatchMessage机制，其中一个主要原因是因为Choreographer的doFrame也是以Message形式抛给Looper处理的，而主线程除了doFrame，本身就可能还存在其它Message需要处理，在两个脉冲之间如果存在耗时message就会导致doFrame不能及时处理，这里就引出了两个问题，一是我们的ANR监控可能误报，因为老方案检测的是两个doFrame之间的总时间超过阈值，但这之间可能是多个message，平摊下来的耗时可能并不会触发真正的ANR；二是监控到ANR时取得的函数栈执行耗时切片相对过大，不太便于分析，总而言之就是无法更精确的统计帧率和卡顿，而新机制可以将上述监控精准到message级别，优势不言而喻。<br />而利用Handler机制的缺点就是方案所依赖的的回调是判断Looper中组装的log字符串，由于回调很频繁因此系统产生大量的字符串严重时会使得内存紧张触发频繁的GC从而导致app性能下降；</p>
+<p><a name="2wPRD"></a></p>
+<h3 id="StartupTracer"><a href="#StartupTracer" class="headerlink" title="StartupTracer"></a>StartupTracer</h3><p>用于监控冷/热启动场景下的性能问题，提供的分析快照包含冷热启动的总耗时、application耗时、启动页耗时、以及相应期间的函数调用栈及其耗时。</p>
+<p>其中函数调用栈的快照来自前述的AppMethodBeat的切片，其它相关的耗时统计则依赖对ActivityThread的hook，切入的时机并未要求手动在application中实现，而是选自函数插桩后的运行时的第一次调用，由于默认是全局插桩，那么不管application实现的onCreate方法还是attchBaseContext，只要被调用就会触发hook。Hook其实只做了一件事：就是反射替换掌管分发应用内四大组件生命周期消息的Handler对象 <code>mH</code> 的 <code>mCallback</code> ，这样便可获取到启动页的launch时机，从而间接计算出application的总耗时（启动页启动时的时间点 - hook切入时的时间点）和启动页的启动耗时（Activity#onWindowFocusChanged - 启动页启动时的时间点）。</p>
+<p>onWindowFocusChanged和onResume一个很重要的区别就是onResume回调时只是表示进入了可见状态，Activity的layout仍未绘制，理论上Activity的启动统计除了位于生命周期回调函数中的逻辑耗时，还应包括布局的onMeasure、onLayout、onDraw流程的时间，而onWindowFocusChanged的首次回调表示Activity真正可见，是一个<strong>相对更完美</strong>的统计截止点；之所以不是最完美是因为onDraw是在onWindowFocusChanged之后回调的，即 <code>onResume -&gt; onMeasure -&gt; onLayout -&gt; onWindowFocusChanged -&gt; onDraw</code> ，因此上面的“真正可见”的时机实际上还是一团黑/白，没有任何内容。</p>
+<p>补充说明：</p>
+<ul>
+<li>application的总耗时的截止时间点具体来说是到第一个组件（Activity/Service/Receiver，除了Provider）启动的时刻；</li>
+<li>“启动页”并非特指第一个Activity，可以结合实际业务指定启动过程的截止Activity；</li>
+<li>onWindowFocusChanged时机的监控也是在编译时通过插桩调用的，见上述matrix-trace-plugin流程；</li>
+</ul>
+<p><a name="K6I20"></a></p>
+<h3 id="FrameTracer"><a href="#FrameTracer" class="headerlink" title="FrameTracer"></a>FrameTracer</h3><p>帧率监控也是通过向LooperMonitor注册得到主线程的消息分发回调、并在私有HandlerThread中进行逻辑处理，主要分为以下两块：<br />一是通过FrameTracer来统计每个页面在可见时的帧率情况，并在帧耗时累积达到一定时间时上报该期间的统计分析，包括平均帧率、掉帧的区间分布等信息（个人觉得用处不大）。<br />另一块位于FrameDecorator，以UI形式呈现“实时”FPS的监控，可以较为准确地观察到当前UI的帧率变化。其中的FPS算法是以累积200ms的总耗时为一个周期，期间的总帧数和总耗时相除得到的一个平均值，所以这里的“实时”是打引号的。<br />有以下几个注意点：</p>
+<ul>
+<li>总耗时指每一帧的耗时的累积时间，其中每一帧的耗时并非取的是 <code>UIThreadMonitor</code> 中统计的耗时，而是先根据该耗时计算出掉帧数dropFrame，即frameCost / 16.66（这里及以下以60hz为例）得到的整数，然后再用(dropFrame + 1) * 16.66计算出一帧的耗时时间，可以看到这种规则得到的耗时始终是16.66的倍数，为什么要这样算？其实这和VSYNC有关系，举个例子：不论每个VSYNC期间UI相关操作是10ms还是5ms，我们实际的帧率依然是60，不可能因为UI操作非常快就突破了60，因为VSYNC的推出就是用来稳定帧率的。</li>
+<li>计算的FPS除了不是实时外，而且还<strong>偏大</strong>。原因就在于matrix里一帧的耗时只包含了Choreographer的callback队列的执行，即UI操作相关的耗时，没有包含两个VSYNC之间产生的其它非UI操作相关的message的耗时，从而导致实际一帧的时间偏小，最终导致FPS偏高。</li>
+</ul>
+<p><a name="I03T8"></a></p>
+<h3 id="EvilMethodTracer"><a href="#EvilMethodTracer" class="headerlink" title="EvilMethodTracer"></a>EvilMethodTracer</h3><p>顾名思义，该tracer是用来找出“邪恶”方法，即那些在主线程执行时耗时过长的方法，可以看作AnrTracer的补充，提供了一个更细的分析粒度。因此方案也与ANRTracer类似，通过LoopMonitor注册主线程的消息分发回调观察每一个消息的耗时，当超过指定阈值（默认700ms）时便通过AppMethodBeat取出该期间在主线程中所有执行过的方法记录然后抛在私有HandlerThread中进行解析上报。</p>
+
+        </div>
+        <div class="top-div">
+          <ol class="top-box"><li class="top-box-item top-box-level-2"><a class="top-box-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="top-box-text">核心组件</span></a><ol class="top-box-child"><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#LooperMonitor"><span class="top-box-text">LooperMonitor</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#UIThreadMonitor"><span class="top-box-text">UIThreadMonitor</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#matrix-trace-plugin%EF%BC%9A"><span class="top-box-text">matrix-trace-plugin：</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#AppMethodBeat"><span class="top-box-text">AppMethodBeat</span></a></li></ol></li><li class="top-box-item top-box-level-2"><a class="top-box-link" href="#Tracer"><span class="top-box-text">Tracer</span></a><ol class="top-box-child"><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#AnrTracer"><span class="top-box-text">AnrTracer</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#StartupTracer"><span class="top-box-text">StartupTracer</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#FrameTracer"><span class="top-box-text">FrameTracer</span></a></li><li class="top-box-item top-box-level-3"><a class="top-box-link" href="#EvilMethodTracer"><span class="top-box-text">EvilMethodTracer</span></a></li></ol></li></ol>
+        </div>
+      </div>
+    </div>
+
+    
+      <div class="next-post">
+        <a class="purple-link" href="/2019/10/18/choreographer/">
+          <h3 class="post-title">
+            下一篇：Choreographer机制概述
+          </h3>
+        </a>
+      </div>
+    
+  </div>
+
+
+
+
+<footer>
+<div class="site-footer">
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/whataa" target="_blank">
+          <i class="icon icon-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+  
+  
+  
+  
+  
+  
+</div>
+</footer>
+
+
+      </div>
+      
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery.fancybox.min.js"></script>
+
+
+
+    <script>window.is_post = true;</script>
+
+
+<script src="/js/main.js"></script>
+
+
+
+
+
+    </div>
+  </body>
+</html>
+
