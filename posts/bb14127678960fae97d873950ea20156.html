@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Dart的学习笔记 - linjiang</title><meta name=description content=linjiang&#39;blog><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,300,700" type=text/css><link rel=stylesheet href=/style.css></head><body><header><h1><a href=/ >linjiang</a></h1><ul class=list-inline><li><a href=/ ><span>Home</span></a></li><li><a href=/about.html><span>About</span></a></li><li><a href=https://github.com/whataa target=_blank><span>GitHub</span></a></li></ul></header><div class=content><article class="blog-post post"><h2>Dart的学习笔记</h2><p class=date>2019-03-21</p><div class=post-content><p>在Dart中一切都是对象，一个.dart文件可以声明任何对象，包括类、函数、变量；</p><h2 id=var>var</h2><p>除了局部变量建议用var之外，其余地方建议用具体类型声明；</p><h2 id=const>const</h2><p>const 修饰一个编译时常量。</p><ul><li>当修饰构造函数时，则该类的所有fields必须是final修饰；</li><li>当const修饰的是类的field，则必须同时修饰static；</li><li>被final或者const修饰的变量，变量类型可以省略；</li></ul><h2 id=final>final</h2><p>类的fields被final修饰，可以不初始化（只是会警告），但是若要初始化，则必须通过构造函数来初始化，不能通过其它函数初始化。</p><ul><li>声明对象时可以省略对象类型；</li></ul><h2 id=covariant><a href=https://www.dartlang.org/guides/language/sound-dart#use-sound-parameter-types-when-overriding-methods>covariant</a></h2><p>因为Dart是类型安全的，所以Override方法时，方法的参数类型不能“收缩(tight)”。但是某些时候需要这种情况时，可以用该关键字注解用来抑制「静态检测错误」（即使知道是无效的），以 <strong>通过编译</strong>。但是运行时仍会执行无效参数检查。</p><h1 id=class>Class</h1><h2 id=dart文件>dart文件</h2><ul><li><p>主方法是 <code>main()</code>, 如果需要接收输入的参数则定义为 <code>main(List&lt;String&gt; args)</code> ；</p></li><li><p>可以定义任何代码，包括多个类、变量、函数等，无需限定在 <code>class</code> 内部；</p></li><li><p>没有 <code>public、protected、private</code> 关键字，默认所有的定义都是「public」的，如果需要转化为「private」，直接在对应的命名前增加下划线 <code>_</code>；</p></li><li><p><code>abstract</code> 定义抽象类，使用 <code>extends</code> 则表示继承；</p></li><li><p>没有 <code>interface</code> 关键字，默认所以的 <code>class</code> 都是隐式的接口。使用 <code>implements</code> 实现接口:</p><ul><li>若在同一个文件，则必须实现接口定义的所有变量和函数；</li><li>若不在同一个文件，则只需实现「public」类型的变量和函数；</li></ul></li></ul><h2 id=构造函数>构造函数</h2><ul><li><p>提供两种定义方式：</p><ol><li><p>与类名 <code>(ClassName)</code> 相同，可以理解为 <code>NoNamed constructors</code>；</p><blockquote><p>有且只能存在一个</p></blockquote></li><li><p>以<code>ClassName.identifier</code>的形式，称作 <code>Named constructors</code>；</p><blockquote><p>可用以提供更具场景化的构造名称，和Java的利用静态方法构造对象的方案类似，因此这种构造方式也就无法被子类继承;</p></blockquote></li></ol></li><li><p>在没有显式提供任何构造函数时，默认包含一个 <strong>无参无名</strong> 构造函数；不管是哪种方式，一旦显式定义了，默认的无参构造函数就被取代；</p></li><li><p>可以没有方法体；</p></li><li><p>构造函数参数区后可继续接 <code>:</code> + 表达式，称为初始化表达式<code>Initializer expressions</code> ：</p><ol><li><p>调用父类构造函数，例如：<code>Point.circle(int x) : super.any(x);</code></p></li><li><p>实例化成员变量，例如：<code>Point(int y) : x = 1 + y;</code></p></li><li><p>开发阶段的断言，例如：<code>Point(int y) : assert(y &gt; 0);</code></p></li><li><p>重定向到其它构造函数，例如：<code>Point.circle(int x) : this(x);</code></p><blockquote><p>重定向无法和上述前三种共用、没有body、不能快速参数指定</p></blockquote></li></ol><blockquote><p>1, 2, 3可以组合，但是1必须位于整个表达式的最后。</p></blockquote></li><li><p><code>factory</code> 关键字定义一个工厂函数（是构造函数，相当于从语言层支持了工厂方法），例如抽象类不能被实例化，可以利用该方式返回子类对象；</p></li><li><p>如果类实例化的对象不可变（不可修改该对象、且不可修改该对象的变量），可以通过在构造函数前面声明 <code>const</code>、对所有变量声明 <code>final</code> 来将对象转化为编译时常量。</p><p>该形式的构造函数有以下特性：</p><ol><li>没有有body；</li><li>由于所有的变量必须final，对于私有变量，可以通过 初始化表达式 来实例化；</li><li>初始化表达式 涉及的只能是常量；</li><li>任何地方通过该构造函数实例化的 <em><strong>constant对象</strong></em> (例如<code>const Point(1)</code>这种)，如果参数完全一致，那么这些对象是同一个对象；</li></ol></li></ul><h3 id=1-参数>1. 参数</h3><ul><li><p>可直接在参数区使用 <code>this.</code>+ 实例变量名 快速为实例变量赋值，例如：</p><pre><code>Bicycle(this.cadence, this.speed, this.gear);
+</code></pre></li><li><p>命名可选参数：将构造函数的部分参数包裹在 <code>{}</code> 中，同时可以为可选参数提供默认值，若参数是一个对象，则默认值需要声明为 <code>const</code> 以表示是一个编译时常量；</p></li><li><p>位置可选参数：将构造函数的部分参数包裹在 <code>[]</code> 中，传入的参数位置和函数声明的参数位置一一对应。</p></li></ul><h3 id=2-继承>2. 继承</h3><ul><li>子类的构造函数必须调用父类的构造函数，默认隐式调用父类的无参无名构造函数（注意：<code>Named constructors</code> 的无参构造函数不算）；若父类没有，则需要通过 <code>: super</code> 的形式手动调用，例如：<pre><code>Point.circle(int x) : super(x);
+</code></pre></li></ul><h2 id=实例>实例</h2><ul><li>定义对象时可以使用 <code>var</code> 关键字，同时也支持 <code>final</code>（如果该对象不会发生变化）；</li><li>实例化对象时可以省略 <code>new</code> 关键字；</li></ul><h2 id=变量>变量</h2><ul><li><p>由于完全面向对象，所以任何类型的变量默认值都为null，即使是num；</p></li><li><p>默认情况每个「public」实例变量都隐式地实现了 <code>getter/setter</code> （无需也禁止再手动实现），如果该实例变量被声明为了「private」，则可以使用关键字 <code>get</code> 定义方法以提供对外(内)访问，<code>set</code> 定义方法提供对外(内)修改；</p></li></ul><h2 id=泛型>泛型</h2><ul><li>与Java的泛型在运行时被擦除不一样的是，Dart的泛型指定后在运行时始终存在：<pre><code>var names = List&lt;String&gt;();
+names.addAll([&#39;Seth&#39;, &#39;Kathy&#39;, &#39;Lars&#39;]);
+print(names is List&lt;String&gt;); // true
+</code></pre></li></ul><h2 id=mixin><a href=https://my.oschina.net/zzxzzg/blog/2962518>Mixin</a></h2><ul><li><p>可以理解为「组合」，形如Java接口但更强大；</p></li><li><p>使用方式是通过 <code>class A with B, C, ...</code>，使A得到B、C的方法、字段；</p></li><li><p>除了普通类，可使用关键字 <code>mixin</code> 定义一种特殊的类，专门表示用来mixin(<code>with</code>)的；</p><ol start=0><li>mixin类不能继承或被继承，但是可以（或被）<code>implements</code>；</li><li>mixin类可以后接 <code>on</code>，例如 <code>mixin A on B</code> ，用以限定 A 只能被 B 及其子类所<code>with</code>；</li><li>mixin on 所指定的限定类必须包含一个无参无名构造函数；</li></ol></li></ul><h2 id=异常>异常</h2><ul><li><p><code>try-catch-finally</code> 捕获异常；</p></li><li><p>可以在try模块后接 <code>on + Ex</code> 模块来捕获具体类型的异常，区别于 <code>catch</code> 捕获的是具体异常对象；</p><pre><code>try {
+  breedMoreLlamas();
+} on OutOfLlamasException {
+  // A specific exception
+  buyMoreLlamas();
+} on Exception catch (e) {
+  // Anything else that is an exception
+  print(&#39;Unknown exception: $e&#39;);
+} catch (e) {
+  // No specified type, handles all
+  print(&#39;Something really unknown: $e&#39;);
+}
+</code></pre></li><li><p>使用 <code>throw</code> + 字符串 快速抛出异常，也可以继承 <code>Exception</code> 类实现自定义的异常；</p></li><li><p>使用 <code>reThrow</code> 快速在catch块中再次抛出；</p></li></ul><h2 id=函数式编程>函数式编程</h2><ul><li><p>支持函数作为参数；</p></li><li><p>支持将函数赋值给变量；</p></li><li><p>由于函数也是对象，所以关键字 <code>Function</code> 如同 <code>num、bool</code> 一样，代表函数的类型，因此，对象可声明的地方，函数也如此，例如：</p><pre><code>void main() {
+    Function test() {
+        return int abc() =&gt; 0;
+    }
+}
+</code></pre></li><li><p>所有的函数都有返回值，如果没有显式指定return，默认返回null；</p></li><li><p>函数可以省略声明返回类型，这样就是默认的dynamic类型；</p></li><li><p><code>=&gt; expr</code> 是对 <code>{ return expr; }</code> 的一种简写手法，注意：expr指<strong>表达式</strong>；</p></li></ul><h3 id=typedef>typedef</h3><ul><li>也是一种类型；</li></ul><p>typedef 用于定义Function类型，具体指参数类型、个数、返回值，而Function的名字只是一个别名，包括以下两种定定义方式：</p><ol><li><code>typedef XXX = void Function(int/String/... x);</code></li><li><code>typedef void XXX(int/String/... x);</code></li></ol><blockquote><p>注意：若省略参数名，则参数类型失效，变为了dynamic</p></blockquote><pre><code>typedef int Test(Object a, Object);
+typedef int ABC(Object a, Object b);
+typedef ABC2 = int Function(Object a, Object b);
+int sort(Object a, Object b) =&gt; 0;
+main() {
+  print(Test); // (Object, dynamic) =&gt; int
+  print(ABC);  // (Object, Object) =&gt; int
+  
+  print(&quot;sort is ABC: ${sort is ABC}&quot;); // true
+  print(&quot;sort is ABC2: ${sort is ABC2}&quot;); // true
+  
+  print(&quot;ABC is ABC2: ${ABC is ABC2}&quot;); // false
+  print(&quot;ABC == ABC2: ${ABC == ABC2}&quot;); // true
+}
+</code></pre><h2 id=条件>条件</h2><ul><li><p><code>switch case</code> 支持省略 <code>break</code> 以继续下一个 <code>case</code> ，但是前提是这个 <code>case</code> 不包含代码，否则异常；如果确要如此，可以使用 <code>continue + label:</code> 的形式：</p><pre><code>switch (command) {
+  case &#39;CLOSED&#39;:
+    executeClosed();
+    continue nowClosed;
+  // Continues executing at the nowClosed label.
+
+  nowClosed:
+  case &#39;NOW_CLOSED&#39;:
+    // Runs for both CLOSED and NOW_CLOSED.
+    executeNowClosed();
+    break;
+}
+</code></pre></li></ul><h2 id=external><a href=https://stackoverflow.com/a/24929907>external</a></h2><p>大意是用于修饰函数，表示该函数的具体实现和它定义的地方是分开的。据目前所知，这种形式常用来针对不同平台作不同的具体实现，例如浏览器端和服务端VM的差异实现。</p><h2 id=async--await>async / await</h2><p><a href=https://segmentfault.com/a/1190000007535316>https://segmentfault.com/a/1190000007535316</a></p><h2 id=syncasyncyieldyield>sync*/async*/yield/yield*</h2><p>一种（序列）生成器的概念。<a href=https://www.dartlang.org/articles/language/beyond-async>https://www.dartlang.org/articles/language/beyond-async</a></p><ul><li><p>类似Async-await概念。用Sync*/Async*修饰函数，函数被调用时，不同于前者立即返回Future，后者是返回Iterable（同步）/Stream（异步）。</p></li><li><p>函数内通过yield发射值到迭代器/流，同步的情况是需要外部pull（惰性）；异步的情况是stream被订阅后主动push；</p></li><li><p>Sync、ASync是同步和异步的区别，同步情况下，每次yield后会“暂停”，直到下次被pull；异步情况则不会。</p></li><li><p>yield后接一个表达式，yield* 则是后接一个子序列（符合同步异步情况的前提下），并将这个子序列转入当前函数的序列中。</p></li></ul></div></article><script src=https://giscus.app/client.js data-repo=whataa/whataa.github.io data-repo-id="MDEwOlJlcG9zaXRvcnk1NDY1NzI1MA==" data-category=Announcements data-category-id=DIC_kwDOA0IA4s4CtJJY data-mapping=title data-strict=0 data-reactions-enabled=0 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=zh-CN data-loading=lazy crossorigin=anonymous async></script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js></script><script>hljs.highlightAll()</script></div></body></html>

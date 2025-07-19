@@ -1,0 +1,174 @@
+<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>App&#39;s ClassLoader的来源 - linjiang</title><meta name=description content=linjiang&#39;blog><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,300,700" type=text/css><link rel=stylesheet href=/style.css></head><body><header><h1><a href=/ >linjiang</a></h1><ul class=list-inline><li><a href=/ ><span>Home</span></a></li><li><a href=/about.html><span>About</span></a></li><li><a href=https://github.com/whataa target=_blank><span>GitHub</span></a></li></ul></header><div class=content><article class="blog-post post"><h2>App's ClassLoader的来源</h2><p class=date>2016-10-31</p><div class=post-content><p>Java中每一个类都是通过ClassLoader来加载的。对于基于Java的Android应用，这些ClassLoader是从哪来的呢。研究过Android插件化机制的都知道Android中有<code>PathClassLoader</code>和<code>DexClassLoader</code>这两个类，它们的概念和区别也许我们已经很熟悉了，但是对为什么应用的类加载器是PathClassLoader，它是如何产生的这些问题却是不甚了解。本文就从应用的启动流程出发，来揭开ClassLoader的秘密。</p><p>如果抛开底层原理不看，我们可以感知到的App启动的第一步大概就是<code>Application的onCreate</code>方法，因此我们先来看看Application类是如何加载进来的。</p><h3 id=加载application>加载Application</h3><p>在该方法中加入下面这行代码来查看一下当前堆栈：</p><pre><code>new Throwable().printStackTrace();
+</code></pre><p>启动应用后，可以在logCat中看到如下信息：</p><pre><code>W/System.err: java.lang.Throwable
+             at com.demo.MyApplication.onCreate(MyApplication.java:12)
+             at android.app.Instrumentation.callApplicationOnCreate(Instrumentation.java:1013)
+             at android.app.ActivityThread.handleBindApplication(ActivityThread.java:4707)
+             at android.app.ActivityThread.-wrap1(ActivityThread.java)
+             at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1405)
+             at android.os.Handler.dispatchMessage(Handler.java:102)
+             at android.os.Looper.loop(Looper.java:148)
+             at android.app.ActivityThread.main(ActivityThread.java:5417)
+             at java.lang.reflect.Method.invoke(Native Method)
+             at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726)
+             at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+</code></pre><p>方法间的调用链很清晰，在onCreate之前，从名字来看与<code>Application</code>类相关的调用最早是出现在<code>ActivityThread.handleBindApplication</code>这一行，那么我们就到ActivityThread的源码中去一探究竟。</p><p>在ActivityThread类中大约4680行处，第一次发现了Application的身影，结合代码中的上下文，我们可以确信这就是我们日常开发中所熟悉的Application对象。可以看到，它是通过调用data.info的makeApplication方法来生成的，而这个 <code>data.info</code> 是一个LoadedApk对象，LoadedApk表示，一个包对应一个LoadedApk对象（具体的可以自行深入了解）。先来看看这个data.info是什么时候生成的。</p><pre><code>Application app = data.info.makeApplication(data.restrictedBackupMode, null);
+</code></pre><h4 id=data--info>data . info</h4><p>往回查找，在大约4493行发现它被首次赋值：</p><pre><code>data.info = getPackageInfoNoCheck(data.appInfo, data.compatInfo);
+</code></pre><p>从getPackageInfoNoCheck方法名就可以看出，它获取的应该是一个全新未缓存的LoadedApk对象，继续查看代码，其内部其实只是调用了getPackageInfo方法。</p><p>果不其然，在该方法会首先去查找缓存，由于是第一次调用，所以未命中缓存，直接通过LoadedApk构造方法new了一个LoadedApk对象，并缓存至<code>mPackages</code>中。</p><blockquote><p>注意由于上面getPackageInfoNoCheck传入的ClassLoader为null，所以导致构造LoadedApk时传入的baseLoader也为null。</p></blockquote><pre><code>final ArrayMap&lt;String, WeakReference&lt;LoadedApk&gt;&gt; mPackages = new ArrayMap&lt;String, WeakReference&lt;LoadedApk&gt;&gt;();
+
+private LoadedApk getPackageInfo(ApplicationInfo aInfo, CompatibilityInfo compatInfo,
+        ClassLoader baseLoader, boolean securityViolation, boolean includeCode,
+        boolean registerPackage) {
+        //...
+        WeakReference&lt;LoadedApk&gt; ref;
+        //...
+        ref = mPackages.get(aInfo.packageName);
+        //...
+        LoadedApk packageInfo = ref != null ? ref.get() : null;
+        if (packageInfo == null || (packageInfo.mResources != null
+                &amp;&amp; !packageInfo.mResources.getAssets().isUpToDate())) {
+            //...
+            packageInfo = new LoadedApk(this, aInfo, compatInfo, baseLoader,
+                        securityViolation, includeCode &amp;&amp;
+                        (aInfo.flags&amp;ApplicationInfo.FLAG_HAS_CODE) != 0, registerPackage);
+                        
+            //...由于前面getPackageInfoNoCheck传给getPackageInfo的includeCode参数为true，所以放入缓存
+            else if (includeCode) {
+                mPackages.put(aInfo.packageName, new WeakReference&lt;LoadedApk&gt;(packageInfo));
+            }
+        }
+        return packageInfo;
+    }
+}
+</code></pre><p>通过getPackageInfoNoCheck拿到返回LoadedApk对象后，我们再回到最初的位置，来看看<code>LoadedApk#makeApplication</code>方法。</p><h4 id=makeapplication>makeApplication</h4><p>在LoadApk#makeApplication中，首先构造了Application的全包名字符串，并调用了方法getClassLoader得到ClassLoader的实例，然后调用了<code>mActivityThread.mInstrumentation.newApplication</code>方法传入classLoader参数，newApplication方法中通过cl.loadClass(className).newInstance()最终返回了Application实例：</p><pre><code>// LoadedApk
+public Application makeApplication(boolean forceDefaultAppClass, Instrumentation instrumentation) {
+    //...
+    String appClass = mApplicationInfo.className;
+    if (forceDefaultAppClass || (appClass == null)) {
+        appClass = &quot;android.app.Application&quot;;
+    }
+    //...
+    java.lang.ClassLoader cl = getClassLoader();
+    //...
+    ContextImpl appContext = ContextImpl.createAppContext(mActivityThread, this);
+    app = mActivityThread.mInstrumentation.newApplication(cl, appClass, appContext);
+    appContext.setOuterContext(app);
+    //...
+}
+// Instrumentation
+public Application newApplication(ClassLoader cl, String className, Context context)
+        throws InstantiationException, IllegalAccessException, 
+        ClassNotFoundException {
+    return newApplication(cl.loadClass(className), context);
+}
+static public Application newApplication(Class&lt;?&gt; clazz, Context context)
+        throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+    Application app = (Application)clazz.newInstance();
+    app.attach(context);
+    return app;
+}
+</code></pre><p>重点来了，上面说到最终加载并构造Application对象的这个ClassLoader是通过<code>LoadedApk#getClassLoader</code>得到的，我们看看它的源码：</p><pre><code>public ClassLoader getClassLoader() {
+    synchronized (this) {
+        if (mClassLoader != null) {
+            return mClassLoader;
+        }
+        if (mIncludeCode &amp;&amp; !mPackageName.equals(&quot;android&quot;)) {
+            //...
+            mClassLoader = ApplicationLoaders.getDefault().getClassLoader(zip, lib, mBaseClassLoader);
+            //...
+        } else {
+            if (mBaseClassLoader == null) {
+                mClassLoader = ClassLoader.getSystemClassLoader();
+            } else {
+                mClassLoader = mBaseClassLoader;
+            }
+        }
+        return mClassLoader;
+    }
+}
+</code></pre><p>很明显在第一次调用的时候缓存mClassLoader为null，同时<code>mIncludeCode</code>为true，并且我们的包名肯定也不是系统的包名，所以接下来直接调用的是<code>ApplicationLoaders.getDefault().getClassLoader</code>方法，该方法的流程为：当参数<code>parent==null || parent == baseParent</code>， 且<code>缓存无效</code>时，就会构建一个以BootClassLoader为parent，指向apk的PathClassLoader对象，在前面的分析中可知，构建LoadedApk对象时传入的baseLoader为null，所以LoadedApk的变量mBaseClassLoader也为null，最终导致ApplicationLoaders.getDefault().getClassLoader返回了一个全新的PathClassLoader对象。<code>ClassLoader.getSystemClassLoader()</code>的源码很简单，就是一个懒加载的单例，其parent为BootClassLoader，在此就不贴代码了。</p><p>其实对于ApplicationLoaders，这也是唯一被调用的时机（即通过LodedApk#getClassLoader），每个App进程都有唯一的ApplicationLoaders实例，一个LoadedApk的ClassLoader一但创建，便会保存在ApplicationLoaders的mLoaders实例中，后续则通过apk路径查询返回。同时还可以得出一个结论，一个进程可以对应多个apk。</p><pre><code>#ApplicationLoaders
+public ClassLoader getClassLoader(String zip, String libPath, ClassLoader parent) {
+    ClassLoader baseParent = ClassLoader.getSystemClassLoader().getParent();
+    synchronized (mLoaders) {
+        if (parent == null) {
+            parent = baseParent;
+        }
+        if (parent == baseParent) {
+            ClassLoader loader = mLoaders.get(zip);
+            if (loader != null) {
+                return loader;
+            }
+            PathClassLoader pathClassloader = new PathClassLoader(zip, libPath, parent);
+            mLoaders.put(zip, pathClassloader);
+            return pathClassloader;
+        }
+        PathClassLoader pathClassloader = new PathClassLoader(zip, parent);
+        return pathClassloader;
+    }
+}
+</code></pre><p>到这里，Application的ClassLoader的来源我们也就清楚了，也解决了文中开头提到的为什么是PathClassLoader的问题。但是诸如Activity、Service等组件又是通过哪个ClassLoader加载进来的呢。</p><h3 id=加载四大组件>加载四大组件</h3><p>其实前面的分析流程来对Android四大组件的启动流程分析同样适用，最终都会走到在ActivityThread，分别通过<code>performLaunchActivity、handleCreateService、handleReceiver、installProvider</code>几个方法来启动的：</p><pre><code>private Activity performLaunchActivity(ActivityClientRecord r, Intent customIntent) {
+        //...
+        Activity activity = null;
+        try {
+            java.lang.ClassLoader cl = r.packageInfo.getClassLoader();
+            activity = mInstrumentation.newActivity(cl, component.getClassName(), r.intent);
+            //...
+        } catch (Exception e) {
+            //...
+        }
+        //...
+}
+
+private void handleCreateService(CreateServiceData data) {
+        //...
+        LoadedApk packageInfo = getPackageInfoNoCheck(data.info.applicationInfo, data.compatInfo);
+        Service service = null;
+        try {
+            java.lang.ClassLoader cl = packageInfo.getClassLoader();
+            service = (Service) cl.loadClass(data.info.name).newInstance();
+        } catch (Exception e) {
+            //...
+        }
+        //...
+}
+
+private void handleReceiver(ReceiverData data) {
+        //...
+        LoadedApk packageInfo = getPackageInfoNoCheck(data.info.applicationInfo, data.compatInfo);
+        //...
+        BroadcastReceiver receiver;
+        try {
+            java.lang.ClassLoader cl = packageInfo.getClassLoader();
+            //...
+            receiver = (BroadcastReceiver)cl.loadClass(component).newInstance();
+        } catch (Exception e) {
+            //...
+        }
+        //...
+}
+
+private IActivityManager.ContentProviderHolder installProvider(Context context,
+            IActivityManager.ContentProviderHolder holder, ProviderInfo info,
+            boolean noisy, boolean noReleaseNeeded, boolean stable) {
+    ContentProvider localProvider = null;
+    IContentProvider provider;
+    if (holder == null || holder.provider == null) {
+        //...
+        Context c = null;
+        //...
+        c = mInitialApplication;
+        //...
+        try {
+            final java.lang.ClassLoader cl = c.getClassLoader();
+            localProvider = (ContentProvider)cl.loadClass(info.name).newInstance();
+            provider = localProvider.getIContentProvider();
+            //...
+        } catch (java.lang.Exception e) {
+            //...
+        }
+    } else {
+        //...
+    }
+}
+</code></pre><p>从上面的代码可以得到，这些方法中，最终都会直接/间接通过<code>LoadedApk#getClassLoader</code>来加载相应的类，这里的LoadedApk对象则是handleBindApplication流程期间生成并保存到ActivityThread的mPackages中的缓存，而每个App在启动时都会经历handleBindApplication流程，所以最终可以得出的结论就是加载四大组件的ClassLoader与Application的ClassLoader是同一个类加载器并且它是PathClassLoader对象。</p><h3 id=加载普通类>加载普通类</h3><p>加载Application和四大组件的ClassLoader我们已经知道了，那么应用中自行编写的其它普通类又是通过哪个ClassLoader加载进来的呢？其实这个问题属于Java类加载机制的一部分。在一个类A中如果使用到了类B，都会直接或间接的通过new关键字或者Class.forName.newInstance显式地获得B的对象，在B类未加载的前提下，两种方式都会触发加载B类。如果我们深究其原理和区别，可以再写一篇文章了，这里直接抛出简要说明，我们可以把new关键字当做forName和newInstance两个步骤的集合，在调用Class.forName时，默认调用了以下方法作为将要加载的类的类加载器:</p><pre><code>// Returns the defining class loader of the caller&#39;s caller.
+VMStack.getCallingClassLoader()
+</code></pre><p>由注释可知，该方法获取的是当前栈caller&#39;s caller的类加载器，对于上面的AB例子，那么返回的就是加载A的类加载器。也就是说，普通类的加载是通过调用该类的caller类的类加载器来完成的。由于整个应用默认的初始类加载器是PathClassLoader，那么通过Application和四大组件引用到的其它普通类的类加载器也都是PathClassLoader。</p><h3 id=结语>结语</h3><p>本文结合Application和四大组件以及普通类是如何加载的问题来分析了Android应用的类加载器的来源。了解Android中的类加载器的来源可以让我们更清楚Android应用的所有类的是如何加载进来的；在对自定义类加载器中，对如何修改加载流程来达到应用的热更新和插件化目的的也有明显的帮助。</p></div></article><script src=https://giscus.app/client.js data-repo=whataa/whataa.github.io data-repo-id="MDEwOlJlcG9zaXRvcnk1NDY1NzI1MA==" data-category=Announcements data-category-id=DIC_kwDOA0IA4s4CtJJY data-mapping=title data-strict=0 data-reactions-enabled=0 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=zh-CN data-loading=lazy crossorigin=anonymous async></script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js></script><script>hljs.highlightAll()</script></div></body></html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Choreographer机制概述 - linjiang</title><meta name=description content=linjiang&#39;blog><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,300,700" type=text/css><link rel=stylesheet href=/style.css></head><body><header><h1><a href=/ >linjiang</a></h1><ul class=list-inline><li><a href=/ ><span>Home</span></a></li><li><a href=/about.html><span>About</span></a></li><li><a href=https://github.com/whataa target=_blank><span>GitHub</span></a></li></ul></header><div class=content><article class="blog-post post"><h2>Choreographer机制概述</h2><p class=date>2019-10-18</p><div class=post-content><p>Choreographer是用于协调动画(animation)、输入(input)以及绘制(drawing)三种事件的触发时间。<br>具体来说就是作为系统”垂直同步脉冲“VSYNC和应用端的协调者，通过稳定的周期性回调来统一上述与UI相关的事件的执行，以期达到稳定流畅的显示效果。</p><p>Choreographer在内部为这些事件各自维护了一个按发生时间从近及远的队列，用于存储向其请求执行的任务，每当同步信号到来时，就从相应的队列中取出符合的任务并按照INPUT、ANIMATION、TRAVERSAL的顺序回调，最终触发触摸事件分发、动画执行和绘制流程相关逻辑的执行。</p><p>所谓VSYNC，是Android4.1开始引入的一种提升页面流畅性的新机制，以固定周期集中处理UI绘制相关操作以提供更稳定的FPS；在此之前每一帧的UI绘制相关操作都是无间隔地以message形式抛给Handler处理的，那么FPS直接取决于message的执行时间，导致忽高忽低。需要注意的是，系统在运行期间以60帧的帧率即16.67ms的间隔（对于最近火热的90帧的手机，其系统的VSYNC则是90帧即11.1ms的间隔）持续发出脉冲信号，但并不意味着应用内部不论何种情况都会不断地收到该信号，仅当应用主动向系统请求时，最近的VSYNC才会传递给Choreographer并安排相应的任务；其中”应用主动请求“包括input事件的唤起、动画的执行以及视图层级的刷新。</p><p><a name=O91kg></a></p><h2 id=traversal流程>TRAVERSAL流程</h2><p>这里我们以View的绘制执行为例来梳理应用与Choreographer之间的关系。<br>当视图需要重绘时，我们会调用requestLayout方法，该方法将事件通过视图层级层层向上传递到了ViewRootImpl的requestLayout方法中，并最终调用scheduleTraversals方法：</p><pre><code class=language-java>void scheduleTraversals() {
+    if (!mTraversalScheduled) {
+        ...
+        mChoreographer.postCallback(
+                Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
+        ...
+    }
+}
+</code></pre><p>显而易见，该方法直接向Choreographer通过postCallback插入了一个TRAVERSAL事件，我们前面说到，当同步信号到来时就会取出Choreographer里面的队列事件并执行，这里的事件指的其实就是 mTraversalRunnable ，其内部调用正是Android绘制的真正执行方法：doTraversal()，整个流程也就不言而喻了。<br>postCallback内部并不复杂，主要做了以下两件事：</p><ol><li>将事件加入到对应的队列：</li></ol><pre><code class=language-java>private void postCallbackDelayedInternal(int callbackType,
+            Object action, Object token, long delayMillis) {
+    ...
+    synchronized (mLock) {
+        final long now = SystemClock.uptimeMillis();
+        final long dueTime = now + delayMillis;
+        mCallbackQueues[callbackType].addCallbackLocked(dueTime, action, token);
+        ...
+    }
+}
+</code></pre><ol start=2><li>向系统请求安排最近的同步信号：</li></ol><pre><code class=language-java>private void scheduleFrameLocked(long now) {
+    ...
+    if (USE_VSYNC) {
+        ...
+        if (isRunningOnLooperThreadLocked()) {
+            scheduleVsyncLocked();
+        } else {
+            ...
+        }
+    } else {
+        ...
+    }
+}
+</code></pre><p>这里我们仅关心VSYNC模式下的相关逻辑，其中scheduleVsyncLocked内部调用的是native方法，用于向系统请求安排 **最近 **的同步信号，相当于向对应的系统进程注册了一个回调；当下一次同步信号到来时Choreographer的onVsync方法将被调用，该方法内部又将事件抛给了主线程的Handler（这里我们以主线程的Choreographer为例），以真正的执行方法：</p><pre><code class=language-java>void doFrame(long frameTimeNanos, int frame) {
+    synchronized (mLock) {
+    ... 
+        try {
+            doCallbacks(Choreographer.CALLBACK_INPUT, frameTimeNanos);
+            doCallbacks(Choreographer.CALLBACK_ANIMATION, frameTimeNanos);
+            doCallbacks(Choreographer.CALLBACK_TRAVERSAL, frameTimeNanos);
+            ...
+        } finally {
+            ...
+        }
+    ...
+    }
+}
+</code></pre><p>所有事件本质都是以runnable的形式存储在队列，doCallback内部的核心逻辑就是执行runnable的run方法，也即是执行前面说到的mTraversalRunnable内部的doTraversal方法开始真正的绘制流程。整个流程结束，对于ANIMATION以及TRAVERSAL也是依次类推。</p><p>另外，在doFrame中我们还可以顺道发现和验证一些常见问题，例如我们经常在LogCat里看到的</p><blockquote><p>Skipped xx frames!  The application may be doing too much work on its main thread.</p></blockquote><p>就是在该方法中输出的，刚刚我们说到onVsync方法会把通知事件抛给Handler，如果在此期间存在非常耗时的message，那么等到doFrame这个消息执行时可能已经过了好几个VSYNC周期，在doFrame中就是通过对比 当前时间 和触发该message的 onVsync的发生时间 来判断出大致掉了多少帧，所以在主线程中不管是input、animation以及UI绘制三者自身耗时还是其它message的执行耗时，都会导致掉帧。</p><blockquote><p>注：onVsync的发生时间并非指onVsync开始执行时的时间，而是传给onVsync的参数时间，这个时间是VSYNC信号到来的时间。</p></blockquote><p><a name=g1k0I></a></p><h2 id=题外话：流畅度>题外话：流畅度</h2><p>既然已经大致了解了Android的UI绘制与Choreographer的关系，那么可以以什么方式或从什么地方来检测每一帧的耗时情况呢？</p><p>由前面的分析可知，所谓每一帧其实指的就是input、animation、traversal三种事件对应的三个doCallback方法的执行结果，那么帧耗时就可以用这三个方法的执行总时间来表示。</p><p>统计一个方法的耗时最直接的方案就是向方法内部第一行和最后一行插桩得到执行时间差，此处依然行之有效，当然并不是编译期插入，毕竟是系统方法，而是向input、animation、traversal三个事件队列的头部插入一个我们自己包装的事件，从input队列第一个事件开始执行到animation队列的第一个事件开始执行刚好就是此次所有input事件的执行时间，以此类推即可计算出三种事件的耗时，由此可见，根据该方案我们不仅可以得到每一帧的耗时，还能更进一步得到每一帧内input、animation、traversal三种事件的耗时情况。</p><p>至于为什么只插入到队列头部，是进入doCallback的事件是从相应队列中取出的符合执行时间的集合，这里的问题就是符合时间的事件是取决于doFrame开始执行的时间戳，没法提前知道，即无法成对地向队列尾部插入事件。<br>另外还有一个小细节，traversal的doCallback之后就结束了，一帧的耗时统计没法闭合，所以我们可以增加一个标识符，在下一个message事件开始时根据标识符来结束对TRAVERSAL的耗时统计。</p><p>其实该方案正是取自微信开源的Matrix项目，具体代码逻辑位于 UIThreadMonitor 类，关于在什么时机并如何向Choreographer内部的队列插入自定义事件可自行参考。</p><p><a name=rsOQV></a></p><h2 id=参考>参考</h2><ul><li><a href=https://zhuanlan.zhihu.com/p/37631535>https://zhuanlan.zhihu.com/p/37631535</a></li><li><a href=https://blog.csdn.net/yangwen123/article/details/39518923>https://blog.csdn.net/yangwen123/article/details/39518923</a></li><li><a href=http://gityuan.com/2017/02/25/choreographer/ >http://gityuan.com/2017/02/25/choreographer/</a></li><li><a href=https://developer.android.com/reference/android/view/Choreographer>https://developer.android.com/reference/android/view/Choreographer</a></li><li><a href=https://github.com/Tencent/matrix/blob/91935959753fcfe9826aa699138fafa86fd5f00b/matrix/matrix-android/matrix-trace-canary/src/main/java/com/tencent/matrix/trace/core/UIThreadMonitor.java#L311>https://github.com/Tencent/matrix/blob/91935959753fcfe9826aa699138fafa86fd5f00b/matrix/matrix-android/matrix-trace-canary/src/main/java/com/tencent/matrix/trace/core/UIThreadMonitor.java#L311</a></li></ul></div></article><script src=https://giscus.app/client.js data-repo=whataa/whataa.github.io data-repo-id="MDEwOlJlcG9zaXRvcnk1NDY1NzI1MA==" data-category=Announcements data-category-id=DIC_kwDOA0IA4s4CtJJY data-mapping=title data-strict=0 data-reactions-enabled=0 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=zh-CN data-loading=lazy crossorigin=anonymous async></script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js></script><script>hljs.highlightAll()</script></div></body></html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>优化 Gradle 构建速度汇总 - linjiang</title><meta name=description content=linjiang&#39;blog><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,300,700" type=text/css><link rel=stylesheet href=/style.css></head><body><header><h1><a href=/ >linjiang</a></h1><ul class=list-inline><li><a href=/ ><span>Home</span></a></li><li><a href=/about.html><span>About</span></a></li><li><a href=https://github.com/whataa target=_blank><span>GitHub</span></a></li></ul></header><div class=content><article class="blog-post post"><h2>优化 Gradle 构建速度汇总</h2><p class=date>2020-02-26</p><div class=post-content><p>本文罗列了目前社区中常规的 gradle 构建速度优化方案，作为开发的参考。<br>更新于：2020-2-26</p><p><a name=2hPkS></a></p><h3 id=gradle配置>gradle配置</h3><p><a name=WQV9Q></a></p><h4 id=1-daemon>1. daemon</h4><p>无需每次执行构建相关任务时都重新启动一个新的gradle进程，从而增加了相应的非必要耗时。</p><pre><code class=language-kotlin>// 在项目的gradle.properties 增加 
+org.gradle.daemon=true 
+// 或通过命令行传递参数 
+./gradlew --daemon
+</code></pre><p>如果在长时间多次编译后速度变得缓慢，可以通过 <code>./gradlew --stop</code> 结束已有daemon进程。</p><p><a name=6dQcW></a></p><h4 id=2-parallel>2. parallel</h4><p>基本上大部分项目都包含了多个module，gradle默认情况下是串行执行的，可以通过以下方式开启并行构建，可以加入参数 --profile 在生成的html中看到total build time 和 task execution的时间差异。</p><pre><code class=language-kotlin>// 在项目的gradle.properties 增加 
+org.gradle.parallel=true 
+// 或通过命令行传递参数 
+./gradlew --parallel
+</code></pre><p><a name=32cGr></a></p><h4 id=3-configure-on-demand>3. configure on demand</h4><p>gradle的构建包含初始化、配置、执行三大流程，CoD用于配置阶段，仅配置与所选任务相关的module。<br>例如module-A compile module-B，则B会被配置；或者task-A dependOn module-B‘s task 则B也会被配置。</p><blockquote><p>但是我们大部分情况是在IDE中执行的 <code>sync</code> 触发了配置所有module，因此CoD并没起什么作用。Gradle团队也决定废弃它，并计划通过一个新的模式来替代：<a href=https://github.com/gradle/gradle/issues/2868#issuecomment-384373780>issue</a></p></blockquote><pre><code class=language-kotlin>// 在项目的gradle.properties 增加 
+org.gradle.configureondemand=true 
+// 或通过命令行传递参数 
+./gradlew --configure-on-demand
+</code></pre><p><a name=NAwuA></a></p><h4 id=4-offline>4. offline</h4><p>每次构建都会去下载本地缓存没有的依赖或检查缓存已有依赖是否存在最新版本，另外一些三方插件在构建期间也会发起网络请求，例如一些会上传匿名统计信息、一些会上传混淆的mapping文件等等。但是由于国内糟糕的网络环境，网络经常超时重试占用大量构建时间。</p><pre><code class=language-kotlin>// 1. 在IDE中的gradle panel里 toggle offline mode
+// 2. 或通过命令行传递参数 
+./gradlew --offline
+</code></pre><p><a name=vd2pN></a></p><h4 id=5-buildcache>5. buildCache</h4><p>gradle的构建缓存机制 会缓存构建的输出（build-in 和 符合的三方task），并以输入作为参数生成唯一的key生成对应的缓存文件，这样在后续的构建过程中如果输入没有变化就可以直接利用这些缓存加快构建速度。<br>**特别是clean之后重新构建时，实测有无缓存的时间相差将近 2/3 **。</p><pre><code class=language-kotlin>// 在项目的gradle.properties 增加 
+org.gradle.caching=true 
+// 或通过命令行传递参数 
+./gradlew --build-cache
+// 如果在开启了caching，想临时测试关闭构建缓存的执行效果
+./gradlew --no-build-cache
+</code></pre><p>生成的缓存默认存储在 <code>&lt;user-home&gt;/.android/build-cache/</code> 可以通过以下方式进行修改或删除：</p><pre><code class=language-kotlin>// 1. 修改位置：
+// 在setting.gradle中增加
+buildCache {
+    local {
+        directory = new File(rootDir, &#39;build-cache&#39;)
+        removeUnusedEntriesAfterDays = 30
+    }
+}
+// 2. 删除构建缓存：
+./gradlew cleanBuildCache
+</code></pre><p>与增量编译（incremental build）机制一个很明显的区别就是在构建的输出日志中，增量编译的task之后显示的是 <code>UP-TO-DATE</code> ，而构建缓存显示的是 <code>FROM-CACHE</code> 。</p><p><a name=BoMOz></a></p><h4 id=6-jvmargs>6. jvmargs</h4><p>由于构建所处的进程也是一个JVM，因此通常Java开发对JVM的调优参数也适用此构建进程，可以根据自身电脑的配置传递合适的jvm参数：</p><pre><code class=language-kotlin>// 在项目的gradle.properties 增加 
+org.gradle.jvmargs=-Xmx2g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8
+</code></pre><p><a name=coFgH></a></p><h3 id=agp配置>AGP配置</h3><p><a name=69wTG></a></p><h4 id=1-minsdkversion-21>1. minSdkVersion 21</h4><p>64K问题导致针对5.0以下的设备需要通过multiDex方案来兼容，构建期间在拆分dex的同时还需要 花费一些时间 来决定哪些class需要放入primary dex以避免启动发生Crash。而从5.0开始虽然构建期间依然会拆分dex，但由于应用在安装时这些dex会被优化为一个 <code>.oat</code> 文件，也就无需再区分primary dex。<br>因此如果当前调试的设备版本&gt;=5.0，完全可以仅在debug下将 <code>minSdkVersion</code> 指定为 <strong>21</strong> 来避免前述的耗时。</p><p><a name=ADwtE></a></p><h4 id=2-resconfigs>2. resConfigs</h4><p>除非是针对不同语言或特定设备显示效果的特定测试，一般情况下我们开发环境仅包含一套资源即可，尽量减少aapt的编译耗时。</p><pre><code class=language-kotlin>// 在app.gradle中的 defaultConfig 或特定 flavor 中
+resConfigs &quot;en&quot;, &quot;xxhdpi&quot;
+</code></pre><p><a name=ihXbj></a></p><h4 id=3-crunchpngs>3. crunchPngs</h4><p>在构建期间 aapt 会自动对 png 图片进行压缩处理，但这在开发环境下一般是没必要的，因此可以停用。</p><pre><code class=language-kotlin>// 在AGP3.0.0以下
+aaptOptions {
+    cruncherEnabled false
+}
+// 从AGP3.0.0开始，buildType为debug时默认已经关闭，如果有自定义type，可增加如下
+crunchPngs false
+</code></pre><p><a name=qD6p1></a></p><h4 id=4-静态化>4. 静态化</h4><p>我们可能经常会将一些动态信息通过 app.gradle 配置写入到 manifest.xml 或 BuildConfig.java 文件中，例如绑定编译时间、git提交版本等，但是这些属性往往会触发全量构建，即使每次只是修改了一行项目内的代码。<br>因此在开发环境尽量避免这些行为，可以通过判断是否release来分别配置。</p><p><a name=Cg74p></a></p><h3 id=kotlin配置>Kotlin配置</h3><p>现在很多项目都接入了Kotlin享受其带来的开发收益，但其编译速度却大受诟病，不过随着语言的迭代其编译速度也一直在优化。 <a name=fHw0E></a></p><h4 id=from-1221>from 1.2.21</h4><p>从该版本开始，Kotlin的编译任务也支持了 buildCache 特性，所以在开启buildCache 的前提下直接 <strong>升级到最新版本</strong> 就能享受到期带来的收益。<br>另外即使开启了buildCache，注解处理器 kapt 的缓存默认也是禁用的，因此需要手动开启：</p><pre><code class=language-kotlin>kapt {
+    useBuildCache = true
+}
+</code></pre><p><a name=1Afhv></a></p><h4 id=from-1260>from 1.2.60</h4><p>从该版本开始，对kapt利用gradle的work api实现并行任务处理进行了优化，开启方式如下：</p><pre><code class=language-kotlin>// 在gradle.properties 中
+kapt.use.work.api=true
+</code></pre><p><a name=yDkil></a></p><h4 id=from-1320>from 1.3.20</h4><p>从该版本开始，针对kapt引用了 Compile Avoidance 特性来避免一些情况下的注解处理任务，具体<a href=https://docs.gradle.org/current/userguide/java_plugin.html#sec:java_compile_avoidance>规则链接</a>。但前提是需要注解处理器显式地声明使用kapt处理，因此通过以下方式来禁止在编译路径下自动搜索注解处理器：</p><pre><code class=language-kotlin>// 在gradle.properties 中
+kapt.include.compile.classpath=false
+</code></pre><p><a name=DFDXP></a></p><h4 id=from-1330>from 1.3.30</h4><p>从该版本开始，kapt支持增量注解处理，通过以下方式开启：</p><pre><code class=language-kotlin>// 在gradle.properties 中
+kapt.incremental.apt=true
+</code></pre><p>截止目前（1.3.61），以上特性由于还处于实验阶段，因此需要手动开启，不过随着版本的更新优化还在继续，也许在今后的某些版本中就会修改为默认开启。</p><p><a name=zdJ0N></a></p><h3 id=其它实践>其它实践</h3><p><a name=mMkjy></a></p><h4 id=1-版本问题>1. 版本问题</h4><p>对于AS 和 AGP，除了新需求外新版本相对老版本一般都有性能方面的优化。</p><ul><li>例如老版的AS对于包含多个buildType和flavor配置的项目，每次sync都会将所有组合同步一遍（可以在build目录中看到所有组合的相关目录），非常耗时，而从AS3.3 + AGP3.3.0开始，在gradle文件发生变化时默认仅sync当前指定的flavor。</li><li>又如AGP 3.5.0 和AS 3.5.0 实施了 Project Marble 计划，主要针对的就是对构建速度的优化。</li></ul><p>因此在没有严重BUG的情况下，保持开发环境为最新版本能得到最新的性能优化。</p><p><a name=2bdjK></a></p><h4 id=2-精简module>2. 精简module</h4><p>每增加一个module（模块）都会引入对应的 初始化 和 配置 tasks，大量的模块会对整个构建时间产生不可忽略的影响。可以挨个审查项目中的模块，能移除的尽量移除；对于基本上不会变动的模块，可以考虑打包为aar形式的依赖，AGP的构建缓存机制可以对其进行<a href=https://developer.android.com/studio/build/build-cache#disable_build_cache>缓存</a>以提升构建速度。</p><p><a name=U4gZM></a></p><h4 id=3-三方库>3. 三方库</h4><p><a name=PLhUI></a></p><h5 id=firebase-crashlytics-fabric>Firebase Crashlytics (Fabric)</h5><p>Crashlytics是用于收集bug的sdk，在国内使用也相当普遍，但是以下注意点会对构建速度产生影响：<br>crashlytics 会在每次构建期间构造一个ID来标识唯一性，但该ID是存储在manifest中所以会导致全量构建，可以在 buildType 中使用  <code>ext.alwaysUpdateBuildId = false</code> 在开发期间关闭。</p><p><a name=yTZ9k></a></p><h4 id=4-command-line>4. command-line</h4><p>建议尽量通过命令行来执行构建任务。通过IDE形式开启构建会将任务的执行进度、状态以及日志等信息与UI进行同步，根据电脑配置的不同该方案对构建性能有一定的影响。</p><p><a name=De0B6></a></p><h4 id=5-其它方案>5. 其它方案</h4><ul><li><a href=https://github.com/alibaba/freeline>freeline</a>：当年前东家的项目中集成使用过，在生效的基础上单从速度而言确实比当时的instant run快，可以缓解部分情况下的问题。但是由于增量条件严苛（例如需要建立app进程和电脑socket通信所以首次插上时得全量编译、资源变化也会降级为全量等等），再加上仍然存在BUG（例如显示生效了但app中并没有变化，此时只能全量重编）实际上不适合作为常规开发解决方案。</li><li><a href=https://github.com/typ0520/fastdex>fastdex</a></li></ul><p>虽然以上两种方式由于AGP的升级和一些其它限制导致事实上不再适用现在大部分项目，但其优化方案是值得学习和借鉴的。</p><p><a name=dORSb></a></p><h3 id=性能分析>性能分析</h3><p><strong><code>--profile</code></strong> 可以获取当次构建的结果报告，包含所有task的具体执行时间，可以以此分析可优化的点；生成的文件一般位于项目根路径下的 reports 目录下。<br><strong><code>--info</code></strong> 可以获得更详细的构建输出日志，例如其中就包含了一些task为什么被执行的原因。<br><strong><code>&gt;&gt; &lt;file path&gt;</code></strong> 构建过程的日志非常多，难以详细定位，可以通过该方式将日志输出到指定的文件中。</p><p>针对某一项的优化措施需要排除其它因素干扰，可以通过以下方式获取全量构建：</p><pre><code class=language-kotlin>./gradlew clean
+./gradlew --stop
+./gradlew --profile --offline --no-build-cache --rerun-tasks assembleXXX
+</code></pre><p>其中 <code>--rerun-tasks</code> 强制重新执行所有相关task并忽略任何task优化。</p></div></article><script src=https://giscus.app/client.js data-repo=whataa/whataa.github.io data-repo-id="MDEwOlJlcG9zaXRvcnk1NDY1NzI1MA==" data-category=Announcements data-category-id=DIC_kwDOA0IA4s4CtJJY data-mapping=title data-strict=0 data-reactions-enabled=0 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=zh-CN data-loading=lazy crossorigin=anonymous async></script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js></script><script>hljs.highlightAll()</script></div></body></html>

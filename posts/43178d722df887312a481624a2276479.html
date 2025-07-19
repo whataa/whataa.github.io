@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>使用sublime提升mars-xlog日志文件分析效率 - linjiang</title><meta name=description content=linjiang&#39;blog><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,300,700" type=text/css><link rel=stylesheet href=/style.css></head><body><header><h1><a href=/ >linjiang</a></h1><ul class=list-inline><li><a href=/ ><span>Home</span></a></li><li><a href=/about.html><span>About</span></a></li><li><a href=https://github.com/whataa target=_blank><span>GitHub</span></a></li></ul></header><div class=content><article class="blog-post post"><h2>使用sublime提升mars-xlog日志文件分析效率</h2><p class=date>2017-08-06</p><div class=post-content><p>最近由于个人所负责的模块的不确定性，需要预埋大量的日志以便更精准地分析和定位问题、同时升级项目中原有的日志系统的需求又刚好提上了日程，于是通过和同事的几天调研，最终将公司App的日志系统替换为了微信开源的Mars-xlog组件，关于xlog的优势和使用方式可直接参见其<a href=https://github.com/Tencent/mars/tree/master/mars/log>官方Github</a>，这里仅记录拿到收集的日志文件后，如何提升对日志的分析的效率的小技巧。</p><p>参考Android Studio的Logcat，结合xlog文件的特性，以最省心和高效的方式来看，可优化的方面包括：自动化解压和打开、语法高亮两方面。</p><h2 id=自动化解压和打开open-build>自动化解压和打开(open-build)</h2><p>xlog在异步模式下会自动开启内容压缩，若直接打开，看到的将全是16进制的数字，所以微信提供了脚本<code>decode_mars_log_file.py</code>来解压，我们所需要做的首先是打开终端，cd到对应的路径，执行<code>python decode_mars_log_file.py xxx.xlog命令</code>以生成最终的xxx.xlog.log文件，然后再打开文件……，作为开发，怎能忍受这么麻烦的操作存在，这里就需要抡起sublime了。</p><blockquote><p>小技巧：.log的文件默认是以“控制台”程序打开，可以通过<code>“右键 - 显示简介 - 打开方式 - 选择‘sublime’ - 全部更改”</code>的方法修改默认配置。</p></blockquote><p>总所周知，sublime可以编辑和编译大部分主流的编程语言文件(js、java、php……)，这得益于其强大的构建系统(build system)的自定义，因此这里利用该方案来“build”我们的xlog文件。打开sublime，选择 <code>工具栏 - tool - Build System - New Build System</code>来为xlog文件配置构建方案。在弹出的新文件编辑窗口中填写以下内容即可：</p><pre><code>{
+    &quot;cmd&quot;: [&quot;$packages/User/decode_mars_log_file.py&quot;, &quot;$file&quot;],
+    &quot;selector&quot;: &quot;source.xlog&quot;
+}
+</code></pre><p>然后保存为例如<code>SampleXlog.sublime-build</code>。</p><blockquote><p>关于如何编写这些配置，具体可以参考sublime官方文档-<a href=http://sublime-text.readthedocs.io/en/latest/reference/build_systems.html#id1>Build System章节【译】</a></p></blockquote><p>由于sublime本身对python的支持，所以我们可以直接指定相应的参数。</p><ul><li>其中cmd的值的第一个元素表示前面提到的用于解压缩的脚本的路径，<code>$packages</code>变量表示sublime本地的Packages路径，因此这里第二个步骤就是将<code>decode_mars_log_file.py</code>文件copy到上述路径下；</li><li>第二个元素变量表示当前文件，如果当前窗口是打开的xlog文件，<code>$file</code>就表示它。<br>另外还有个selector，我们稍后再解释。</li></ul><p>完成上述步骤后如果我们直接选中SampleXlog并点击Build，我们会发现在本地文件系统打开的xlog文件旁边生成了解压缩后的文件<code>xxx.xlog.log</code>，但是……这并没有什么*用，讲了大半天就给看这个？</p><p>其实很容易就可以给出解决方案：只要将其解压后的内容的存放位置从原来生成的新文件修改为源文件本身，就可以实现“open-build”，对于解压前的内容，我们本身就不关心。因此，打开<code>decode_mars_log_file.py</code>文件，修改其main方法，将传入ParseFile的第二个参数修改为第一个参数一样的值：</p><pre><code>def main(args):
+    global lastseq
+    if 1==len(args):
+        if os.path.isdir(args[0]):
+            filelist = glob.glob(args[0] + &quot;/*.xlog&quot;)
+            for filepath in filelist:
+                lastseq = 0
+                ParseFile(filepath, filepath)
+        else: ParseFile(args[0], args[0]) #这里   
+    elif 2==len(args):
+        ParseFile(args[0], args[1]) #这里手动指定了存放文件，就不修改了 （虽然并不会走到这里）  
+    else: 
+        filelist = glob.glob(&quot;*.xlog&quot;)
+        for filepath in filelist:
+            lastseq = 0
+            ParseFile(filepath, filepath) #这里（虽然并不会走到这里） 
+</code></pre><p>到这里，我们再重试手动Build，解压的内容便成功地覆盖了先前那不知所云的内容。但是密密麻麻的一大片白色字符，眼睛开始痛了起来。在logcat中的红黄蓝绿等所标识的VIDWEF等级显得多么的美丽。</p><h2 id=语法高亮>语法高亮</h2><p>不用刻意注意就知道sublime在打开的例如js、Java等文件时，会自动对相关关键字、方法变量等进行颜色区分，或者直接说语法高亮，其中的原因便是sublime内置了对这些语言的高亮配置方案，因此我们还是可以以为xlog配置build方案的模式来同样为xlog配置“语法高亮”方案。</p><h2 id=在sublime中，每种语法的高亮配置是以xml格式的内容组成，而为了更方便的制作高亮配置，已经有前人提供了相应方案，例如sublime的packagedev插件，以更直观的方式进行编辑。安装好之后，点击工具栏---tool---packages---package-development---syntax-definition来为xlog文件指定高亮方案。如下所示：---packagedev-target_format-plist-ext-tmlanguage>在sublime中，每种语法的高亮配置是以xml格式的内容组成，而为了更方便的制作高亮配置，已经有前人提供了相应方案，例如sublime的PackageDev插件，以更直观的方式进行编辑。安装好之后，点击<code>“工具栏 - tool - Packages - Package Development - Syntax Definition”</code>来为xlog文件指定高亮方案。如下所示： ``` # [PackageDev] target_format: plist, ext: tmLanguage</h2><p>name: Codoon Xlog scopeName: source.xlog fileTypes: [&quot;xlog&quot;, &quot;xlog.log&quot;] uuid: af21ab18-b1b3-4929-8999-2654833418f4</p><p>patterns: ...</p><pre><code>- name：表示该方案的名称，随意；
+- scopeName：这个字段很重要了，可以将其理解为一套“语法方案”，注意将其与下面的fileTypes区分开来，还记得前面在为xlog配置build方案时忽略了一个selector属性吗，这下应该明白了，也就是说，如果发现该文件内容是xlog“语法方案”，那么就sublime就会自动将其build方案指定为`SampleXlog`；
+- fileTypes：大概跟文件类型通配符类似，这里指定了只要文件名是以xlog、xlog.log形式结尾的，都将适用于本方案；
+- uuid：自动生成，勿删除；
+
+接下来最重要的就是这个patterns了，如需详细了解，请自行参考[官方文档](http://www.sublimetext.com/docs/3/syntax.html)，可以以一句大白话概括：用正则匹配语句并指定高亮模式，每一种高亮模式在不同的主题中都有对应的颜色，具体颜色可以访问[自定义sublime主题颜色-Sublime Color Editor网站](http://tmtheme-editor.herokuapp.com/#!/editor/theme/Monokai)。那么有了这些基础了解，xlog的高亮方案也就可以很简单的匹配出来了：
+</code></pre><p>patterns:</p><ul><li><p>comment: others name: comment match: (^|d|g|M|l).*</p></li><li><p>comment: verbose name: variable match: ([V])([.<em>?])([.</em>?])([.<em>?])([.</em>?])([.*) captures: &#39;1&#39;: {name: comment} &#39;2&#39;: {name: comment} &#39;3&#39;: {name: comment} &#39;4&#39;: {name: string} &#39;5&#39;: {name: constant.numeric}</p></li><li><p>comment: debug name: support.function match: ([D])([.<em>?])([.</em>?])([.<em>?])([.</em>?])([.*) captures: &#39;1&#39;: {name: comment} &#39;2&#39;: {name: comment} &#39;3&#39;: {name: comment} &#39;4&#39;: {name: string} &#39;5&#39;: {name: constant.numeric}</p></li><li><p>comment: info name: entity.name.function match: ([I])([.<em>?])([.</em>?])([.<em>?])([.</em>?])([.*) captures: &#39;1&#39;: {name: comment} &#39;2&#39;: {name: comment} &#39;3&#39;: {name: comment} &#39;4&#39;: {name: string} &#39;5&#39;: {name: constant.numeric}</p></li><li><p>comment: warn name: variable.parameter match: ([W])([.<em>?])([.</em>?])([.<em>?])([.</em>?])([.*) captures: &#39;1&#39;: {name: comment} &#39;2&#39;: {name: comment} &#39;3&#39;: {name: comment} &#39;4&#39;: {name: string} &#39;5&#39;: {name: constant.numeric}</p></li><li><p>comment: error name: keyword.other match: ([E])([.<em>?])([.</em>?])([.<em>?])([.</em>?])([.*) captures: &#39;1&#39;: {name: comment} &#39;2&#39;: {name: comment} &#39;3&#39;: {name: comment} &#39;4&#39;: {name: string} &#39;5&#39;: {name: constant.numeric}</p></li></ul><pre><code>其中
+- comment相当于注释；
+- name表示该套模式的名字；
+- match该套模式的正则表达式，入门正则，可以看看[这一篇](https://deerchao.net/tutorials/regex/regex.htm)；
+- captures是可选的，是对match粒度的进一步细分；
+
+保存后，还需要执行build将这种编写方式转化为sublime的格式，最后大功告成，看看效果：![image](http://note.youdao.com/yws/api/personal/file/WEB06c09e65828a99e4080f24621c08cd95?method=download&amp;shareKey=41254dace5879db69c65ad295eb7a0d4)
+
+
+## 其它
+虽然sublime自带强大的搜索/过滤，但以用途和方便而言，这里还是推荐一下[Filter Lines插件](https://github.com/davidpeckham/sublime-filterlines)，可以更好地帮助日志的粗分，最重要的是可以以**行**为单位进行过滤。
+
+## 最后
+最后来总结一下，本文方案其实就是利用sublime的特性，通过将xlog文件当作一种“语言”的方式来为其配置自定义的“语法高亮”规则和“编译”规则，实现了xlog文件的快速解压和查看，极大的提升了日志分析的效率；使用方式也非常方便，直接双击xlog在sublime中打开，然后快捷键F7或command+B执行加压缩，便得到了形如logcat的日志内容。
+
+另外，需要说明的有两点：
+1. 本文所使用的xlog未修改源码，其余压缩方案、加密解密、自定义格式化等修改请自行参考；
+2. 本文所涉及的路径描述、生产环境均基于mac，其它系统请自行参考。
+</code></pre></div></article><script src=https://giscus.app/client.js data-repo=whataa/whataa.github.io data-repo-id="MDEwOlJlcG9zaXRvcnk1NDY1NzI1MA==" data-category=Announcements data-category-id=DIC_kwDOA0IA4s4CtJJY data-mapping=title data-strict=0 data-reactions-enabled=0 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=zh-CN data-loading=lazy crossorigin=anonymous async></script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js></script><script>hljs.highlightAll()</script></div></body></html>

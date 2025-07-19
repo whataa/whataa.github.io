@@ -1,0 +1,192 @@
+<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Coloring Buttons with ThemeOverlays and Background Tints[译] - linjiang</title><meta name=description content=linjiang&#39;blog><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,300,700" type=text/css><link rel=stylesheet href=/style.css></head><body><header><h1><a href=/ >linjiang</a></h1><ul class=list-inline><li><a href=/ ><span>Home</span></a></li><li><a href=/about.html><span>About</span></a></li><li><a href=https://github.com/whataa target=_blank><span>GitHub</span></a></li></ul></header><div class=content><article class="blog-post post"><h2>Coloring Buttons with ThemeOverlays and Background Tints[译]</h2><p class=date>2016-08-13</p><div class=post-content><p>译自：<a href=http://www.androiddesignpatterns.com/2016/08/coloring-buttons-with-themeoverlays-background-tints.html>Coloring Buttons w/ ThemeOverlays &amp; Background Tints</a></p><p>如果我们想改变<code>Button</code>的背景色<code>background color</code>，一般如何实现？</p><p>本文将介绍两种实现方式。第一种是使用<code>AppCompat</code>的<code>Widget.AppCompat.Button.Colored</code>样式并自定义<code>ThemeOverlay</code>来直接修改<code>Button</code>的背景色，而第二种方式则是使用<code>AppCompat</code>的<code>built-in background tinting support</code>来实现同样的效果。</p><h3 id=方式1：通过themeoverlay方式修改>方式#1：通过<code>ThemeOverlay</code>方式修改</h3><p>前面讲得有点空泛，在此之前我们先来了解下按钮的背景颜色是如何决定的。<a href=https://material.google.com/components/buttons.html>material设计规范</a>对在<code>light and dark themes</code>中的按钮应该是什么样子有非常具体的要求。那么这些需求在底层是如何被满足的呢？</p><h4 id=the-widgetappcompatbutton-button-styles>The <code>Widget.AppCompat.Button</code> button styles</h4><p>为了回答上面所提出的问题，我们首先需要对<code>AppCompat</code>是如何决定一个标准按钮的默认外观有一个基本的理解，<code>AppCompat</code>定义了大量的由<code>Widget.AppCompat.Button</code>派生出来的<code>style</code>样式，作为各种按钮的默认外观样式，在<code>Android</code>中，每一个<code>View</code>必须有一个默认的外观。也就使得<code>framework</code>可以为每一个控件应用一系列默认属性值，达到了更好的用户体验。对于按钮<code>Buttons</code>，默认的<code>Widget.AppCompat.Button</code>样式有以下特性：</p><ul><li><p>所有<code>Button</code>的最小宽高<code>minimum width</code>、<code>minimum height</code>默认都是相同的（根据<a href=https://material.google.com/components/buttons.html>material设计规范</a><code>分别指定为</code>88dp<code>和</code>48dp`）</p></li><li><p>所有<code>Button</code>的<code>TextAppearance</code>默认相同（例如：所有大写字母的文本默认字体和大小全都一致）</p></li><li><p>所有<code>Button</code>的<code>background</code>默认相同（例如：相同的颜色、圆角角度、相等的<code>insets</code> 和<code>padding</code>值等）</p></li></ul><p><code>Widget.AppCompat.Button</code>确保了所有<code>Button</code>默认情况下看起来大致相同。但是这些特性例如按钮背景色在<code>Light</code>和<code>Dark</code>主题下又是如何被取决的，又或者是诸如<code>disabled</code>, <code>pressed</code>, and <code>focused</code>等状态下的情况呢？对于这些，<code>AppCompat</code>主要取决于以下三种不同的属性（<code>theme attributes</code>）：</p><ul><li><p><a href=https://developer.android.com/reference/android/support/v7/appcompat/R.attr.html#colorButtonNormal>R.attr.colorButtonNormal</a>：决定按钮在普通状态 <code>normal state</code>下的背景色， <code>light themes</code>主题下为<code>#ffd6d7d7</code>，<code>dark themes</code>主题下为<code>#ff5a595b</code>。</p></li><li><p><a href=https://developer.android.com/reference/android/R.attr.html#disabledAlpha>android.R.attr.disabledAlpha</a>：浮点数类型，决定控件disabled 状态下的alpha值，<code>light themes</code>和<code>dark themes</code>主题下分别为<code>0.26f</code>、<code>0.30f</code>。</p></li><li><p><a href=https://developer.android.com/reference/android/support/v7/appcompat/R.attr.html#colorControlHighlight>R.attr.colorControlHighlight</a>：决定当控件被按下<code>pressed</code>或者获得焦点<code>focused</code>时，绘制在控件顶部的透明悬浮层的颜色<code>translucent overlay color</code>（在<code>post-Lollipop</code>中的<code>Ripple</code>效果或者<code>pre-Lollipop</code>的<code>list selectors</code>的前景色<code>foreground</code>），在<code>light themes</code>和<code>dark themes</code>下分别表现为<code>12% black</code>和<code>20% white</code>(<code>#1f000000</code> and <code>#33ffffff</code>)。</p></li></ul><p><code>AppCompat</code>在背后几乎已经为我们处理好了所有的事，它提供了另一个样式<code>Widget.AppCompat.Button.Colored</code>来 让改变按钮背景色 相对更加地简单，从它的命名可知，该样式派生于<code>Widget.AppCompat.Button</code>，因此拥有了所有和父类一样的属性，除了其中一个：<a href=https://developer.android.com/reference/android/support/v7/appcompat/R.attr.html#colorAccent>R.attr.colorAccent</a> 属性决定按钮的背景基色<code>button’s base background color</code>。</p><h4 id=creating-custom-themes-using-themeoverlays>Creating custom themes using <code>ThemeOverlay</code>s</h4><p>现在我们知道了按钮的背景可以通过<code>Widget.AppCompat.Button.Colored</code>样式来自定义，但是我们又该如何自定义<code>theme’s accent color</code>呢？一种是我们可以直接通过修改应用的主题中的<code>R.attr.colorAccent</code>属性来指定我们所要修改的颜色，但是大部分时间我们在应用中仅希望改变特定的几个按钮的背景，这个方法就变得不可取了。因为修改应用的全局Theme的属性会对应用中的所有按钮的背景有效。</p><p>相反，一个更好的解决方案就是在<code>xml</code>中利用<code>android:theme</code>和<code>ThemeOverlay</code>来为按钮指定自己的自定义主题。假设我们想改变<code>Google Red 500</code>的按钮背景色，为实现这一目标，我们可以定义以下主题：</p><pre><code>&lt;!-- res/values/themes.xml --&gt;
+&lt;style name=&quot;RedButtonLightTheme&quot; parent=&quot;ThemeOverlay.AppCompat.Light&quot;&gt;
+    &lt;item name=&quot;colorAccent&quot;&gt;@color/googred500&lt;/item&gt;
+&lt;/style&gt;
+</code></pre><p>然后设置到布局xml中对应的按钮上，如下：</p><pre><code>&lt;Button
+    style=&quot;@style/Widget.AppCompat.Button.Colored&quot;
+    android:layout_width=&quot;wrap_content&quot;
+    android:layout_height=&quot;wrap_content&quot;
+    android:theme=&quot;@style/RedButtonLightTheme&quot;/&gt;
+</code></pre><p>就是这样！尽管达到了目的，我们仍想知道这个<code>ThemeOverlay</code>到底是什么。不像我们在<code>AndroidManifest.xml</code>文件中使用的主题（例如<code>Theme.AppCompat.Light</code>, <code>Theme.AppCompat.Dark</code>等），<code>ThemeOverlay</code> 仅定义了对控件外观设置Theme时最常用的一小部分<code>material-styled</code>的主题属性（参见 <a href=https://github.com/android/platform_frameworks_support/blob/d57359e205b2c04a4f0f0ecf9dcb8d6086e75663/v7/appcompat/res/values/themes_base.xml#L551-L604>source code</a> 获取完整的属性列表）。因此当我们仅想修改特定视图的一两个属性时就变得非常有用：只需要继承<code>ThemeOverlay</code>，然后更新我们想修改的属性的值，并且我们可以确保该视图除了已修改的属性外的其他属性使用的仍然是继承了的<code>light/dark</code>主题的值。</p><h3 id=方式2-设置appcompatbutton-的-background-tint>方式#2: 设置<code>AppCompatButton</code>的<code>background tint</code></h3><p>这里还有一种更加高效的方式来修改按钮的背景色，使用一个在<code>AppCompat</code>中叫做<code>background tinting</code>的新特性。我们可能知道许多框架的控件已经被替换为<code>AppCompat</code> 样式，这使得<code>AppCompat</code> 可以更好地通过<code>material design</code>规范来控制控件的着色<code>hint</code>，甚至是在<code>Lollipop</code>之前的设备。在应用运行期间，<code>Buttons</code> 变为<code>AppCompatButtons</code>，<code>ImageViews</code> 变为 <code>AppCompatImageViews</code>, <code>CheckBoxs</code> 变为 <code>AppCompatCheckBoxs</code>等等等等。任何AppCompat化的控件只要实现了<a href=https://developer.android.com/reference/android/support/v4/view/TintableBackgroundView.html>TintableBackgroundView </a>接口，都可以运用<code>ColorStateList</code>属性来拥有自己的背景着色：</p><pre><code>&lt;!-- res/color/btn_colored_background_tint.xml --&gt;
+&lt;selector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;&gt;
+
+    &lt;!-- Disabled state. --&gt;
+    &lt;item android:state_enabled=&quot;false&quot;
+          android:color=&quot;?attr/colorButtonNormal&quot;
+          android:alpha=&quot;?android:attr/disabledAlpha&quot;/&gt;
+
+    &lt;!-- Enabled state. --&gt;
+    &lt;item android:color=&quot;?attr/colorAccent&quot;/&gt;
+
+&lt;/selector&gt;
+</code></pre><p>然后设置到布局<code>xml</code>中：</p><pre><code>&lt;android.support.v7.widget.AppCompatButton
+    android:layout_width=&quot;wrap_content&quot;
+    android:layout_height=&quot;wrap_content&quot;
+    app:backgroundTint=&quot;@color/btn_colored_background_tint&quot;/&gt;
+</code></pre><p>或者指定通过方法<code>ViewCompat#setBackgroundTintList(View,ColorStateList)</code>动态指定：</p><pre><code>final ColorStateList backgroundTintList =
+    AppCompatResources.getColorStateList(context, R.color.btn_colored_background_tint);
+ViewCompat.setBackgroundTintList(button, backgroundTintList);
+</code></pre><p>就动态修改这种方式而言，尽管它更加有效（<code>ThemeOverlays</code>只能定义在xml中而不能动态修改），但同时如果我们想确保按钮完全符合<code>material design</code>规范，则需要我们做更多的工作。我们可以创建一个简单的<code>BackgroundTints</code>工具类来让构造<code>colored background tint lists</code>更加快速简单：</p><pre><code>/**
+ * Utility class for creating background tint {@link ColorStateList}s.
+ */
+public final class BackgroundTints {
+  private static final int[] DISABLED_STATE_SET = new int[]{-android.R.attr.state_enabled};
+  private static final int[] PRESSED_STATE_SET = new int[]{android.R.attr.state_pressed};
+  private static final int[] FOCUSED_STATE_SET = new int[]{android.R.attr.state_focused};
+  private static final int[] EMPTY_STATE_SET = new int[0];
+
+  /**
+   * Returns a {@link ColorStateList} that can be used as a colored button&#39;s background tint.
+   * Note that this code makes use of the {@code android.support.v4.graphics.ColorUtils}
+   * utility class.
+   */
+  public static ColorStateList forColoredButton(Context context, @ColorInt int backgroundColor) {
+    // On pre-Lollipop devices, we need 4 states total (disabled, pressed, focused, and default).
+    // On post-Lollipop devices, we need 2 states total (disabled and default). The button&#39;s
+    // RippleDrawable will animate the pressed and focused state changes for us automatically.
+    final int numStates = Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.LOLLIPOP ? 4 : 2;
+
+    final int[][] states = new int[numStates][];
+    final int[] colors = new int[numStates];
+
+    int i = 0;
+
+    states[i] = DISABLED_STATE_SET;
+    colors[i] = getDisabledButtonBackgroundColor(context);
+    i++;
+
+    if (Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.LOLLIPOP) {
+      final int highlightedBackgroundColor = getHighlightedBackgroundColor(context, backgroundColor);
+
+      states[i] = PRESSED_STATE_SET;
+      colors[i] = highlightedBackgroundColor;
+      i++;
+
+      states[i] = FOCUSED_STATE_SET;
+      colors[i] = highlightedBackgroundColor;
+      i++;
+    }
+
+    states[i] = EMPTY_STATE_SET;
+    colors[i] = backgroundColor;
+
+    return new ColorStateList(states, colors);
+  }
+
+  /**
+   * Returns the theme-dependent ARGB background color to use for disabled buttons.
+   */
+  @ColorInt
+  private static int getDisabledButtonBackgroundColor(Context context) {
+    // Extract the disabled alpha to apply to the button using the context&#39;s theme.
+    // (0.26f for light themes and 0.30f for dark themes).
+    final TypedValue tv = new TypedValue();
+    context.getTheme().resolveAttribute(android.R.attr.disabledAlpha, tv, true);
+    final float disabledAlpha = tv.getFloat();
+
+    // Use the disabled alpha factor and the button&#39;s default normal color
+    // to generate the button&#39;s disabled background color.
+    final int colorButtonNormal = getThemeAttrColor(context, R.attr.colorButtonNormal);
+    final int originalAlpha = Color.alpha(colorButtonNormal);
+    return ColorUtils.setAlphaComponent(
+        colorButtonNormal, Math.round(originalAlpha * disabledAlpha));
+  }
+
+  /**
+   * Returns the theme-dependent ARGB color that results when colorControlHighlight is drawn
+   * on top of the provided background color.
+   */
+  @ColorInt
+  private static int getHighlightedBackgroundColor(Context context, @ColorInt int backgroundColor) {
+    final int colorControlHighlight = getThemeAttrColor(context, R.attr.colorControlHighlight);
+    return ColorUtils.compositeColors(colorControlHighlight, backgroundColor);
+  }
+
+  /** Returns the theme-dependent ARGB color associated with the provided theme attribute. */
+  @ColorInt
+  private static int getThemeAttrColor(Context context, @AttrRes int attr) {
+    final TypedArray array = context.obtainStyledAttributes(null, new int[]{attr});
+    try {
+      return array.getColor(0, 0);
+    } finally {
+      array.recycle();
+    }
+  }
+
+  private BackgroundTints() {}
+}
+</code></pre><p>通过它，我们可以简单地在代码中给按钮应用背景着色：</p><pre><code>ViewCompat.setBackgroundTintList(
+    button, BackgroundTints.forColoredButton(button.getContext(), backgroundColor);
+</code></pre><h4 id=测试pop-quiz>测试(Pop quiz)!</h4><p>我们以一个简单的例子来检验一下前面所了解到的知识，在<code>App</code>的<code>AndroidManifest.xml</code>中应用以下主题：</p><pre><code>&lt;!-- res/values/themes.xml --&gt;
+&lt;style name=&quot;AppTheme&quot; parent=&quot;Theme.AppCompat.Light.DarkActionBar&quot;&gt;
+    &lt;item name=&quot;colorPrimary&quot;&gt;@color/indigo500&lt;/item&gt;
+    &lt;item name=&quot;colorPrimaryDark&quot;&gt;@color/indigo700&lt;/item&gt;
+    &lt;item name=&quot;colorAccent&quot;&gt;@color/pinkA200&lt;/item&gt;
+&lt;/style&gt;
+</code></pre><p>除此之外，再定义以下自定义主题：</p><pre><code>&lt;!-- res/values/themes.xml --&gt;
+&lt;style name=&quot;RedButtonLightTheme&quot; parent=&quot;ThemeOverlay.AppCompat.Light&quot;&gt;
+    &lt;item name=&quot;colorAccent&quot;&gt;@color/googred500&lt;/item&gt;
+&lt;/style&gt;
+
+&lt;style name=&quot;RedButtonDarkTheme&quot; parent=&quot;ThemeOverlay.AppCompat.Dark&quot;&gt;
+    &lt;item name=&quot;colorAccent&quot;&gt;@color/googred500&lt;/item&gt;
+&lt;/style&gt;
+</code></pre><p>下面<code>xml</code>中的按钮在默认、按下、关闭等状态时，在<code>API 19 and API 23</code>的设备会是什么样子的呢？</p><pre><code>&lt;LinearLayout
+    android:layout_width=&quot;match_parent&quot;
+    android:layout_height=&quot;wrap_content&quot;
+    android:orientation=&quot;vertical&quot;&gt;
+
+    &lt;Button
+        android:layout_width=&quot;wrap_content&quot;
+        android:layout_height=&quot;wrap_content&quot;/&gt;
+
+    &lt;Button
+        style=&quot;@style/Widget.AppCompat.Button.Colored&quot;
+        android:layout_width=&quot;wrap_content&quot;
+        android:layout_height=&quot;wrap_content&quot;/&gt;
+
+    &lt;Button
+        style=&quot;@style/Widget.AppCompat.Button.Colored&quot;
+        android:layout_width=&quot;wrap_content&quot;
+        android:layout_height=&quot;wrap_content&quot;
+        android:theme=&quot;@style/RedButtonLightTheme&quot;/&gt;
+
+    &lt;Button
+        android:id=&quot;@+id/button4&quot;
+        android:layout_width=&quot;wrap_content&quot;
+        android:layout_height=&quot;wrap_content&quot;/&gt;
+
+    &lt;Button
+        android:layout_width=&quot;wrap_content&quot;
+        android:layout_height=&quot;wrap_content&quot;
+        android:theme=&quot;@style/ThemeOverlay.AppCompat.Dark&quot;/&gt;
+
+    &lt;Button
+        style=&quot;@style/Widget.AppCompat.Button.Colored&quot;
+        android:layout_width=&quot;wrap_content&quot;
+        android:layout_height=&quot;wrap_content&quot;
+        android:theme=&quot;@style/ThemeOverlay.AppCompat.Dark&quot;/&gt;
+
+    &lt;Button
+        style=&quot;@style/Widget.AppCompat.Button.Colored&quot;
+        android:layout_width=&quot;wrap_content&quot;
+        android:layout_height=&quot;wrap_content&quot;
+        android:theme=&quot;@style/RedButtonDarkTheme&quot;/&gt;
+
+    &lt;Button
+        android:id=&quot;@+id/button8&quot;
+        android:layout_width=&quot;wrap_content&quot;
+        android:layout_height=&quot;wrap_content&quot;
+        android:theme=&quot;@style/ThemeOverlay.AppCompat.Dark&quot;/&gt;
+
+&lt;/LinearLayout&gt;
+</code></pre><p>假设第4和第8个按钮的背景着色是通过如下代码动态设置的：</p><pre><code>final int googRed500 = ContextCompat.getColor(activity, R.color.googred500);
+
+final View button4 = activity.findViewById(R.id.button4);
+ViewCompat.setBackgroundTintList(
+    button4, BackgroundTints.forColoredButton(button4.getContext(), googRed500));
+
+final View button8 = activity.findViewById(R.id.button8);
+ViewCompat.setBackgroundTintList(
+    button8, BackgroundTints.forColoredButton(button8.getContext(), googRed500));
+</code></pre><h4 id=结论>结论</h4><ul><li><a href=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-enabled-unpressed-19.png>API 19, default state</a></li></ul><p><img src=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-enabled-unpressed-19.png alt=image></p><ul><li><a href=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-enabled-pressed-19.png>API 19, pressed state</a></li></ul><p><img src=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-enabled-pressed-19.png alt=image></p><ul><li><a href=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-disabled-19.png>API 19, disabled state</a></li></ul><p><img src=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-disabled-19.png alt=image></p><ul><li><a href=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-enabled-unpressed-23.png>API 23, default state</a></li></ul><p><img src=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-enabled-unpressed-23.png alt=image></p><ul><li><a href=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-enabled-pressed-23.png>API 23, pressed state</a></li></ul><p><img src=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-enabled-pressed-23.png alt=image></p><ul><li><a href=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-disabled-23.png>API 23, disabled state</a></li></ul><p><img src=http://www.androiddesignpatterns.com/assets/images/posts/2016/08/11/themed-buttons-disabled-23.png alt=image></p><p>（注意：截图中在disabled状态下的文字颜色错误的显示是一个已知的<a href="https://code.google.com/p/android/issues/detail?id=219276">Bug issue</a>，在<code>support library</code>的下一个版本更新中将得到修复）</p><h3 id=源码地址>源码地址</h3><p>最后，感谢大家阅读。源码地址：<a href=https://github.com/alexjlockwood/adp-theming-buttons-with-themeoverlays>source code for these examples on GitHub</a></p></div></article><script src=https://giscus.app/client.js data-repo=whataa/whataa.github.io data-repo-id="MDEwOlJlcG9zaXRvcnk1NDY1NzI1MA==" data-category=Announcements data-category-id=DIC_kwDOA0IA4s4CtJJY data-mapping=title data-strict=0 data-reactions-enabled=0 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=zh-CN data-loading=lazy crossorigin=anonymous async></script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js></script><script>hljs.highlightAll()</script></div></body></html>

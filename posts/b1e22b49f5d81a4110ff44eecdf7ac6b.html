@@ -1,0 +1,31 @@
+<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>facebook hermes 编译 - linjiang</title><meta name=description content=linjiang&#39;blog><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,300,700" type=text/css><link rel=stylesheet href=/style.css></head><body><header><h1><a href=/ >linjiang</a></h1><ul class=list-inline><li><a href=/ ><span>Home</span></a></li><li><a href=/about.html><span>About</span></a></li><li><a href=https://github.com/whataa target=_blank><span>GitHub</span></a></li></ul></header><div class=content><article class="blog-post post"><h2>facebook hermes 编译</h2><p class=date>2023-01-11</p><div class=post-content><h3 id=基本环境>基本环境</h3><pre><code class=language-shell># 按需安装
+brew install cmake git ninja
+# 准备workspace
+mkdir github_hermes_workspace
+cd github_hermes_workspace/
+# 环境变量，很重要，编译hermes.so时，hermes/android/build.gradle工程会读取使用
+export HERMES_WS_DIR=&quot;$(pwd)&quot;
+# clone，作为workspace子目录
+git clone https://github.com/facebook/hermes.git github_hermes
+</code></pre><h3 id=编译hermesc>编译hermesc</h3><pre><code class=language-shell># 构建build目录
+## 由于 hermes/android/build.gradle 里写死了路径（build|build_release），不改源码的前提下就用前述两个：
+## RELEASE: cmake -S github_hermes -B build_release -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake -S github_hermes -B build -G Ninja
+# build hermesc
+## --build 指定的是上述命令的输出路径
+cmake --build ./build --target hermesc
+# hermesc位置：位于 --build 指定的目录下
+find . | grep -E &quot;hermesc$&quot;
+</code></pre><h3 id=编译hermesso>编译hermes.so</h3><p>指定NDK版本，这个很重要，保证和要使用hermes的工程的版本一致（目前已发现的问题是try-catch失效），方式：</p><ul><li>android.ndkVersion （需要更改hermes/android/hermes/build.gradle）</li><li>android.ndkPath （需要更改hermes/android/hermes/build.gradle）</li><li>ndk.dir @ local.properties</li></ul><p>一些说明：</p><ul><li>Intl 表示国际化版本</li><li>不管是debug还是release的libhermes.so，CMAKE_BUILD_TYPE都是为Release<ul><li>JS developers aren&#39;t VM developers. Give them a faster build.</li></ul></li><li>release的参数：<ul><li>HERMES_ENABLE_DEBUGGER=false // 即debug的so带inspector</li><li>CMAKE_BUILD_TYPE=MinSizeRel</li></ul></li><li>混淆规则：<pre><code>-keep class com.facebook.hermes.unicode.** { *; }
+-keep class com.facebook.jni.** { *; }
+</code></pre></li></ul><pre><code class=language-shell>cd hermes/android/
+chmod +x gradlew
+# build目录在 ${HERMES_WS_DIR}/build_android/
+./gradlew build
+# so位置：
+cd $HERMES_WS_DIR
+find . | grep -E &quot;libhermes\.so$&quot;
+</code></pre><h3 id=js转hbc>js转hbc</h3><pre><code class=language-shell>hermes -emit-binary -out test.hbc test.js
+</code></pre><h3 id=运行rn-demo>运行RN demo</h3><blockquote><p>参考：<a href=https://reactnative.dev/docs/environment-setup>https://reactnative.dev/docs/environment-setup</a></p></blockquote><pre><code>npx react-native init AwesomeProject
+npx react-native run-android
+</code></pre><h3 id=更多>更多</h3><ul><li><a href=https://hermesengine.dev/docs/cross-compilation>https://hermesengine.dev/docs/cross-compilation</a></li><li><a href=https://reactnative.dev/docs/hermes#debugging-js-on-hermes-using-google-chromes-devtools>使用Chrome调试运行在hermes的JS代码</a></li></ul></div></article><script src=https://giscus.app/client.js data-repo=whataa/whataa.github.io data-repo-id="MDEwOlJlcG9zaXRvcnk1NDY1NzI1MA==" data-category=Announcements data-category-id=DIC_kwDOA0IA4s4CtJJY data-mapping=title data-strict=0 data-reactions-enabled=0 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=zh-CN data-loading=lazy crossorigin=anonymous async></script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js></script><script>hljs.highlightAll()</script></div></body></html>

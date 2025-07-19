@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>一种巧妙的drawable.xml替代方案-效果篇 - linjiang</title><meta name=description content=linjiang&#39;blog><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,300,700" type=text/css><link rel=stylesheet href=/style.css></head><body><header><h1><a href=/ >linjiang</a></h1><ul class=list-inline><li><a href=/ ><span>Home</span></a></li><li><a href=/about.html><span>About</span></a></li><li><a href=https://github.com/whataa target=_blank><span>GitHub</span></a></li></ul></header><div class=content><article class="blog-post post"><h2>一种巧妙的drawable.xml替代方案-效果篇</h2><p class=date>2018-09-08</p><div class=post-content><blockquote><p>接上一原理篇：<a href=http://linjiang.tech/2018/09/08/%E4%B8%80%E7%A7%8D%E5%B7%A7%E5%A6%99%E7%9A%84drawable.xml%E6%9B%BF%E4%BB%A3%E6%96%B9%E6%A1%88/ >一种巧妙的drawable.xml替代方案</a></p></blockquote><p>在上一篇文章中，我们详细了解到了一种利用DataBinding来替代drawable.xml的方案，但是并没有任何真正的演示代码和效果来呈现，本篇就是此目的。</p><p>本文将以上一篇方案所对应的库<code>NoDrawable</code>来演示，具体的用法请点击链接 <a href=https://github.com/whataa/noDrawable>https://github.com/whataa/noDrawable</a> 查看。以大部分App中都有的登录页为例，以下为设计图：</p><p><img src="https://note.youdao.com/yws/api/personal/file/WEB47eb0205a805ab3c719e4ec0eaf4b643?method=download&shareKey=f2797e4084769c4dd0fd558c1ac87378" alt=image></p><p>这是一张很常见（正常）的设计图，但是从实现角度来看，按照传统方式，我们至少得新建8个drawable.xml资源文件（没想到吧）：</p><ol><li>整体背景的渐变色；</li><li>输入框的普通状态背景和选中状态背景；</li><li>登录按钮的背景；</li><li>“第三方登录”左右两边的“尾翼”资源，各一个（没办法，即使小，还是得做啊）；</li><li>微信和QQ的按钮各一个（不同的按压效果）；</li></ol><p>可以看出来，仅一张设计图就新建了8个文件，那项目中的其它页面呢？即使按照规范将文件名起得整整齐齐的，保不齐下一次圆角大小变了、同样的圆角单背景色变了...枯燥无味吧。</p><p>现在我们直接用<code>NoDrawable</code>来试试到底能不能达到一个drawable文件都不用创建的效果。</p><blockquote><p>为节约篇幅，以下演示片段均展示与drawable相关的属性，其余省略</p></blockquote><h3 id=1-整体背景的渐变色>1. 整体背景的渐变色</h3><pre><code>&lt;android.support.constraint.ConstraintLayout 
+    drawable_endColor=&quot;@{0xff3e91ee}&quot;
+    drawable_orientation=&quot;@{@integer/orientation_bottom_top}&quot;
+    drawable_startColor=&quot;@{0xff02144e}&quot;
+    ...
+    &gt;
+</code></pre><h3 id=2-输入框状态>2. 输入框状态</h3><pre><code>&lt;EditText
+    drawable_focused_strokeColor=&quot;@{@color/color_green}&quot;
+    drawable_focused_strokeDash=&quot;@{4}&quot;
+    drawable_focused_strokeDashGap=&quot;@{4}&quot;
+    drawable_focused_strokeWidth=&quot;@{2}&quot;
+    drawable_focused_marginLeft=&quot;@{-3}&quot;
+    drawable_focused_marginTop=&quot;@{-3}&quot;
+    drawable_focused_marginRight=&quot;@{-3}&quot;
+    drawable_radius=&quot;@{21}&quot;
+    drawable_solidColor=&quot;@{0x7fffffff}&quot;
+    ...
+    /&gt;
+</code></pre><h3 id=3-登录按钮的背景>3. 登录按钮的背景</h3><pre><code>&lt;Button
+    drawable_radius=&quot;@{21}&quot;
+    drawable_solidColor=&quot;@{0xff818385}&quot;
+    drawable_enabled_radius=&quot;@{21}&quot;
+    drawable_enabled_solidColor=&quot;@{0xff59c8d8}&quot;
+    ...
+    /&gt;
+</code></pre><h3 id=4-第三方登录左右两边的尾翼>4. “第三方登录”左右两边的“尾翼”</h3><pre><code>&lt;View
+    drawable_endColor=&quot;@{0x00000000}&quot;
+    drawable_orientation=&quot;@{@integer/orientation_right_left}&quot;
+    drawable_startColor=&quot;@{0xffffffff}&quot;
+    ...
+    /&gt;
+</code></pre><h3 id=5-微信按钮按压效果>5. 微信按钮按压效果</h3><pre><code>&lt;ImageView
+    drawable_pressed_shapeMode=&quot;@{@integer/shapeMode_oval}&quot;
+    drawable_pressed_solidColor=&quot;@{0xff54B536}&quot;
+    drawable_shapeMode=&quot;@{1}&quot;
+    drawable_solidColor=&quot;@{0xffDCDFE8}&quot;
+    ...
+    /&gt;
+</code></pre><p>结合 <a href=https://github.com/whataa/noDrawable>NoDrawable</a> 的属性文档，不知大家是否可以理解到位。根据上述代码片段，我们可以总结到该方案的两大特性：</p><ol><li>高可读性</li></ol><p>直接在布局中的View标签声明drawable属性，对View最终效果一目了然；</p><ol start=2><li>适配任意View</li></ol><p>像使用View自身的属性一样，作用于任何View；</p><p>效果图就不贴了，和设计图一模一样。大家如果有具体需求，可直接到<code>NoDrawable</code>仓库地址查看，其demo包含本文完整的代码及效果预览，最后，感谢阅读。</p></div></article><script src=https://giscus.app/client.js data-repo=whataa/whataa.github.io data-repo-id="MDEwOlJlcG9zaXRvcnk1NDY1NzI1MA==" data-category=Announcements data-category-id=DIC_kwDOA0IA4s4CtJJY data-mapping=title data-strict=0 data-reactions-enabled=0 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=zh-CN data-loading=lazy crossorigin=anonymous async></script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js></script><script>hljs.highlightAll()</script></div></body></html>

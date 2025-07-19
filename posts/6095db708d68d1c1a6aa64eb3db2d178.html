@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>多手指Touch变化处理原则基础 - linjiang</title><meta name=description content=linjiang&#39;blog><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,300,700" type=text/css><link rel=stylesheet href=/style.css></head><body><header><h1><a href=/ >linjiang</a></h1><ul class=list-inline><li><a href=/ ><span>Home</span></a></li><li><a href=/about.html><span>About</span></a></li><li><a href=https://github.com/whataa target=_blank><span>GitHub</span></a></li></ul></header><div class=content><article class="blog-post post"><h2>多手指Touch变化处理原则基础</h2><p class=date>2016-09-26</p><div class=post-content><p>手势事件的产生、传递及处理也许我们并不陌生，特别是在自定义一些可交互性的<code>View</code>时，处理手势是不可避免的。而日常中我们接触得最多的是单指产生的手势事件，毕竟除了图片缩放、游戏等情况，谁会没事用两根手指或整块手掌在屏幕上滑来滑去。这就导致了关于如何处理<strong>多手指下</strong>的<code>Touch</code>事件的相关知识的文章很少，本篇笔记便是对多<code>手指Touch变化处理原则</code>的一个归纳与记录。</p><h3 id=问题>问题</h3><p>如果我们仔细观察<code>SDK</code>自带的一些滚动控件的使用效果，便会发现不论是<code>ScrollView</code>还是<code>ListView</code>，一根手指滑动或者手指数量不断变化的情况下滑动，它们都能表现正常；<br>我们再看看市面上的一些流行应用在这方面的处理，举个例子：例如大家所熟悉的<code>美团Android客户端</code>，其首页的<code>下拉刷新控件</code>便是一个交互性较强的自定义<code>View</code>，当我们<code>单指A</code>向下拖动时，隐藏的“小人儿”逐渐出现，此时我们再放一根<code>手指B</code>到屏幕上并拖动<code>B</code>，似乎控件表现正常，但是此时若放开<code>手指A</code>（保持<code>B</code>），问题便出现了：当前页面从一个位置瞬间移动到了另一个位置！虽然于业务无关痛痒，但是对于体验，却是不可忽视。既然问题已经抛出，接下来我们就通过对手势的分析来确定它是如何产生的并给出解决方案。</p><h3 id=手势基础>手势基础</h3><p>在此之前我们先了解手势一些最基本的原则：<code>Touch</code>手势的事件除了最常接触的<code>ACTION_DOWN</code>、<code>ACTION_MOVE</code>、<code>ACTION_UP</code>及<code>ACTION_CANCEL</code>外，还包括封装了多指的事件的<code>ACTION_POINTER_DOWN</code>和<code>ACTION_POINTER_UP</code>，<code>Android</code>对手势事件产生的处理原则之一就是：</p><blockquote><ul><li>除了第一根手指按下时产生的事件是<code>ACTION_DOWN</code>外，保持第一根手指的同时，其余手指按下时产生的事件都是<code>ACTION_POINTER_DOWN</code>；</li><li>除了最后一根离开屏幕的手指产生的事件是<code>ACTION_UP</code>外，期间抬起的其余手指产生的事件都是<code>ACTION_POINTER_UP</code>。</li></ul></blockquote><blockquote><p>注意：每一个手势事件都包含了当前<strong>所有手指</strong>的信息，并非仅有当前事件对应的手指信息！</p></blockquote><p>也就是说，一个完整的Touch手势包括了<code>ACTION_DOWN</code>、<code>ACTION_MOVE</code>、<code>ACTION_UP</code>以及在<code>ACTION_DOWN</code>和<code>ACTION_UP</code>之间可能产生的<code>ACTION_POINTER_DOWN</code>、<code>ACTION_POINTER_UP</code>所有事件。一个好的建议就是处理手势事件时，利用<code>MotionEvent # getActionMasked()</code>代替<code>MotionEvent # getAction()</code>来得到完整的事件类型。</p><h4 id=id和index>ID和Index</h4><p>同时，为了保证手指的唯一性，系统其实为每一根参与的手指分配了一个<code>唯一标识ID</code>，在按下抬起期间始终保持不变；此外，根据<code>ID</code>从小到大排序，每根手指还对应一个<code>索引Index</code>，索引将随着手指数量变化而变化，但所有索引始终保持从0开始。</p><p>当手指按下时，系统则通过如下流程图为手指生成正确的<code>ID</code>：</p><p><img src=https://raw.githubusercontent.com/whataa/PicsRepo/master/20160926235820_touch_id_flow_diagram.jpg alt=手指ID分配流程图></p><ul><li>start：手指按下，初始化</li><li>操作1：定义<code>a-&gt;0, b-&gt;0</code>，分别表示索引和ID</li><li>条件1：<code>索引a</code>处是否存在手指</li><li>条件2：<code>索引a</code>处对应的手指的<code>ID</code>是否等于<code>b</code></li><li>操作2：<code>a+1-&gt;a, b+1-&gt;b</code></li><li>操作3：指定当前按下的手指<code>ID</code>为<code>b</code>，并根据所有手指的<code>ID</code>从小到大分配对应的索引</li><li>end：封装<code>ACTION_DOWN</code>或<code>ACTION_POINTER_DOWN</code>事件并发送</li></ul><p>当抬起手指时，规则就相对简单些：移除对应手指的<code>ID</code>，并根据剩余的所有手指的<code>ID</code>从小到大重新分配对应的索引。</p><p>如果还不太明白，我们举个简单的例子来分析这个流程：第一步，我们依次按下手指<code>A、B</code>；第二步，抬起<code>手指A</code>；第三步，按下<code>手指A、C</code>；第四步，依次抬起<code>手指A、B、C</code>。在整个过程中来看看手指<code>ABC</code>的<code>ID</code>和<code>索引Index</code>分别是什么：</p><blockquote><p>第一步：根据按下流程图，<code>A</code>的<code>ID == 0，Index == 0</code>，<code>B</code>的<code>ID == 1，Index == 1</code>；</p></blockquote><blockquote><p>第二步：抬起<code>A</code>后，在下一个事件到来之前，将移除<code>A</code>的<code>ID</code>，只剩<code>B</code>的<code>ID</code>，然后重新分配索引，所以<code>B</code>最终的<code>ID == 1，Index == 0</code>；</p></blockquote><blockquote><p>第三步：按下手指<code>A</code>生成<code>ACTION_POINTERD_DOWN</code>前发现索引0处对应的<code>ID != 0</code>，所以将<code>A</code>的<code>ID</code>分配为0，然后重新按<code>ID</code>大小分配索引，最终<code>A</code>的<code>ID == 0，Index == 0</code>，<code>B</code>的<code>ID == 1，Index == 1</code>；继续按下<code>C</code>发现索引0处的<code>ID</code>为0，索引1处的<code>ID</code>为1，索引2处没有手指，所以将<code>C</code>的<code>ID</code>分配为2，最后再次按<code>ID</code>大小重新分配索引，最终<code>ABC</code>的<code>[ID,Index]</code>分别为<code>[0,0], [1,1], [2,2]</code>；</p></blockquote><blockquote><p>第四步：抬起<code>A</code>，剩下<code>BC</code>的<code>ID</code>1和2，按<code>ID</code>大小重新分配索引，<code>BC</code>的<code>[ID,Index]</code>分别为<code>[0,1], [1,2]</code>，抬起<code>B、C</code>依此类推。</p></blockquote><p>那么<code>ID和Index</code>到底有什么用呢，平常似乎并没有使用到。我们可以先看看下面这个疑惑：</p><p>可能部分朋友在接触多手指事件处理时心中一直有一个疑问：当屏幕上同时有多根手指在移动，<code>Android</code>是如何决定以哪根手指为准的呢（即：如果是移动视图，当几根手指都在<code>MOVE</code>时，视图到底是跟随哪一根手指<code>MOVE</code>的）？准确地说，“视图移动由谁决定”这问题指的是：在<code>MOVE</code>时，该事件对应的手指到底是哪一根。</p><p>其实系统规定 <strong>ID最小的手指便是追踪手指</strong>。即在<code>MOVE</code>时，<code>event.getX()/getY()</code>对应的手指始终是当前按下 的所有手指中<code>ID</code>最小的。因此，在处理移动事件的时候，要特别注意最小<code>ID</code>发生变化时的情况，手指数量发生变化时，我们如果可以清楚地推算出各手指的<code>ID和Index</code>，最小<code>ID</code>的变化就轻而易举地可以知道。那么接下来我们来尝试分析前面提到的跳动问题的产生原因。</p><h3 id=分析原因>分析原因</h3><p>既然是移动视图，那么我们就来看看，一个随手指移动的自定义<code>View</code>在手势事件回调方法里最基本的写法：</p><pre><code>private float lastX, lastY; 
+
+@Override
+public boolean onTouchEvent(MotionEvent ev) {
+    switch (ev.getAction()) {
+        case MotionEvent.ACTION_DOWN:
+            lastX = ev.getX();
+            lastY = ev.getY();
+            break;
+        case MotionEvent.ACTION_MOVE:
+            ...
+            float dx = ev.getX() - lastX;
+            float dy = ev.getY() - lastY;
+            // then, use dx,dy to do scroll...
+            ...
+            
+            // at last, update them with new values.
+            lastX = ev.getX();
+            lastY = ev.getY();
+            break;
+        ...
+    }
+}
+</code></pre><p>上面代码中，定义了<code>lastX, lastY</code>用来记录 追踪手指 的最近一次坐标，然后在<code>MOVE</code>时用来和当前最新坐标运算得到手指的移动距离<code>dx, dy</code>，进行移动等操作。在单指情况下，上面的写法没问题。可以走一遍流程验证：按下手指A，由于是第一根手指，所以A的ID和索引分别为0和0，且事件为<code>ACTION_DOWN</code>，在<code>ACTION_DOWN</code>调用<code>getXY()</code>便得到了A手指的坐标；然后移动手指A，产生<code>ACTION_MOVE</code>事件且该事件对应的手指的<code>ID和Index</code>分别为0和0，在此取得该事件产生时手指的坐标，即最新坐标，运算得到移动的距离，进行视图移动，最后更新最近一次坐标<code>lastX&#39;和&#39;lastY</code>，<code>ACTION_MOVE</code>再次生成到来时，以此类推。</p><p>若此时按下手指B，根据前面的流程图分析，B的<code>ID和Index</code>分别为1和1，且事件为<code>ACTION_POINTER_DOWN</code>，继续移动手指（不论A或者B），由于A的ID最小，所以<code>ACTION_MOVE</code>对应的手指依然为A（说明：不论<code>ACTION_MOVE</code>对应的手指是谁，只要手指移动了，都会产生相应的事件并封装到了<code>ACTION_MOVE</code>，只是<code>ev.getXY()</code>可以直接取到该事件对应手指的坐标），移动依然随着A手指移动。</p><p>然后此时我们突然松开手指A，那么在<code>ACTION_POINTER_UP</code>后，由于A的ID 0被移除，手指的索引被重新分配，最终B的<code>ID和Index</code>分别为1和0，在继续移动B时，由于此时B的ID最小，所以<code>ACTION_MOVE</code>对应的手指ID发生了变化，即追踪手指由A变为了B，<code>ev.getXY()</code>得到的坐标是B当前最新的坐标，而<code>lastXY</code>缓存的坐标还是手指A在松开前的最终坐标而非手指B的上一个位置的坐标，那么视图就会从上一处位置瞬间移动 A抬起时的位置到B现在位置 这么长的距离，就出现了文章最初的问题。（若松开的是B，由于B的ID并非最小，所以并不影响追踪手指；其实，不论手指有多少，或者如何松开，都是一个道理）</p><p>由此便得出了原因：在手指数量变化时，未更新追踪手指的缓存坐标<code>lastX, lastY</code>。</p><h3 id=解决方案>解决方案</h3><p>前面提到，由于是追踪手指发生了变化，使得缓存坐标<code>lastX, lastY</code>记录的依然是上一个追踪手指的最后一次坐标，而导致了瞬间跳动的问题。所以解决方案就是及时更新lastXY，那么，更新<code>lastX, lastY</code>的时机应该如何挑选，回顾一下，前文提到：</p><blockquote><p>“<code>lastXY</code>缓存的坐标还是手指A在松开前的最终坐标而非手指B的上一个位置的坐标”</p></blockquote><p>既然如此，就需要在下一个事件即<code>MOVE</code>到来前提前修改，手指数量变化有两个时机，先来说<code>ACTION_POINTER_UP</code>，在这个时机之后，下一个事件（例如<code>ACTION_MOVE</code>）发生前，我们必须取到在下一个事件起作用的那个手指的坐标，很显然，只要找到除开松开的那根手指外，剩余手指中ID最小的那个手指，问题就可以解决了；然后我们再来看看<code>ACTION_POINTER_DOWN</code>，同理需要找到包括新加入的手指的所有手指中ID最小的那根，将其坐标更新至<code>lastXY</code>。</p><p>具体代码演示如下：</p><pre><code>private float lastX, lastY;
+
+ @Override
+public boolean onTouchEvent(MotionEvent event) {
+
+    switch (event.getActionMasked()) {
+        case MotionEvent.ACTION_DOWN:
+
+            mLastX = event.getX();
+            mLastY = event.getY();
+            break;
+
+        case MotionEvent.ACTION_POINTER_DOWN:
+            // 手指数量发生变化，更新lastXY为追踪手指
+            // 根据手指ID生成流程图，在该事件到来时索引0对应的手指一定存在，且ID最小
+            mLastX = event.getX(0);
+            mLastY = event.getY(0);
+            break;
+
+        case MotionEvent.ACTION_POINTER_UP:
+            // 定义一个记录当前松开手指Index的变量
+            int indexOfUpPointer = event.getActionIndex();
+            // 如果松开的手指刚好是追踪手指
+            if (indexOfUpPointer == 0) {
+                // !!!核心!!!：更新lastXY为接下来将被追踪的手指的当前坐标
+                mLastX = event.getX(1);
+                mLastY = event.getY(1);
+            }
+
+            break;
+        case MotionEvent.ACTION_MOVE:
+            // do something...
+            break;
+</code></pre><p>上述代码的注释已经很清楚了，可以看到，它和原来的代码相比其实并没有增加几行代码，但是那些丑陋的视觉问题却得到了解决。其实，还有许多由多手指引发的不连续的效果的问题，都可以用上述“万金油”方案原理来解决，在此就不一一列举了。当然，更新lastXY的方式也并非此一种，只要理清了原理，便能在实际业务中灵活地处理。</p><h3 id=尾语>尾语</h3><p>本文通过一个简单的案例来归纳总结了关于Android多手指Touch变化处理原则的基础知识，对多指缩放、旋转等效果的实现是一个很好的参考。</p></div></article><script src=https://giscus.app/client.js data-repo=whataa/whataa.github.io data-repo-id="MDEwOlJlcG9zaXRvcnk1NDY1NzI1MA==" data-category=Announcements data-category-id=DIC_kwDOA0IA4s4CtJJY data-mapping=title data-strict=0 data-reactions-enabled=0 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=zh-CN data-loading=lazy crossorigin=anonymous async></script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js></script><script>hljs.highlightAll()</script></div></body></html>
