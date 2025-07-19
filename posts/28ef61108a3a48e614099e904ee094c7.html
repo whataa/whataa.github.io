@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>【Fragment】对Fragment的状态保存恢复机制原理的分析 - linjiang</title><meta name=description content=linjiang&#39;blog><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,300,700" type=text/css><link rel=stylesheet href=/style.css></head><body><header><h1><a href=/ >linjiang</a></h1><ul class=list-inline><li><a href=/ ><span>Home</span></a></li><li><a href=/about.html><span>About</span></a></li><li><a href=https://github.com/whataa target=_blank><span>GitHub</span></a></li></ul></header><div class=content><article class="blog-post post"><h2>【Fragment】对Fragment的状态保存恢复机制原理的分析</h2><p class=date>2017-01-04</p><div class=post-content><p>如同Activity、View等，状态的保存与恢复的重要性不言而喻，对于Fragment，在哪setRetainInstance，在什么时机save/restore State我们也早已熟练于心，但是为什么要这样、或者还有没有更多的skill却是稍显不足，也许探究一下整个机制的过程说不定就会恍然大悟。</p><p>在深入流程分析之前，我们需要明白状态的保存机制发生的前提：只要Activity不是被主动finish的，状态的保存与恢复机制就会被触发，导致onSaveInstanceState和onRestoreInstanceState的回调，包括了内存不足被killed、其它命令杀死进程等场景，甚至于手机的配置改变引发的Activity重建的情况（用户没有手动处理配置改变的情况下）。</p><h2 id=saveallstate>saveAllState</h2><p>Fragment依附于Activity，因此Fragment的状态保存与恢复机制也是由Activity的相关方法触发。Activity的方法onSaveInstanceState的参数outState是系统在状态需要保存时用来提供存放持久化状态的容器，当系统触发状态保存时，在该方法中，通过对mFragments的saveAllState方法的调用，Activity下的Fragment的所有状态便保存在了 <code>FRAGMENTS_TAG</code> 键中：</p><pre><code>protected void onSaveInstanceState(Bundle outState) {
+<!DOCTYPE html><html lang=zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><title>【Fragment】对Fragment的状态保存恢复机制原理的分析 - linjiang</title><meta name=description content=linjiang&#39;blog><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Merriweather+Sans:400,300,700" type=text/css><link rel=stylesheet href=/style.css></head><body><header><h1><a href=/ >linjiang</a></h1><ul class=list-inline><li><a href=/ ><span>Home</span></a></li><li><a href=/about.html><span>About</span></a></li><li><a href=https://github.com/whataa target=_blank><span>GitHub</span></a></li></ul></header><div class=content><article class="blog-post post"><h2>【Fragment】对Fragment的状态保存恢复机制原理的分析</h2><p class=date>2017-01-04</p><div class=post-content><p>如同Activity、View等，状态的保存与恢复的重要性不言而喻，对于Fragment，在哪setRetainInstance，在什么时机save/restore State我们也早已熟练于心，但是为什么要这样、或者还有没有更多的skill却是稍显不足，也许探究一下整个机制的过程说不定就会恍然大悟。</p><p>在深入流程分析之前，我们需要明白状态的保存机制发生的前提：只要Activity不是被主动finish的，状态的保存与恢复机制就会被触发，导致onSaveInstanceState和onRestoreInstanceState的回调，包括了内存不足被killed、其它命令杀死进程等场景，甚至于手机的配置改变引发的Activity重建的情况（用户没有手动处理配置改变的情况下）。</p><h2 id=saveallstate>saveAllState</h2><p>Fragment依附于Activity，因此Fragment的状态保存与恢复机制也是由Activity的相关方法触发。Activity的方法onSaveInstanceState的参数outState是系统在状态需要保存时用来提供存放持久化状态的容器，当系统触发状态保存时，在该方法中，通过对mFragments的saveAllState方法的调用，Activity下的Fragment的所有状态便保存在了 <code>FRAGMENTS_TAG</code> 键中：</p><pre><code class=language-java>protected void onSaveInstanceState(Bundle outState) {
     ...
     Parcelable p = mFragments.saveAllState();
     if (p != null) {
@@ -6,7 +6,7 @@
     }
     ...
 }
-</code></pre><p>但是saveAllState()具体保存了Fragment的哪些状态却不从得知。我们继续分析： mFragments对象对应的类FragmentController是供Host(Activity)调用的一层FragmentManager的包装，FragmentManager下维护的所有Fragment的生命周期都是Host通过FragmentController来转发回调的，因此saveAllState()事件也被分发到了FragmentManager的saveAllState()中：</p><pre><code>Parcelable saveAllState() {
+</code></pre><p>但是saveAllState()具体保存了Fragment的哪些状态却不从得知。我们继续分析： mFragments对象对应的类FragmentController是供Host(Activity)调用的一层FragmentManager的包装，FragmentManager下维护的所有Fragment的生命周期都是Host通过FragmentController来转发回调的，因此saveAllState()事件也被分发到了FragmentManager的saveAllState()中：</p><pre><code class=language-java>Parcelable saveAllState() {
     ...
     FragmentManagerState fms = new FragmentManagerState();
     fms.mActive = active;
@@ -14,7 +14,7 @@
     fms.mBackStack = backStack;
     return fms;
 }
-</code></pre><p>可以看到，该方法将所有需要保存的状态归结为3种并封装到了一个FragmentManagerState可序列化对象中，我们依次来看看这三种状态分别是什么以及其具体的保存过程。</p><h4 id=fmsmactive>fms.mActive</h4><p>mActive是一个FragmentState[]数组对象，而FragmentState类则是一个实现了Parcelable接口的实体，它负责对Fragment的基本变量进行序列化，包括了arguments、tag等信息，具体保存了哪些状态如下所示（字段代表的意义可以参考Fragment的字段详解）：</p><pre><code>public FragmentState(Fragment frag) {
+</code></pre><p>可以看到，该方法将所有需要保存的状态归结为3种并封装到了一个FragmentManagerState可序列化对象中，我们依次来看看这三种状态分别是什么以及其具体的保存过程。</p><h4 id=fmsmactive>fms.mActive</h4><p>mActive是一个FragmentState[]数组对象，而FragmentState类则是一个实现了Parcelable接口的实体，它负责对Fragment的基本变量进行序列化，包括了arguments、tag等信息，具体保存了哪些状态如下所示（字段代表的意义可以参考Fragment的字段详解）：</p><pre><code class=language-java>public FragmentState(Fragment frag) {
     mClassName = frag.getClass().getName();
     mIndex = frag.mIndex;
     mFromLayout = frag.mFromLayout;
@@ -26,7 +26,7 @@
     mArguments = frag.mArguments;
     mHidden = frag.mHidden;
 }
-</code></pre><p>除了以上字段外，FragmentState还预留了一个<code>Bundle mSavedFragmentState</code>来存储一些额外的状态，具体保存了什么接下来再分析；可见，这些字段足以代表了Fragment的实例基本状态。</p><p>因此可以简单说FragmentState就是对Fragment的基本状态的一个封装。</p><p>在需要save state时，只需要将对应的Fragment通过FragmentState构造方法传入，该Fragment实例的基本状态也就封装好了，在FragmentManager中具体实现过程如下所示：</p><pre><code>// FragmentManager
+</code></pre><p>除了以上字段外，FragmentState还预留了一个<code>Bundle mSavedFragmentState</code>来存储一些额外的状态，具体保存了什么接下来再分析；可见，这些字段足以代表了Fragment的实例基本状态。</p><p>因此可以简单说FragmentState就是对Fragment的基本状态的一个封装。</p><p>在需要save state时，只需要将对应的Fragment通过FragmentState构造方法传入，该Fragment实例的基本状态也就封装好了，在FragmentManager中具体实现过程如下所示：</p><pre><code class=language-java>// FragmentManager
 Parcelable saveAllState() {
     ...
     // 若没有Fragment，就无需保存状态
@@ -174,48 +174,236 @@ FragmentManagerNonConfig retainNonConfig() {
     // 最后，将缓存包装在FragmentManagerNonConfig对象中返回
     return new FragmentManagerNonConfig(fragments, childFragments);
 }
-</code></pre><p>代码中的注释已经很详细了，纵观整个方法的流程，其实就是将需要 保持实例的Fragment集合 及 其相应的嵌套子Fragment实例集合 都保存在了FragmentManagerNonConfig对象中并返回，FragmentActivity将得到的该对象又被包装在NonConfigurationInstances里返回给了系统。 这样，在设备配置改变时，通过setRetainInstance来告知需要保持实例的Fragment对象就在Activity的被销毁过程中被保存了下来。 <img src=https://raw.githubusercontent.com/whataa/PicsRepo/master/FragmentManagerState.png alt=image></p><p>当然，如果我们在mainfest中配置了Activity的<code>android:configChanges</code>属性，即我们需要手动处理设备配置改变下的变化，那么也就意味着Activity不需要默认地被销毁重建，这样也就不存在Fragment保持实例这一说法了。</p><h3 id=注意>注意</h3><p>上面分析了触发状态的保存机制的两种大的情况：分别是普通情况下例如内存不足、被其它软件杀死等，以及特殊情况——设备的配置改变。不论是哪一种情况，都会触发onSaveInstance方法的回调，即使是当设备配置改变时已经通过setRetainInstance告知了保留实例，这里需要特别注意。</p><p>并且，两种情况保存状态/实例的时机和位置是独立，也就是说onSaveInstance并不会因为setRetainInstance发生改变、或者retainNonConfig不会干扰setRetainInstance的执行和结果。</p><p>同时另一个需要注意的点就是：<strong>setRetainInstance起效的前提是设备的配置改变</strong> 这一情况，如果只是普通情况Activity被killed，Fragment依然会被销毁和稍后的恢复，即无法保持实例的，这时候只能通过onSaveInstance来保留一些状态。</p><h2 id=restoreallstate>restoreAllState</h2><p>当Activity <code>re-created</code>时（包括了稍后用户手动从历史栈中回来或者配置改变引发的重建的情况），当前状态就应该恢复到上次被销毁时保存的状态。</p><h2 id=我们知道，在activity被create时，activity里首次被调用的方法是attach：-final-void-attachnonconfigurationinstances-lastnonconfigurationinstances-----------mlastnonconfigurationinstances--lastnonconfigurationinstances-------在该方法中系统传入了上次包装实例的缓存对象lastnonconfigurationinstances-（若存在，我们这里针对的就是存在的情况），然后在经历生命周期过程第一个方法oncreate时，activity直接使用了该对象来恢复fragments实例（针对appfragment），在fragmentactivity中也是一样（针对appv4fragment）：---activityoncreate--if-savedinstancestate--null------parcelable-p--savedinstancestategetparcelablefragments_tag-----mfragmentsrestoreallstatep-mlastnonconfigurationinstances--null--mlastnonconfigurationinstancesfragments--null->我们知道，在Activity被create时，Activity里首次被调用的方法是attach(...)： <code>final void attach(...NonConfigurationInstances lastNonConfigurationInstances...) { ... mLastNonConfigurationInstances = lastNonConfigurationInstances; ... }</code> 在该方法中系统传入了上次包装实例的缓存对象<code>lastNonConfigurationInstances</code> （若存在，我们这里针对的就是存在的情况），然后在经历生命周期过程第一个方法onCreate时，Activity直接使用了该对象来恢复Fragments实例（针对<code>.app.Fragment</code>），在FragmentActivity中也是一样（针对<code>.app.v4.Fragment</code>）： ``` // Activity#onCreate ... if (savedInstanceState != null) { Parcelable p = savedInstanceState.getParcelable(FRAGMENTS_TAG); mFragments.restoreAllState(p, mLastNonConfigurationInstances != null ? mLastNonConfigurationInstances.fragments : null); }</h2><p>// FragmentActivity#onCreate ... // getLastNonConfigurationInstance方法取就是传入Activity中的mLastNonConfigurationInstances对象 NonConfigurationInstances nc = (NonConfigurationInstances) getLastNonConfigurationInstance(); ... if (savedInstanceState != null) { Parcelable p = savedInstanceState.getParcelable(FRAGMENTS_TAG); mFragments.restoreAllState(p, nc != null ? nc.fragments : null); ... }</p><pre><code>
-在存在savedInstanceState的前提下，在onCreate时直接依据`FRAGMENTS_TAG`键得到与Fragment相关的状态（若存在），然后调用了`mFragments.restoreAllState`方法，我们可以看到，传入的参数除了Fragment的状态之外，还包括了`NonConfigurationInstances.fragments`对象，该对象正是前面设备配置改变时，系统在销毁Activity前回调的`Activity#onRetainNonConfigurationInstance()`方法中保留下来的Fragment实例集合。也就是说，不论是那种触发状态保存机制的情况下保留的状态，最终在Activity re-created时，都会通过mFragments.restoreAllState入口将状态恢复。mFragments.restoreAllState最终将事件分发给了FragmentManager#restoreAllState方法：
-</code></pre><p>// FragmentManager void restoreAllState(Parcelable state, FragmentManagerNonConfig nonConfig) { ... FragmentManagerState fms = (FragmentManagerState)state; ... // step1 if (nonConfig != null) { ... } ... // step2 for (int i=0; i&lt;fms.mActive.length; i++) { FragmentState fs = fms.mActive[i]; if (fs != null) { ... } } // step3 if (nonConfig != null) { ... } ... // step4 if (fms.mAdded != null) { ... } ... // step5 if (fms.mBackStack != null) { ... } ... }</p><pre><code>该方法的流程可以大致分为5个步骤，FragmentManager通过这几个步骤恢复了自身的一些状态，也就恢复了所辖的所有Fragment。
+</code></pre><p>代码中的注释已经很详细了，纵观整个方法的流程，其实就是将需要 保持实例的Fragment集合 及 其相应的嵌套子Fragment实例集合 都保存在了FragmentManagerNonConfig对象中并返回，FragmentActivity将得到的该对象又被包装在NonConfigurationInstances里返回给了系统。 这样，在设备配置改变时，通过setRetainInstance来告知需要保持实例的Fragment对象就在Activity的被销毁过程中被保存了下来。 <img src=https://raw.githubusercontent.com/whataa/PicsRepo/master/FragmentManagerState.png alt=image></p><p>当然，如果我们在mainfest中配置了Activity的<code>android:configChanges</code>属性，即我们需要手动处理设备配置改变下的变化，那么也就意味着Activity不需要默认地被销毁重建，这样也就不存在Fragment保持实例这一说法了。</p><h3 id=注意>注意</h3><p>上面分析了触发状态的保存机制的两种大的情况：分别是普通情况下例如内存不足、被其它软件杀死等，以及特殊情况——设备的配置改变。不论是哪一种情况，都会触发onSaveInstance方法的回调，即使是当设备配置改变时已经通过setRetainInstance告知了保留实例，这里需要特别注意。</p><p>并且，两种情况保存状态/实例的时机和位置是独立，也就是说onSaveInstance并不会因为setRetainInstance发生改变、或者retainNonConfig不会干扰setRetainInstance的执行和结果。</p><p>同时另一个需要注意的点就是：<strong>setRetainInstance起效的前提是设备的配置改变</strong> 这一情况，如果只是普通情况Activity被killed，Fragment依然会被销毁和稍后的恢复，即无法保持实例的，这时候只能通过onSaveInstance来保留一些状态。</p><h2 id=restoreallstate>restoreAllState</h2><p>当Activity <code>re-created</code>时（包括了稍后用户手动从历史栈中回来或者配置改变引发的重建的情况），当前状态就应该恢复到上次被销毁时保存的状态。</p><p>我们知道，在Activity被create时，Activity里首次被调用的方法是attach(...)：</p><pre><code class=language-java>final void attach(...NonConfigurationInstances lastNonConfigurationInstances...) {
+    ...
+    mLastNonConfigurationInstances = lastNonConfigurationInstances;
+    ...
+}
+</code></pre><p>在该方法中系统传入了上次包装实例的缓存对象<code>lastNonConfigurationInstances</code> （若存在，我们这里针对的就是存在的情况），然后在经历生命周期过程第一个方法onCreate时，Activity直接使用了该对象来恢复Fragments实例（针对<code>.app.Fragment</code>），在FragmentActivity中也是一样（针对<code>.app.v4.Fragment</code>）：</p><pre><code class=language-java>// Activity#onCreate
+...
+if (savedInstanceState != null) {
+    Parcelable p = savedInstanceState.getParcelable(FRAGMENTS_TAG);
+    mFragments.restoreAllState(p, mLastNonConfigurationInstances != null ? mLastNonConfigurationInstances.fragments : null);
+}
+---------------------------------------------------------------------
+// FragmentActivity#onCreate
+...
+// getLastNonConfigurationInstance方法取就是传入Activity中的mLastNonConfigurationInstances对象
+NonConfigurationInstances nc = (NonConfigurationInstances) getLastNonConfigurationInstance();
+...
+if (savedInstanceState != null) {
+    Parcelable p = savedInstanceState.getParcelable(FRAGMENTS_TAG);
+    mFragments.restoreAllState(p, nc != null ? nc.fragments : null);
+    ...
+}
+</code></pre><p>在存在savedInstanceState的前提下，在onCreate时直接依据<code>FRAGMENTS_TAG</code>键得到与Fragment相关的状态（若存在），然后调用了<code>mFragments.restoreAllState</code>方法，我们可以看到，传入的参数除了Fragment的状态之外，还包括了<code>NonConfigurationInstances.fragments</code>对象，该对象正是前面设备配置改变时，系统在销毁Activity前回调的<code>Activity#onRetainNonConfigurationInstance()</code>方法中保留下来的Fragment实例集合。也就是说，不论是那种触发状态保存机制的情况下保留的状态，最终在Activity re-created时，都会通过mFragments.restoreAllState入口将状态恢复。mFragments.restoreAllState最终将事件分发给了FragmentManager#restoreAllState方法：</p><pre><code class=language-java>// FragmentManager
+void restoreAllState(Parcelable state, FragmentManagerNonConfig nonConfig) {
+    ...
+    FragmentManagerState fms = (FragmentManagerState)state;
+    ...
+    // step1
+    if (nonConfig != null) {
+        ...
+    }
+    ...
+    // step2
+    for (int i=0; i&lt;fms.mActive.length; i++) {
+        FragmentState fs = fms.mActive[i];
+        if (fs != null) {
+            ...
+        }
+    }
+    // step3
+    if (nonConfig != null) {
+        ...
+    }
+    ...
+    // step4
+    if (fms.mAdded != null) {
+        ...
+    }
+    ...
+    // step5
+    if (fms.mBackStack != null) {
+        ...
+    }
+    ...
+}
+</code></pre><p>该方法的流程可以大致分为5个步骤，FragmentManager通过这几个步骤恢复了自身的一些状态，也就恢复了所辖的所有Fragment。</p><h3 id=step-1：将保持的fragment实例关联至fragmentstate>Step 1：将保持的Fragment实例关联至FragmentState</h3><p>由于可能存在保持了实例的Fragment，所以在该步骤中，需要将这些实例关联到上次保存的Fragment状态对象FragmentState中，这样在接下来的步骤中就不需要实例化对应的Fragment对象了（因为下面的步骤会依据保存的状态来实例化新的Fragment对象）：</p><pre><code class=language-java>// FragmentManager # restoreAllState()
+if (nonConfig != null) {
+    List&lt;Fragment&gt; nonConfigFragments = nonConfig.getFragments();
+    childNonConfigs = nonConfig.getChildNonConfigs();
+    final int count = nonConfigFragments != null ? nonConfigFragments.size() : 0;
+    for (int i = 0; i &lt; count; i++) {
+        // 得到保持的实例对象
+        Fragment f = nonConfigFragments.get(i);
+        // 取出实例对象在保存了状态的数组中对应的FragmentState
+        FragmentState fs = fms.mActive[f.mIndex];
+        // 将实例关联到对应的FragmentState
+        fs.mInstance = f;
+        f.mSavedViewState = null;
+        f.mBackStackNesting = 0;
+        f.mInLayout = false;
+        f.mAdded = false;
+        f.mTarget = null;
+        if (fs.mSavedFragmentState != null) {
+            fs.mSavedFragmentState.setClassLoader(mHost.getContext().getClassLoader());
+            f.mSavedViewState =FragmentManagerImpl.VIEW_STATE_TAG);
+            f.mSavedFragmentState = fs.mSavedFragmentState;
+        }
+    }
+}
+</code></pre><h3 id=step2：恢复fragmentmanagermactive>Step2：恢复FragmentManager#mActive</h3><p>在将保存的状态和保持的实例合并后，接下来就需要开始遍历fms.mActive，将保存的Fragment状态依次恢复：</p><pre><code class=language-java>// FragmentManager # restoreAllState()
+for (int i=0; i&lt;fms.mActive.length; i++) {
+    FragmentState fs = fms.mActive[i];
+    if (fs != null) {
+        FragmentManagerNonConfig childNonConfig = null;
+        if (childNonConfigs != null &amp;&amp; i &lt; childNonConfigs.size()) {
+            // 拿到Fragment的子Fragment的实例
+            childNonConfig = childNonConfigs.get(i);
+        }
+        // 该方法通过FragmentState保存的状态返回一个Fragment实例
+        Fragment f = fs.instantiate(mHost, mParent, childNonConfig);
+        // 将（重新实例化）的Fragment对象关联到mActive数组中
+        mActive.add(f);
+        // 清空mInstance字段，以防最后再次从中恢复
+        fs.mInstance = null;
+    } else {
+        mActive.add(null);
+        if (mAvailIndices == null) {
+            mAvailIndices = new ArrayList&lt;Integer&gt;();
+        }
+        if (DEBUG) Log.v(TAG, &quot;restoreAllState: avail #&quot; + i);
+        mAvailIndices.add(i);
+    }
+}
+</code></pre><p>其中的<code>fs.instantiate(mHost, mParent, childNonConfig)</code>方法如下：</p><pre><code class=language-java>// FragmentState
+public Fragment instantiate(FragmentHostCallback host, Fragment parent, FragmentManagerNonConfig childNonConfig) {
+    // mInstance是上一步关联进来的保持了实例的Fragment对象
+    if (mInstance == null) {
+        final Context context = host.getContext();
+        if (mArguments != null) {
+            mArguments.setClassLoader(context.getClassLoader());
+        }
+        // 最终通过Fragment的instantiate方法得到了一个全新的Fragment对象
+        mInstance = Fragment.instantiate(context, mClassName, mArguments);
+        if (mSavedFragmentState != null) {
+            mSavedFragmentState.setClassLoader(context.getClassLoader());
+            mInstance.mSavedFragmentState = mSavedFragmentState;
+        }
+        mInstance.setIndex(mIndex, parent);
+        mInstance.mFromLayout = mFromLayout;
+        mInstance.mRestored = true;
+        mInstance.mFragmentId = mFragmentId;
+        mInstance.mContainerId = mContainerId;
+        mInstance.mTag = mTag;
+        mInstance.mRetainInstance = mRetainInstance;
+        mInstance.mDetached = mDetached;
+        mInstance.mHidden = mHidden;
+        mInstance.mFragmentManager = host.mFragmentManager;
+    }
+    mInstance.mChildNonConfig = childNonConfig;
+    return mInstance;
+}
+</code></pre><p>Fragment.instantiate(...)方法会根据所给的class name加载对应的Class类，调用<code>clazz.newInstance()</code>新建一个全新的Fragment对象：</p><pre><code class=language-java>public static Fragment instantiate(Context context, String fname, @Nullable Bundle args) {
+    ...
+    Fragment f = (Fragment)clazz.newInstance();
+    if (args != null) {
+        args.setClassLoader(f.getClass().getClassLoader());
+        f.mArguments = args;
+    }
+    ...
+}
+</code></pre><p>得到Fragment对象后，我们还发现紧接下来第一件事就是为之绑定mArguments（若存在），所以如果需要传递一些简单的或者受限于生命周期的可持久化的参数，推荐使用<code>setArguments(Bundle)</code>方式。</p><p>另外，这里需要显式地强调一点：虽然在上面的<code>FragmentState#instantiate</code>方法中，保持了实例的Fragment的mSavedFragmentState字段并没有被赋值，但是状态的恢复机制依然与正常的流程一样。因为保持了实例就意味着该实例下的状态也会被保持。</p><h3 id=step3：关联恢复的fragment的target>Step3：关联恢复的Fragment的target</h3><p>关于Target字段是什么可以参考Fragment的字段详解。</p><p>保存了的状态对应的Fragment实例恢复后，这一步就主要根据Fragment对应的target索引，来讲索引替换为对应的Fragment实例，当然，target索引对应的实例存在的前提是该target之前使用了<code>Fragment#setRetainInstance</code>机制来保持实例：</p><pre><code class=language-java>if (nonConfig != null) {
+    List&lt;Fragment&gt; nonConfigFragments = nonConfig.getFragments();
+    final int count = nonConfigFragments != null ? nonConfigFragments.size() : 0;
+    for (int i = 0; i &lt; count; i++) {
+        Fragment f = nonConfigFragments.get(i);
+        if (f.mTargetIndex &gt;= 0) {
+            if (f.mTargetIndex &lt; mActive.size()) {
+                f.mTarget = mActive.get(f.mTargetIndex);
+            } else {
+                f.mTarget = null;
+            }
+        }
+    }
+}
+</code></pre><p>从这一步我们也可以知道，Fragment对应的Target在状态的保存与恢复机制下，默认只会保留target的索引index，如果target正好启用了setRetainInstance特性，那么target就会被关联至相应的Fragment。</p><h3 id=step4：恢复fragmentmanagermadded>Step4：恢复FragmentManager#mAdded</h3><p>接下来，开始恢复mAdded，FragmentManager#mAdded字段主要作用就是记录已经add到Activity上的Fragment：</p><pre><code class=language-java>if (fms.mAdded != null) {
+    // 依据的就是在saveAllState时保存的fms.mAdded数组
+    // 该数组保存的是已经Add的Fragment在mActive对应是索引
+    mAdded = new ArrayList&lt;Fragment&gt;(fms.mAdded.length);
+    for (int i=0; i&lt;fms.mAdded.length; i++) {
+        Fragment f = mActive.get(fms.mAdded[i]);
+        if (f == null) {
+            throwException(new IllegalStateException(...);
+        }
+        f.mAdded = true;
+        if (mAdded.contains(f)) {
+            throw new IllegalStateException(&quot;Already added!&quot;);
+        }
+        mAdded.add(f);
+    }
+} else {
+    mAdded = null;
+}
+</code></pre><h3 id=step5：恢复fragmentmanagermbackstack>Step5：恢复FragmentManager#mBackStack</h3><p>与第4步一样，这里通过在saveAllState时保存的fms.mBackStack数组依次恢复FragmentManager的回退栈中的BackStackRecord信息：</p><pre><code class=language-java>if (fms.mBackStack != null) {
+    mBackStack = new ArrayList&lt;BackStackRecord&gt;(fms.mBackStack.length);
+    for (int i=0; i&lt;fms.mBackStack.length; i++) {
+        BackStackRecord bse = fms.mBackStack[i].instantiate(this);
+        mBackStack.add(bse);
+        if (bse.mIndex &gt;= 0) {
+            setBackStackIndex(bse.mIndex, bse);
+        }
+    }
+} else {
+    mBackStack = null;
+}
 
-### Step 1：将保持的Fragment实例关联至FragmentState
-
-由于可能存在保持了实例的Fragment，所以在该步骤中，需要将这些实例关联到上次保存的Fragment状态对象FragmentState中，这样在接下来的步骤中就不需要实例化对应的Fragment对象了（因为下面的步骤会依据保存的状态来实例化新的Fragment对象）：
-</code></pre><p>// FragmentManager # restoreAllState() if (nonConfig != null) { List<fragment>nonConfigFragments = nonConfig.getFragments(); childNonConfigs = nonConfig.getChildNonConfigs(); final int count = nonConfigFragments != null ? nonConfigFragments.size() : 0; for (int i = 0; i &lt; count; i++) { // 得到保持的实例对象 Fragment f = nonConfigFragments.get(i); // 取出实例对象在保存了状态的数组中对应的FragmentState FragmentState fs = fms.mActive[f.mIndex]; // 将实例关联到对应的FragmentState fs.mInstance = f; f.mSavedViewState = null; f.mBackStackNesting = 0; f.mInLayout = false; f.mAdded = false; f.mTarget = null; if (fs.mSavedFragmentState != null) { fs.mSavedFragmentState.setClassLoader(mHost.getContext().getClassLoader()); f.mSavedViewState =FragmentManagerImpl.VIEW_STATE_TAG); f.mSavedFragmentState = fs.mSavedFragmentState; } } }</fragment></p><pre><code>
-### Step2：恢复FragmentManager#mActive
-
-在将保存的状态和保持的实例合并后，接下来就需要开始遍历fms.mActive，将保存的Fragment状态依次恢复：
-</code></pre><p>// FragmentManager # restoreAllState() for (int i=0; i&lt;fms.mActive.length; i++) { FragmentState fs = fms.mActive[i]; if (fs != null) { FragmentManagerNonConfig childNonConfig = null; if (childNonConfigs != null &amp;&amp; i &lt; childNonConfigs.size()) { // 拿到Fragment的子Fragment的实例 childNonConfig = childNonConfigs.get(i); } // 该方法通过FragmentState保存的状态返回一个Fragment实例 Fragment f = fs.instantiate(mHost, mParent, childNonConfig); // 将（重新实例化）的Fragment对象关联到mActive数组中 mActive.add(f); // 清空mInstance字段，以防最后再次从中恢复 fs.mInstance = null; } else { mActive.add(null); if (mAvailIndices == null) { mAvailIndices = new ArrayList<integer>(); } if (DEBUG) Log.v(TAG, &quot;restoreAllState: avail #&quot; + i); mAvailIndices.add(i); } }</integer></p><pre><code>其中的`fs.instantiate(mHost, mParent, childNonConfig)`方法如下：
-</code></pre><p>// FragmentState public Fragment instantiate(FragmentHostCallback host, Fragment parent, FragmentManagerNonConfig childNonConfig) { // mInstance是上一步关联进来的保持了实例的Fragment对象 if (mInstance == null) { final Context context = host.getContext(); if (mArguments != null) { mArguments.setClassLoader(context.getClassLoader()); } // 最终通过Fragment的instantiate方法得到了一个全新的Fragment对象 mInstance = Fragment.instantiate(context, mClassName, mArguments); if (mSavedFragmentState != null) { mSavedFragmentState.setClassLoader(context.getClassLoader()); mInstance.mSavedFragmentState = mSavedFragmentState; } mInstance.setIndex(mIndex, parent); mInstance.mFromLayout = mFromLayout; mInstance.mRestored = true; mInstance.mFragmentId = mFragmentId; mInstance.mContainerId = mContainerId; mInstance.mTag = mTag; mInstance.mRetainInstance = mRetainInstance; mInstance.mDetached = mDetached; mInstance.mHidden = mHidden; mInstance.mFragmentManager = host.mFragmentManager; } mInstance.mChildNonConfig = childNonConfig; return mInstance; }</p><pre><code>Fragment.instantiate(...)方法会根据所给的class name加载对应的Class类，调用`clazz.newInstance()`新建一个全新的Fragment对象：
-</code></pre><p>public static Fragment instantiate(Context context, String fname, @Nullable Bundle args) { ... Fragment f = (Fragment)clazz.newInstance(); if (args != null) { args.setClassLoader(f.getClass().getClassLoader()); f.mArguments = args; } ... }</p><pre><code>得到Fragment对象后，我们还发现紧接下来第一件事就是为之绑定mArguments（若存在），所以如果需要传递一些简单的或者受限于生命周期的可持久化的参数，推荐使用`setArguments(Bundle)`方式。
-
-另外，这里需要显式地强调一点：虽然在上面的`FragmentState#instantiate`方法中，保持了实例的Fragment的mSavedFragmentState字段并没有被赋值，但是状态的恢复机制依然与正常的流程一样。因为保持了实例就意味着该实例下的状态也会被保持。
-
-### Step3：关联恢复的Fragment的target
-
-关于Target字段是什么可以参考Fragment的字段详解。
-
-保存了的状态对应的Fragment实例恢复后，这一步就主要根据Fragment对应的target索引，来讲索引替换为对应的Fragment实例，当然，target索引对应的实例存在的前提是该target之前使用了`Fragment#setRetainInstance`机制来保持实例：
-</code></pre><p>if (nonConfig != null) { List<fragment>nonConfigFragments = nonConfig.getFragments(); final int count = nonConfigFragments != null ? nonConfigFragments.size() : 0; for (int i = 0; i &lt; count; i++) { Fragment f = nonConfigFragments.get(i); if (f.mTargetIndex &gt;= 0) { if (f.mTargetIndex &lt; mActive.size()) { f.mTarget = mActive.get(f.mTargetIndex); } else { f.mTarget = null; } } } }</fragment></p><pre><code>从这一步我们也可以知道，Fragment对应的Target在状态的保存与恢复机制下，默认只会保留target的索引index，如果target正好启用了setRetainInstance特性，那么target就会被关联至相应的Fragment。
-
-### Step4：恢复FragmentManager#mAdded
-
-接下来，开始恢复mAdded，FragmentManager#mAdded字段主要作用就是记录已经add到Activity上的Fragment：
-</code></pre><p>if (fms.mAdded != null) { // 依据的就是在saveAllState时保存的fms.mAdded数组 // 该数组保存的是已经Add的Fragment在mActive对应是索引 mAdded = new ArrayList<fragment>(fms.mAdded.length); for (int i=0; i&lt;fms.mAdded.length; i++) { Fragment f = mActive.get(fms.mAdded[i]); if (f == null) { throwException(new IllegalStateException(...); } f.mAdded = true; if (mAdded.contains(f)) { throw new IllegalStateException(&quot;Already added!&quot;); } mAdded.add(f); } } else { mAdded = null; }</fragment></p><pre><code>
-
-### Step5：恢复FragmentManager#mBackStack
-
-与第4步一样，这里通过在saveAllState时保存的fms.mBackStack数组依次恢复FragmentManager的回退栈中的BackStackRecord信息：
-</code></pre><p>if (fms.mBackStack != null) { mBackStack = new ArrayList<backstackrecord>(fms.mBackStack.length); for (int i=0; i&lt;fms.mBackStack.length; i++) { BackStackRecord bse = fms.mBackStack[i].instantiate(this); mBackStack.add(bse); if (bse.mIndex &gt;= 0) { setBackStackIndex(bse.mIndex, bse); } } } else { mBackStack = null; }</backstackrecord></p><pre><code>BackStackState#instantiate方法中，依据了在saveAllState时，构造BackStackState的规则来完整地恢复BackStackRecord的各个字段，包括`mOps`，具体可以参见BackStackState类。
+```java
+BackStackState#instantiate方法中，依据了在saveAllState时，构造BackStackState的规则来完整地恢复BackStackRecord的各个字段，包括`mOps`，具体可以参见BackStackState类。
 
 至此，该方法的流程就走完了，期间Fragment除了实例化并恢复了基本状态，却并没有发生状态转移(`moveToState`)，Fragment的`mState`字段依然是`INITIALIZING`状态，也就是说，对于整个大流程而言，还差一步状态的转移，Fragment的整体状态就可以恢复为应用上次离开(killed)时的样子了。而这一步就发生在Activity的onCreate方法里mFragments.restoreAllState的后面：
-</code></pre><p>// Activity | FragmentActivity protected void onCreate(@Nullable Bundle savedInstanceState) { ... mFragments.restoreAllState(...); ...// here mFragments.dispatchCreate(); ... }</p><pre><code>mFragments.dispatchCreate()方法就很熟悉了，具体可以参见Fragment的生命周期状态分析一文。这里仅列出在saveAllState时保存在各个Key下的状态通过dispatchCreate的触发，最终是在什么地方被恢复的，dispatchCreate()最终来到了moveState的5个参数的方法中：
-</code></pre><p>// FragmentManager#moveState ... if (f.mState &lt; newState) { ... switch (f.mState) { case Fragment.INITIALIZING: ... if (f.mSavedFragmentState != null) { f.mSavedFragmentState.setClassLoader(mHost.getContext().getClassLoader()); f.mSavedViewState = f.mSavedFragmentState.getSparseParcelableArray(FragmentManagerImpl.VIEW_STATE_TAG); f.mTarget = getFragment(f.mSavedFragmentState, FragmentManagerImpl.TARGET_STATE_TAG); if (f.mTarget != null) { f.mTargetRequestCode = f.mSavedFragmentState.getInt(FragmentManagerImpl.TARGET_REQUEST_CODE_STATE_TAG, 0); } f.mUserVisibleHint = f.mSavedFragmentState.getBoolean(FragmentManagerImpl.USER_VISIBLE_HINT_TAG, true); ... } ... if (!f.mRetaining) { f.performCreate(f.mSavedFragmentState); } else { f.restoreChildFragmentState(f.mSavedFragmentState); f.mState = Fragment.CREATED; } ... } ...</p><pre><code>上面同时恢复的字段包括了`mSavedViewState 、mTarget 、mTargetRequestCode 、mUserVisibleHint `等，对于`mSavedFragmentState`，Fragment的生命周期方法中的这些方法也会用到：
-</code></pre><p>f.performCreateView(f.getLayoutInflater(f.mSavedFragmentState), container, f.mSavedFragmentState); f.onViewCreated(f.mView, f.mSavedFragmentState); f.performActivityCreated(f.mSavedFragmentState); if (f.mView != null) { f.restoreViewState(f.mSavedFragmentState); }</p><pre><code>也就是说，我们可以选择在以上生命周期任何一个方法中来恢复我们先前保存的状态，并且这些状态都是同一个对象。
 
-## 总结
-
-分析Fragment的状态保存与恢复实则是分析FragmentManager的状态保存与恢复，对于Fragment的管理类，除了Fragment个体的状态保存恢复，Fragment之间在FragmentManager下的相互关系、结构栈等也需要维持，因此整个过程以FragmentManagerState为核心，经历了FragmentManagerState的“构造、持久化、还原”三大步骤，逐步完成了FragmentManager的状态保存与恢复。具体来说，就是在destroy前保存相关字段状态，交由系统管理，然后在re-created Activity时，先后创建全新FragmentManager及相关Fragment对象来关联上次保存的状态字段，实现状态的恢复。
-
-本篇属于个人计划的分析Fragment系列。关于Fragment的字段详解、静态/动态加载流程、生命周期和状态的切换以及常见异常解决方案等的分析会陆续完成，欢迎关注。
-</code></pre></div></article><script src=https://giscus.app/client.js data-repo=whataa/whataa.github.io data-repo-id="MDEwOlJlcG9zaXRvcnk1NDY1NzI1MA==" data-category=Announcements data-category-id=DIC_kwDOA0IA4s4CtJJY data-mapping=title data-strict=0 data-reactions-enabled=0 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=zh-CN data-loading=lazy crossorigin=anonymous async></script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js></script><script>hljs.highlightAll()</script></div></body></html>
+```java
+// Activity | FragmentActivity
+protected void onCreate(@Nullable Bundle savedInstanceState) {
+    ...
+    mFragments.restoreAllState(...);
+    ...// here
+    mFragments.dispatchCreate();
+    ...
+}
+</code></pre><p>mFragments.dispatchCreate()方法就很熟悉了，具体可以参见Fragment的生命周期状态分析一文。这里仅列出在saveAllState时保存在各个Key下的状态通过dispatchCreate的触发，最终是在什么地方被恢复的，dispatchCreate()最终来到了moveState的5个参数的方法中：</p><pre><code class=language-java>// FragmentManager#moveState
+...
+if (f.mState &lt; newState) {
+    ...
+    switch (f.mState) {
+        case Fragment.INITIALIZING:
+            ...
+            if (f.mSavedFragmentState != null) {
+                f.mSavedFragmentState.setClassLoader(mHost.getContext().getClassLoader());
+                f.mSavedViewState = f.mSavedFragmentState.getSparseParcelableArray(FragmentManagerImpl.VIEW_STATE_TAG);
+                f.mTarget = getFragment(f.mSavedFragmentState, FragmentManagerImpl.TARGET_STATE_TAG);
+                if (f.mTarget != null) {
+                    f.mTargetRequestCode = f.mSavedFragmentState.getInt(FragmentManagerImpl.TARGET_REQUEST_CODE_STATE_TAG, 0);
+                }
+                f.mUserVisibleHint = f.mSavedFragmentState.getBoolean(FragmentManagerImpl.USER_VISIBLE_HINT_TAG, true);
+                ...
+            }
+            ...
+            if (!f.mRetaining) {
+                f.performCreate(f.mSavedFragmentState);
+            } else {
+                f.restoreChildFragmentState(f.mSavedFragmentState);
+                f.mState = Fragment.CREATED;
+            }
+            ...
+}
+...
+</code></pre><p>上面同时恢复的字段包括了<code>mSavedViewState 、mTarget 、mTargetRequestCode 、mUserVisibleHint</code>等，对于<code>mSavedFragmentState</code>，Fragment的生命周期方法中的这些方法也会用到：</p><pre><code class=language-java>f.performCreateView(f.getLayoutInflater(f.mSavedFragmentState), container, f.mSavedFragmentState);
+f.onViewCreated(f.mView, f.mSavedFragmentState);
+f.performActivityCreated(f.mSavedFragmentState);
+if (f.mView != null) {
+    f.restoreViewState(f.mSavedFragmentState);
+}
+</code></pre><p>也就是说，我们可以选择在以上生命周期任何一个方法中来恢复我们先前保存的状态，并且这些状态都是同一个对象。</p><h2 id=总结>总结</h2><p>分析Fragment的状态保存与恢复实则是分析FragmentManager的状态保存与恢复，对于Fragment的管理类，除了Fragment个体的状态保存恢复，Fragment之间在FragmentManager下的相互关系、结构栈等也需要维持，因此整个过程以FragmentManagerState为核心，经历了FragmentManagerState的“构造、持久化、还原”三大步骤，逐步完成了FragmentManager的状态保存与恢复。具体来说，就是在destroy前保存相关字段状态，交由系统管理，然后在re-created Activity时，先后创建全新FragmentManager及相关Fragment对象来关联上次保存的状态字段，实现状态的恢复。</p><p>本篇属于个人计划的分析Fragment系列。关于Fragment的字段详解、静态/动态加载流程、生命周期和状态的切换以及常见异常解决方案等的分析会陆续完成，欢迎关注。</p></div></article><script src=https://giscus.app/client.js data-repo=whataa/whataa.github.io data-repo-id="MDEwOlJlcG9zaXRvcnk1NDY1NzI1MA==" data-category=Announcements data-category-id=DIC_kwDOA0IA4s4CtJJY data-mapping=title data-strict=0 data-reactions-enabled=0 data-emit-metadata=0 data-input-position=top data-theme=light data-lang=zh-CN data-loading=lazy crossorigin=anonymous async></script><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css><script src=https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js></script><script>hljs.highlightAll()</script></div></body></html>
